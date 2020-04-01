@@ -1,0 +1,14 @@
+# X Server (virtual)
+xvfb
+x11-utils
+xwit
+
+# Screen recording
+ffmpeg
+
+# Other stuff
+wget
+gettext-base
+xz-utils
+unzip
+gnupg
