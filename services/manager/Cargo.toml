@@ -1,0 +1,21 @@
+[package]
+name = "manager"
+version = "0.1.0"
+authors = ["Til Blechschmidt <til@blechschmidt.de>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+shared = { path = "../shared" }
+tokio = { version = "0.2", features = ["macros", "time"] }
+warp = "0.2"
+futures = "0.3.4"
+serde = { version = "1.0.105", features = ["derive"] }
+serde_json = "1.0.48"
+redis = { version = "0.15.1", features = ["tokio-rt-core"] }
+chrono = "0.4.11"
+uuid = { version = "0.8", features = ["v4"] }
+regex = "1"
+config = "0.10"
+lazy_static = "1.4.0"
