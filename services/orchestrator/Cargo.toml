@@ -1,0 +1,19 @@
+[package]
+name = "orchestrator"
+version = "0.1.0"
+authors = ["Til Blechschmidt <til@blechschmidt.de>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+shared = { path = "../shared" }
+redis = { version = "0.15.1", features = ["tokio-rt-core"] }
+tokio = { version = "0.2", features = ["macros", "time"] }
+config = "0.10"
+serde = { version = "1.0.105", features = ["derive"] }
+chrono = "0.4.11"
+uuid = { version = "0.8", features = ["v4"] }
+
+# TODO Figure out if we can do this with conditional compilation
+bollard = "0.5"
