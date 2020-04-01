@@ -1,0 +1,8 @@
+[workspace]
+members = [
+	"shared",
+	"manager",
+	"node",
+	"proxy",
+	"orchestrator"
+]
