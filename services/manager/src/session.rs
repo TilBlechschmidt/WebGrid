@@ -52,12 +52,18 @@ async fn request_slot(
 
     let queue_timeout = Timeout::Queue.get(&con).await;
 
+    let orchestrators: Vec<String> = con.smembers("orchestrators").await.unwrap_or_else(|_| Vec::new());
+
     // TODO Match orchestrators according to capability
-    let matching_orchestrators = vec!["orchestrator-1"];
+    let matching_orchestrators = orchestrators;
     let queues: Vec<String> = matching_orchestrators
         .iter()
         .map(|orchestrator| format!("orchestrator:{}:slots.available", orchestrator))
         .collect();
+
+    if queues.is_empty() {
+        return Err(RequestError::NoOrchestratorAvailable)
+    }
 
     let response: Option<(String, String)> = con
         .blpop(queues, queue_timeout)
@@ -201,6 +207,7 @@ pub async fn handle_create_session_request(
                 RequestError::QueueTimeout => LogCode::QTIMEOUT,
                 RequestError::SchedulingTimeout => LogCode::OTIMEOUT,
                 RequestError::HealthCheckTimeout => LogCode::NTIMEOUT,
+                RequestError::NoOrchestratorAvailable => LogCode::QUNAVAILABLE,
             };
 
             ctx.logger.log(&session_id, log_code, None).await.ok();

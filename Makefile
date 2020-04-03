@@ -28,7 +28,7 @@ run:
 
 clean:
 	-docker rm --force webgrid-redis
-	-docker rm --force webgrid-proxy
+	-docker rm --force webgrid-proxy-1
 	-docker rm --force webgrid-manager-1
 	-docker rm --force webgrid-orchestrator-1
 	-docker network remove webgrid

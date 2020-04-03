@@ -1,15 +1,12 @@
+
+use orchestrator_core::provisioner::{Provisioner, NodeInfo, async_trait};
+
+use bollard::Docker;
 use bollard::container::{
     Config, CreateContainerOptions, HostConfig, KillContainerOptions, StartContainerOptions,
 };
-use bollard::Docker;
 
 use std::default::Default;
-
-#[derive(Debug)]
-pub struct NodeInfo {
-    pub host: String,
-    pub port: String,
-}
 
 pub struct DockerProvisioner {
     docker: Docker,
@@ -22,8 +19,11 @@ impl DockerProvisioner {
 
         Self { docker: connection }
     }
+}
 
-    pub async fn provision_node(&self, session_id: &str) -> NodeInfo {
+#[async_trait]
+impl Provisioner for DockerProvisioner {
+    async fn provision_node(&self, session_id: &str) -> NodeInfo {
         let name = format!("webgrid-node-{}", session_id);
 
         let options = Some(CreateContainerOptions { name: &name });
@@ -63,8 +63,8 @@ impl DockerProvisioner {
             port: "3030".to_string(),
         }
     }
-
-    pub async fn rollback_node(&self, session_id: &str) {
+    
+    async fn terminate_node(&self, session_id: &str) {
         let name = format!("webgrid-node-{}", session_id);
         // TODO Remove unwrap
         self.docker

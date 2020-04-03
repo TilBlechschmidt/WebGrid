@@ -13,6 +13,7 @@ pub enum RequestError {
     SchedulingTimeout,
     HealthCheckTimeout,
     ParseError,
+    NoOrchestratorAvailable,
 }
 
 impl Reject for RequestError {}
@@ -34,6 +35,7 @@ impl fmt::Display for RequestError {
                 "Timed out while waiting for the WebGrid-Node to become responsive"
             ),
             RequestError::ParseError => write!(f, "Failed to parse response from database"),
+            RequestError::NoOrchestratorAvailable => write!(f, "No orchestrator available that can satisfy the required capabilities")
         }
     }
 }

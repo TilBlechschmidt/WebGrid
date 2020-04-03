@@ -98,6 +98,7 @@ Warnings are informative but automatic recovery is possible while failures are f
 - Warn
 	- `CLEFT` client left before scheduling completed
 - Fail
+	- `QUNAVAILABLE` no orchestrator can satisfy the capabilities
 	- `QTIMEOUT` timed out waiting in queue
 	- `OTIMEOUT` timed out waiting for orchestrator to schedule node
 	- `NTIMEOUT` timed out waiting for node to become responsive

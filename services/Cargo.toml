@@ -4,5 +4,7 @@ members = [
 	"manager",
 	"node",
 	"proxy",
-	"orchestrator"
+	"orchestrators/core",
+	"orchestrators/docker",
+	"orchestrators/k8s",
 ]

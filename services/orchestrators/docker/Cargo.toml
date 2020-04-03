@@ -1,0 +1,12 @@
+[package]
+name = "orchestrator_docker"
+version = "0.1.0"
+authors = ["Til Blechschmidt <til.blechschmidt@ppi.de>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+orchestrator_core = { path = "../core" }
+tokio = { version = "0.2", features = ["macros"] }
+bollard = "0.5"

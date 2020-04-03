@@ -9,11 +9,11 @@ use shared::{logging::LogCode, Timeout};
 
 mod config;
 mod context;
-mod provisioner;
 mod reclaim;
+pub mod provisioner;
 
+use crate::provisioner::{Provisioner};
 use crate::context::Context;
-use crate::provisioner::DockerProvisioner;
 use crate::reclaim::reclaim_slots;
 
 async fn slot_reclaimer(ctx: Arc<Context>) {
@@ -55,11 +55,8 @@ async fn slot_recycler(ctx: Arc<Context>) {
 }
 
 #[rustfmt::skip]
-async fn job_processor(ctx: Arc<Context>) {
+async fn job_processor<P: Provisioner>(ctx: Arc<Context>, provisioner: P) {
     let mut con = ctx.client.get_multiplexed_tokio_connection().await.unwrap();
-    
-    // TODO Make this modular (might be problematic since we can't pass async trait objects across threads ...)
-    let provisioner = DockerProvisioner::new();
 
     let backlog = format!("orchestrator:{}:backlog", ctx.config.orchestrator_id);
     let pending = format!("orchestrator:{}:pending", ctx.config.orchestrator_id);
@@ -69,7 +66,8 @@ async fn job_processor(ctx: Arc<Context>) {
         while let Ok(session_id) = con.lindex(&pending, -1).await {
             let session_id: String = session_id;
 
-            let node_info = provisioner.provision_node(&session_id).await;
+            let info_future = provisioner.provision_node(&session_id);
+            let node_info = info_future.await;
 
             let status_key = format!("session:{}:status", session_id);
             let orchestrator_key = format!("session:{}:orchestrator", session_id);
@@ -89,7 +87,7 @@ async fn job_processor(ctx: Arc<Context>) {
 
             if result.is_err() {
                 ctx.logger.log(&session_id, LogCode::STARTFAIL, None).await.ok();
-                provisioner.rollback_node(&session_id).await;
+                provisioner.terminate_node(&session_id).await;
             } else {
                 ctx.logger.log(&session_id, LogCode::SCHED, None).await.ok();
             }
@@ -148,8 +146,7 @@ async fn slot_count_adjuster(ctx: Arc<Context>) -> RedisResult<()> {
     Ok(())
 }
 
-#[tokio::main]
-async fn main() {
+pub async fn start<P: Provisioner + Send + Sync + 'static>(provisioner: P) {
     let ctx = Arc::new(Context::new().await);
     let mut con = ctx.con.clone();
 
@@ -182,8 +179,8 @@ async fn main() {
 
     // Start job processor
     let ctx_job_processor = ctx.clone();
-    tokio::spawn(async {
-        job_processor(ctx_job_processor).await;
+    tokio::spawn(async move {
+        job_processor(ctx_job_processor, provisioner).await;
     });
 
     // Run slot count adjuster
