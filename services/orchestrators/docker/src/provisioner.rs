@@ -7,6 +7,7 @@ use bollard::container::{
 };
 
 use std::default::Default;
+use log::debug;
 
 #[derive(Clone)]
 pub struct DockerProvisioner {
@@ -25,7 +26,7 @@ impl DockerProvisioner {
 #[async_trait]
 impl Provisioner for DockerProvisioner {
     async fn provision_node(&self, session_id: &str) -> NodeInfo {
-        let name = format!("webgrid-node-{}", session_id);
+        let name = format!("webgrid-session-{}", session_id);
 
         let options = Some(CreateContainerOptions { name: &name });
 
@@ -52,6 +53,8 @@ impl Provisioner for DockerProvisioner {
             ..Default::default()
         };
 
+        debug!("Creating docker container {}", name);
+
         // TODO Remove unwrap
         self.docker.create_container(options, config).await.unwrap();
         self.docker
@@ -67,6 +70,7 @@ impl Provisioner for DockerProvisioner {
     
     async fn terminate_node(&self, session_id: &str) {
         let name = format!("webgrid-node-{}", session_id);
+        debug!("Killing docker container {}", name);
         // TODO Remove unwrap
         self.docker
             .kill_container(&name, None::<KillContainerOptions<String>>)

@@ -7,6 +7,7 @@ use warp::Filter;
 use redis::{AsyncCommands, RedisResult};
 use std::net::SocketAddr;
 use std::sync::Arc;
+use log::{debug, info, warn};
 
 mod config;
 mod session;
@@ -29,11 +30,16 @@ async fn handle_post(
         .unwrap_or_else(|| "unknown".to_string());
     let capabilities = request.capabilities.to_string();
 
+    info!("Session creation requested from {}\n{}", remote_addr, capabilities);
+
     let reply_value =
         handle_create_session_request(ctx.clone(), &remote_addr, &user_agent, &capabilities);
 
     match reply_value.await {
         Ok(value) => {
+            info!("Created session {}", value.session_id);
+            debug!("Resulting capabilities {:?}", value.capabilities);
+
             let reply = SessionReply {
                 value: json!(value),
             };
@@ -44,6 +50,8 @@ async fn handle_post(
             ))
         }
         Err(e) => {
+            warn!("Failed to create session {}", e);
+
             let error = SessionReply {
                 value: json!(SessionReplyError {
                     error: "session not created".to_string(),
@@ -84,6 +92,8 @@ async fn main() {
 
     register(ctx.clone()).await.unwrap();
 
+    info!("Registered as {} @ {}:{}", ctx.config.manager_id, ctx.config.manager_host, ctx.config.manager_port);
+
     let heartbeat_key = format!("manager:{}:heartbeat", ctx.config.manager_id);
     ctx.heart.add_beat(heartbeat_key.clone(), 60, 120).await;
 
@@ -97,7 +107,9 @@ async fn main() {
         .and(warp::addr::remote())
         .and_then(handle_post);
 
-    let server = warp::serve(session_route).run(([0, 0, 0, 0], 3033));
+    let listening_socket: SocketAddr = ([0, 0, 0, 0], 3033).into();
+    info!("Listening at {:?}", listening_socket);
+    let server = warp::serve(session_route).run(listening_socket);
 
     tokio::spawn(server);
 

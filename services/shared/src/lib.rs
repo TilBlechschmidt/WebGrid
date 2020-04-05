@@ -1,5 +1,8 @@
+extern crate pretty_env_logger;
+
 use redis::{aio::MultiplexedConnection, AsyncCommands};
 use std::fmt;
+use log::{info, trace};
 
 pub mod lifecycle;
 pub mod logging;
@@ -39,11 +42,14 @@ impl Timeout {
     pub async fn get(&self, con: &MultiplexedConnection) -> usize {
         let mut con = con.clone();
         let key = format!("{}", self).to_lowercase();
+
+        trace!("Reading timeout {}", key);
         let timeout: Option<usize> = con.hget("timeouts", &key).await.ok();
 
         match timeout {
             Some(timeout) => timeout,
             None => {
+                info!("Initializing timeout {} to default value", key);
                 let default = self.default();
                 let _: Option<()> = con.hset("timeouts", key, default).await.ok();
                 default

@@ -13,6 +13,7 @@ use kube::{
 
 use k8s_openapi::Resource;
 use serde::{de::DeserializeOwned, ser::Serialize};
+use log::{info, error};
 
 #[derive(Clone)]
 pub struct K8sProvisioner {
@@ -24,6 +25,8 @@ impl K8sProvisioner {
     pub async fn new() -> Self {
         let client = Client::infer().await.unwrap();
         let namespace = std::env::var("NAMESPACE").unwrap_or("webgrid".into());
+
+        info!("Operating in K8s namespace {}", namespace);
         
         Self {
             client,
@@ -45,12 +48,11 @@ impl K8sProvisioner {
         match api.create(&PostParams::default(), value).await {
             Ok(o) => {
                 let name = Meta::name(&o);
-                println!("Created resource {}", name);
+                info!("Created {} {}", T::KIND, name);
             }
-            Err(kube::Error::Api(ae)) => {
-                println!("{:?}", ae);
-            }, 
-            Err(_) => {} // Something bad happened!
+            Err(e) => {
+                error!("Failed to create {} {:?}", T::KIND, e);
+            }
         };
     }
 
@@ -65,17 +67,15 @@ impl K8sProvisioner {
 
         match api.delete(&name, &params).await {
             Ok(o) => {
-                if let Some(deleted_resource) = o.left() {
-                    let name = Meta::name(&deleted_resource);
-                    println!("Deleted resource {}", name);
+                if o.is_left() {
+                    info!("Deletion of {} {} scheduled", T::KIND, name);
                 } else {
-                    println!("Unable to delete resource {}!", name);
+                    info!("Deleted {} {}", T::KIND, name);
                 }
             }
-            Err(kube::Error::Api(ae)) => {
-                println!("{:?}", ae);
-            }, 
-            Err(_) => {} // Something bad happened!
+            Err(e) => {
+                error!("Failed to delete {} {:?}", T::KIND, e);
+            }
         };
     }
 

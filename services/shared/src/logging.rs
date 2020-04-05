@@ -1,5 +1,6 @@
 use redis::{aio::MultiplexedConnection, cmd, RedisResult};
 use std::fmt;
+use log::info;
 
 pub struct Logger {
     con: MultiplexedConnection,
@@ -9,6 +10,8 @@ pub struct Logger {
 // Initializer
 impl Logger {
     pub fn new(con: &MultiplexedConnection, component: String) -> Logger {
+        pretty_env_logger::init_timed();
+        
         Logger {
             con: con.clone(),
             component,
@@ -28,6 +31,8 @@ impl Logger {
     ) -> RedisResult<()> {
         let mut con = self.con.clone();
         let key = format!("stream:{}:log", session_id);
+
+        info!("Writing log code {} for {}", code, session_id);
 
         cmd("XADD")
             .arg(key).arg("*")

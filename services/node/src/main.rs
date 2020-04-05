@@ -14,6 +14,7 @@ use std::net::SocketAddr;
 use std::process::Command;
 use std::sync::Arc;
 use std::time::Duration;
+use log::{debug, info, warn, error};
 
 use shared::lifecycle::{generate_session_termination_script, wait_for, DeathReason};
 use shared::logging::LogCode;
@@ -46,14 +47,21 @@ struct SessionCreateResponse {
 
 async fn await_driver_startup(ctx: Arc<Context>) -> Result<(), NodeError> {
     let timeout = Timeout::DriverStartup.get(&ctx.con).await;
+
+    info!("Awaiting driver startup");
+
     match wait_for(
         &"http://localhost:3031/status".to_string(),
         Duration::from_secs(timeout as u64),
     )
     .await
     {
-        Ok(_) => Ok(()),
+        Ok(_) => {
+            info!("Driver became responsive");
+            Ok(())
+        },
         Err(_) => {
+            error!("Timeout waiting for driver startup");
             ctx.logger.log(LogCode::DTIMEOUT, None).await.ok();
             Err(NodeError::NoDriverResponse)
         }
@@ -63,6 +71,8 @@ async fn await_driver_startup(ctx: Arc<Context>) -> Result<(), NodeError> {
 async fn start_driver(ctx: Arc<Context>) -> Result<(), NodeError> {
     ctx.logger.log(LogCode::DSTART, None).await.ok();
 
+    info!("Starting local driver");
+
     match ctx.driver.start() {
         Ok(_) => {
             await_driver_startup(ctx.clone()).await?;
@@ -70,6 +80,7 @@ async fn start_driver(ctx: Arc<Context>) -> Result<(), NodeError> {
             Ok(())
         }
         Err(e) => {
+            error!("Failed to start driver {}", e);
             ctx.logger
                 .log(LogCode::DFAILURE, Some(format!("{}", e)))
                 .await
@@ -85,6 +96,8 @@ async fn create_local_session(
 ) -> Result<String, NodeError> {
     let mut con = ctx.con.clone();
     let body_string = format!("{{\"capabilities\": {} }}", requested_capabilities);
+
+    info!("Creating local session");
 
     let client = HttpClient::new();
     let req = Request::builder()
@@ -111,6 +124,7 @@ async fn create_local_session(
         .map_err(|_| NodeError::LocalSessionCreationError)?;
 
     ctx.logger.log(LogCode::LSINIT, None).await.ok();
+
     con.hset(
         format!("session:{}:upstream", &ctx.config.session_id),
         "driverSessionID",
@@ -118,6 +132,7 @@ async fn create_local_session(
     )
     .await
     .map_err(|_| NodeError::LocalSessionCreationError)?;
+
     con.hset(
         format!("session:{}:capabilities", &ctx.config.session_id),
         "actual",
@@ -126,6 +141,8 @@ async fn create_local_session(
     .await
     .map_err(|_| NodeError::LocalSessionCreationError)?;
 
+    info!("Created local session {}", session_id);
+
     Ok(session_id)
 }
 
@@ -133,6 +150,8 @@ async fn serve_proxy(ctx: Arc<Context>, internal_session_id: String) {
     let in_addr = ([0, 0, 0, 0], 3030).into();
     let out_addr: SocketAddr = ([127, 0, 0, 1], 3031).into();
     let client_main = HttpClient::new();
+
+    info!("WebDriver proxy serving {:?} -> {:?}", in_addr, out_addr);
 
     let make_service = make_service_fn(move |_| {
         let ctx = ctx.clone();
@@ -177,6 +196,7 @@ async fn serve_proxy(ctx: Arc<Context>, internal_session_id: String) {
                 };
 
                 let uri = format!("http://{}{}", out_addr, path).parse().unwrap();
+                debug!("{} {} -> {}", req.method(), path, uri);
                 *req.uri_mut() = uri;
 
                 let proxy_request = client.request(req);
@@ -198,9 +218,15 @@ async fn serve_proxy(ctx: Arc<Context>, internal_session_id: String) {
                         )
                         .await;
 
+                    ctx.heart.reset_lifetime();
+
                     match proxy_request.await {
-                        Err(driver_response) => Err(driver_response),
+                        Err(driver_response) => {
+                            warn!("Upstream error {}", driver_response);
+                            Err(driver_response)
+                        },
                         Ok(driver_response) => {
+                            debug!("Upstream {} code {}", path, driver_response.status());
                             let (parts, body) = driver_response.into_parts();
 
                             let body = match body::to_bytes(body).await {
@@ -220,6 +246,7 @@ async fn serve_proxy(ctx: Arc<Context>, internal_session_id: String) {
                             };
 
                             if session_closed {
+                                warn!("Session closed by downstream");
                                 ctx.heart.kill();
                             }
 
@@ -238,24 +265,24 @@ async fn serve_proxy(ctx: Arc<Context>, internal_session_id: String) {
 fn call_on_create_script(ctx: Arc<Context>) {
     match &ctx.config.on_session_create {
         Some(script) => {
+            info!("Calling on_create_script {}", script);
             let parts: Vec<String> = script.split_whitespace().map(|s| s.to_string()).collect();
-            Command::new(parts[0].clone())
-                .args(&parts[1..])
-                .spawn()
-                .ok();
+            let process = Command::new(parts[0].clone()).args(&parts[1..]).spawn();
+            if let Err(e) = process {
+                error!("Failed to execute on_create_script {:?}", e);
+            }
         }
         None => {}
     }
 }
 
-async fn node_startup(ctx: Arc<Context>) {
-    // TODO Error handling instead of unwraps
-    start_driver(ctx.clone()).await.unwrap();
-    let session_id = create_local_session(ctx.clone(), "{}".to_string())
-        .await
-        .unwrap();
+async fn node_startup(ctx: Arc<Context>) -> Result<(), NodeError> {
+    start_driver(ctx.clone()).await?;
+    let session_id = create_local_session(ctx.clone(), "{}".to_string()).await?;
     serve_proxy(ctx.clone(), session_id).await;
     call_on_create_script(ctx);
+
+    Ok(())
 }
 
 async fn terminate_session(ctx: Arc<Context>) {
@@ -282,11 +309,20 @@ async fn main() {
         .await;
 
     ctx.logger.log(LogCode::BOOT, None).await.ok();
-    node_startup(ctx.clone()).await;
+
+    let ctx_startup = ctx.clone();
+    tokio::spawn(async {
+        let heart = ctx_startup.heart.clone();
+        if let Err(e) = node_startup(ctx_startup).await {
+            error!("Startup routine failed {:?}", e);
+            heart.kill();
+        }
+    });
 
     // The heart will keep beating until either the session is closed, a timeout occurs or the signal handler triggers.
     match ctx.heart.beat(true).await {
         DeathReason::LifetimeExceeded => {
+            info!("Lifetime was exceeded");
             ctx.logger.log(LogCode::STIMEOUT, None).await.ok();
         }
         DeathReason::Killed => {

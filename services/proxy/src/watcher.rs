@@ -4,6 +4,7 @@ use redis::{cmd, Client, Commands, Connection, PubSub, RedisResult};
 use regex::Regex;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use log::{info, error};
 
 static PATTERN_MANAGER: &str = "__keyspace@0__:manager:*:heartbeat";
 static PATTERN_SESSION: &str = "__keyspace@0__:session:*:heartbeat.node";
@@ -48,16 +49,16 @@ impl RoutingInfo {
     }
 
     // TODO Code duplication in the four methods below
-    fn add_manager_upstream(&self, manager_id: String, host: &str, port: &str) {
+    fn add_manager_upstream(&self, manager_id: String, host: &str, port: &str) -> Option<String> {
         let addr = format!("{}:{}", host, port);
         let mut managers = self.managers.lock().unwrap();
-        managers.insert(manager_id, addr);
+        managers.insert(manager_id, addr)
     }
 
-    fn add_session_upstream(&self, session_id: String, host: &str, port: &str) {
+    fn add_session_upstream(&self, session_id: String, host: &str, port: &str) -> Option<String> {
         let addr = format!("{}:{}", host, port);
         let mut sessions = self.sessions.lock().unwrap();
-        sessions.insert(session_id, addr);
+        sessions.insert(session_id, addr)
     }
 
     fn remove_manager_upstream(&self, manager_id: &str) {
@@ -81,7 +82,7 @@ fn verify_keyspace_events_config(con: &mut Connection) -> RedisResult<()> {
                 && events_value.contains('g')
                 && events_value.contains('x'))
             {
-                panic!("Redis server config does not contain the values 'Kgx' at the 'notify-keyspace-events' key");
+                error!("Redis server config does not contain the values 'Kgx' at the 'notify-keyspace-events' key");
             }
 
             Ok(())
@@ -106,11 +107,14 @@ fn handle_manager_message(
                 let res: RedisResult<(String, String)> = con.hget(data_key, &["host", "port"]);
 
                 if let Ok((host, port)) = res {
-                    info.add_manager_upstream(manager_id.to_string(), &host, &port);
+                    if info.add_manager_upstream(manager_id.to_string(), &host, &port).is_none() {
+                        info!("+ Manager {} @ {}:{}", manager_id, host, port);
+                    }
                 }
             }
             // Manager has died
             "expired" => {
+                info!("- Manager {}", manager_id);
                 info.remove_manager_upstream(manager_id);
             }
             &_ => {}
@@ -134,11 +138,14 @@ fn handle_session_message(
                 let res: RedisResult<(String, String)> = con.hget(data_key, &["host", "port"]);
 
                 if let Ok((host, port)) = res {
-                    info.add_session_upstream(session_id.to_string(), &host, &port);
+                    if info.add_session_upstream(session_id.to_string(), &host, &port).is_none() {
+                        info!("+ Session {} @ {}:{}", session_id, host, port);
+                    }
                 }
             }
             // Node has died
             "expired" => {
+                info!("- Session {}", session_id);
                 info.remove_session_upstream(session_id);
             }
             &_ => {}
@@ -151,8 +158,6 @@ fn loop_iteration(pubsub: &mut PubSub, info: RoutingInfo, con: &mut Connection) 
     let pattern = msg.get_pattern().ok();
     let channel: &str = msg.get_channel_name();
     let operation: String = msg.get_payload()?;
-
-    println!("{:?} - {} - {}", pattern, channel, operation);
 
     if pattern == Some(PATTERN_MANAGER.to_string()) {
         handle_manager_message(channel, &operation, &info, con);

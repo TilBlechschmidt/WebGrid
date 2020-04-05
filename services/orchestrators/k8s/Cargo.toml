@@ -15,3 +15,4 @@ kube-derive = "0.31.0"
 k8s-openapi = { version = "0.7.1", default-features = false, features = ["v1_17"] }
 serde_json = "1.0.50"
 serde = { version = "1.0.105", features = [] }
+log = "0.4"

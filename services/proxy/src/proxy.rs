@@ -3,6 +3,7 @@ use std::convert::Infallible;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{client::HttpConnector, Body, Client, Method, Request, Response, Server, StatusCode};
 use regex::Regex;
+use log::{debug, info};
 
 use crate::watcher::RoutingInfo;
 
@@ -36,6 +37,9 @@ impl ProxyServer {
         upstream: String,
     ) -> ProxyResult<Response<Body>> {
         let path = req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("");
+
+        debug!("{} {} -> {}", req.method(), path, upstream);
+
         *req.uri_mut() = format!("http://{}{}", upstream, path).parse().unwrap();
         Ok(self.client.request(req).await?)
     }
@@ -98,7 +102,7 @@ impl ProxyServer {
         let addr = ([0, 0, 0, 0], 8080).into();
         let server = Server::bind(&addr).serve(make_svc);
 
-        println!("Listening on http://{}", addr);
+        info!("Listening on {}", addr);
         server.await.unwrap();
     }
 }

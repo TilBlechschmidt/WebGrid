@@ -49,7 +49,7 @@ pub struct SessionRequest {
 
 // --- Response data
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionReplyValue {
     pub session_id: String,

@@ -19,3 +19,4 @@ uuid = { version = "0.8", features = ["v4"] }
 regex = "1"
 config = "0.10"
 lazy_static = "1.4.0"
+log = "0.4"

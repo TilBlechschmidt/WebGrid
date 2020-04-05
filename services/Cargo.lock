@@ -952,6 +952,7 @@ dependencies = [
  "config",
  "futures",
  "lazy_static",
+ "log 0.4.8",
  "redis",
  "regex",
  "serde 1.0.105",
@@ -1140,6 +1141,7 @@ dependencies = [
  "futures",
  "hyper",
  "lazy_static",
+ "log 0.4.8",
  "redis",
  "regex",
  "serde 1.0.105",
@@ -1241,6 +1243,7 @@ dependencies = [
  "config",
  "futures",
  "lazy_static",
+ "log 0.4.8",
  "redis",
  "regex",
  "serde 1.0.105",
@@ -1254,6 +1257,7 @@ name = "orchestrator_docker"
 version = "0.1.0"
 dependencies = [
  "bollard",
+ "log 0.4.8",
  "orchestrator_core",
  "tokio",
 ]
@@ -1265,6 +1269,7 @@ dependencies = [
  "k8s-openapi",
  "kube",
  "kube-derive",
+ "log 0.4.8",
  "orchestrator_core",
  "serde 1.0.105",
  "serde_json",
@@ -1371,6 +1376,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "74490b50b9fbe561ac330df47c08f3f33073d2d00c150f719147d7c54522fa1b"
 
 [[package]]
+name = "pretty_env_logger"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "926d36b9553851b8b0005f1275891b392ee4d2d833852c417ed025477350fb9d"
+dependencies = [
+ "env_logger",
+ "log 0.4.8",
+]
+
+[[package]]
 name = "proc-macro-hack"
 version = "0.5.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1403,10 +1418,12 @@ dependencies = [
  "config",
  "hyper",
  "lazy_static",
+ "log 0.4.8",
  "rand 0.7.3",
  "redis",
  "regex",
  "serde 1.0.105",
+ "shared",
  "tokio",
 ]
 
@@ -1907,8 +1924,11 @@ checksum = "2579985fda508104f7587689507983eadd6a6e84dd35d6d115361f530916fa0d"
 name = "shared"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "futures",
  "hyper",
+ "log 0.4.8",
+ "pretty_env_logger",
  "redis",
  "tokio",
 ]

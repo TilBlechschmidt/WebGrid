@@ -10,3 +10,4 @@ edition = "2018"
 orchestrator_core = { path = "../core" }
 tokio = { version = "0.2", features = ["macros"] }
 bollard = "0.5"
+log = "0.4"

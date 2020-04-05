@@ -9,6 +9,7 @@ use regex::Regex;
 use std::sync::Arc;
 use std::time::Duration;
 use uuid::Uuid;
+use log::{debug, warn};
 
 use crate::structures::*;
 use crate::context::Context;
@@ -189,18 +190,23 @@ pub async fn handle_create_session_request(
     let session_id = create_session(&con, capabilities, remote_addr, user_agent).await?;
     let heartbeat_key = format!("session:{}:heartbeat.manager", session_id);
 
+    debug!("Created session object {}", session_id);
+
     ctx.heart.add_beat(heartbeat_key.clone(), 15, 30).await;
 
     let deferred = async {
-        // TODO Run session termination workflow to do clean-up
+        // TODO Run session termination workflow on error to do clean-up
         ctx.heart.stop_beat(heartbeat_key.clone()).await;
     };
 
     match run_session_setup(ctx.clone(), &con, &session_id, capabilities).await {
         Ok(()) => {
+            debug!("Session {} setup completed", session_id);
             deferred.await;
         }
         Err(e) => {
+            warn!("Failed to setup session {} {:?}", session_id, e);
+
             let log_code = match e {
                 RequestError::ParseError => LogCode::FAILURE,
                 RequestError::RedisError(_) => LogCode::FAILURE,
