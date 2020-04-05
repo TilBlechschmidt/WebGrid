@@ -10,3 +10,4 @@ edition = "2018"
 hyper = "0.13"
 redis = "0.15.1"
 tokio = { version = "0.2", features = ["signal"] }
+futures = "0.3.4"

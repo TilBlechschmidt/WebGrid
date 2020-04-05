@@ -5,6 +5,12 @@ use std::sync::{atomic::AtomicBool, atomic::Ordering, Arc, Mutex};
 use std::time::Duration;
 use tokio::time;
 use tokio::time::{delay_for, timeout};
+use tokio::signal::{ctrl_c, unix::{SignalKind, signal}};
+use futures::{
+    future::FutureExt,
+    pin_mut,
+    select,
+};
 
 #[derive(Debug)]
 pub enum DeathReason {
@@ -53,17 +59,26 @@ impl Heart {
         self.beating.store(false, Ordering::Relaxed);
     }
 
-    pub async fn beat(&self, die_on_ctrl_c: bool) -> DeathReason {
+    pub async fn beat(&self, handle_signals: bool) -> DeathReason {
         let mut con = self.con.clone();
         let mut interval = time::interval(Duration::from_secs(1));
         let mut passed_time: usize = 0;
 
-        if die_on_ctrl_c {
+        if handle_signals {
             let cloned_heart = self.clone();
             tokio::spawn(async move {
-                if tokio::signal::ctrl_c().await.is_ok() {
-                    cloned_heart.kill();
-                }
+                let mut sigterm_stream = signal(SignalKind::terminate()).unwrap();
+                let sigterm = sigterm_stream.recv().fuse();
+                let ctrl_c = ctrl_c().fuse();
+
+                pin_mut!(sigterm, ctrl_c);
+
+                select! {
+                    (_) = sigterm => cloned_heart.kill(),
+                    (_) = ctrl_c => cloned_heart.kill(),
+                };
+
+                println!("Received shutdown signal!");
             });
         }
 
