@@ -1,7 +1,5 @@
-# TODO: Extract builder for one build process only
-
 service-compile:
-	cd services && docker build -f Dockerfile -t webgrid-services .
+	cd services && ./build.sh
 
 proxy: service-compile
 	docker build -f images/proxy/Dockerfile -t webgrid-proxy .

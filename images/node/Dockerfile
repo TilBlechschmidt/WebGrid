@@ -11,7 +11,7 @@ RUN ./packages.sh
 WORKDIR /scripts
 COPY images/node/base/scripts .
 
-COPY --from=webgrid-services /home/rust/src/target/x86_64-unknown-linux-musl/release/node /usr/local/bin/node-service
+COPY services/.build/node /usr/local/bin/node-service
 
 CMD /scripts/entrypoint.sh
 EXPOSE 3030
