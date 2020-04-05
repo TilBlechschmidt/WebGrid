@@ -8,6 +8,7 @@ use bollard::container::{
 
 use std::default::Default;
 
+#[derive(Clone)]
 pub struct DockerProvisioner {
     docker: Docker,
 }

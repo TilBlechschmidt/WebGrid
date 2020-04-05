@@ -4,8 +4,9 @@ use orchestrator_core::provisioner::{Provisioner, NodeInfo, async_trait};
 pub struct K8sProvisioner {}
 
 impl K8sProvisioner {
-    pub fn new() -> Self {
-        Self {}
+    pub async fn new() -> Self {
+        Self {
+        }
     }
 }
 

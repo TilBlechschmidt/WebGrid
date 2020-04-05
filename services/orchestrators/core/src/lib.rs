@@ -12,7 +12,7 @@ mod context;
 mod reclaim;
 pub mod provisioner;
 
-use crate::provisioner::{Provisioner};
+use crate::provisioner::{Provisioner, Type as ProvisionerType};
 use crate::context::Context;
 use crate::reclaim::reclaim_slots;
 
@@ -146,14 +146,16 @@ async fn slot_count_adjuster(ctx: Arc<Context>) -> RedisResult<()> {
     Ok(())
 }
 
-pub async fn start<P: Provisioner + Send + Sync + 'static>(provisioner: P) {
+pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(provisioner_type: ProvisionerType, provisioner: P) {
     let ctx = Arc::new(Context::new().await);
     let mut con = ctx.con.clone();
+
+    let type_str = format!("{}", provisioner_type);
 
     // Register with backing store
     let info_key = format!("orchestrator:{}", ctx.config.orchestrator_id);
     let _: () = con
-        .hset_multiple(&info_key, &[("type", "docker")])
+        .hset_multiple(&info_key, &[("type", type_str)])
         .await
         .unwrap();
     let _: () = con
