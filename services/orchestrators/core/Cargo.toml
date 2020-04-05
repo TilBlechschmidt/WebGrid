@@ -16,11 +16,5 @@ chrono = "0.4.11"
 uuid = { version = "0.8", features = ["v4"] }
 futures = "0.3.4"
 async-trait = "0.1.29"
-
-#bollard = "0.5"
-
-#time = { version = "0.2.9", optional = true }
-#kube = { version = "0.31.0", optional = true }
-#kube-derive = { version = "0.31.0", optional = true }
-#k8s-openapi = { version = "0.7.1", default-features = false, features = ["v1_17"], optional = true }
-#serde_json = { version = "1.0.50", optional = true }
+lazy_static = "1.4.0"
+regex = "1"

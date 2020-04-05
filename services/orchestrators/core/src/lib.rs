@@ -1,9 +1,13 @@
+#[macro_use]
+extern crate lazy_static;
+
 use chrono::prelude::*;
 use redis::{AsyncCommands, RedisResult};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time;
 use uuid::Uuid;
+use regex::Regex;
 
 use shared::{logging::LogCode, Timeout};
 
@@ -15,6 +19,12 @@ pub mod provisioner;
 use crate::provisioner::{Provisioner, Type as ProvisionerType};
 use crate::context::Context;
 use crate::reclaim::reclaim_slots;
+
+static PATTERN_SESSION: &str = "__keyspace@0__:session:*:heartbeat.node";
+
+lazy_static! {
+    static ref REGEX_SESSION: Regex = Regex::new(r"__keyspace@0__:session:(?P<sid>[^:]+):heartbeat\.node").unwrap();
+}
 
 async fn slot_reclaimer(ctx: Arc<Context>) {
     let mut con = ctx.con.clone();
@@ -146,6 +156,33 @@ async fn slot_count_adjuster(ctx: Arc<Context>) -> RedisResult<()> {
     Ok(())
 }
 
+fn watch_nodes<P: Provisioner>(ctx: Arc<Context>, provisioner: P) -> redis::RedisResult<()> {
+    let mut rt = tokio::runtime::Runtime::new().unwrap();
+
+    let mut pubsub_con = ctx.client.get_connection()?;
+    let mut pubsub = pubsub_con.as_pubsub();
+
+    pubsub.psubscribe(PATTERN_SESSION)?;
+
+    loop {
+        let msg = pubsub.get_message()?;
+        let channel: &str = msg.get_channel_name();
+        let operation: String = msg.get_payload()?;
+
+        if operation != "expired" {
+            continue
+        }
+
+        if let Some(caps) = REGEX_SESSION.captures(channel) {
+            let session_id = &caps["sid"];
+            println!("Removing dead node with SID {}", session_id);
+            rt.block_on(async {
+                provisioner.terminate_node(session_id).await;
+            });
+        }
+    }
+}
+
 pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(provisioner_type: ProvisionerType, provisioner: P) {
     let ctx = Arc::new(Context::new().await);
     let mut con = ctx.con.clone();
@@ -166,6 +203,13 @@ pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(provisioner_t
     // Create heartbeat
     let heartbeat_key = format!("orchestrator:{}:heartbeat", ctx.config.orchestrator_id);
     ctx.heart.add_beat(heartbeat_key.clone(), 60, 120).await;
+
+    // Start node watcher
+    let ctx_watcher = ctx.clone();
+    let prov_watcher = provisioner.clone();
+    std::thread::spawn(move || {
+        watch_nodes(ctx_watcher, prov_watcher).unwrap();
+    });
 
     // Start slot reclaimer
     let ctx_reclaimer = ctx.clone();

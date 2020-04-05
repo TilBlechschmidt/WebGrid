@@ -1,4 +1,5 @@
 use redis::{aio::MultiplexedConnection, RedisResult};
+use chrono::Utc;
 
 pub async fn reclaim_slots(
     con: &mut MultiplexedConnection,
@@ -77,7 +78,7 @@ pub async fn reclaim_slots(
 
     let res: RedisResult<Vec<Vec<String>>> = script
         .arg(orchestrator_id)
-        .arg("some timestamp")
+        .arg(Utc::now().to_rfc3339())
         .invoke_async(con)
         .await;
 
