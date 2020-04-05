@@ -1,8 +1,8 @@
 #!/bin/sh
 STDIN_FILE=/var/lock/ffmpeg.stdin
 PID_FILE=/var/lock/ffmpeg.pid
-LOG_FILE=${FFMPEG_LOG:-/host/ffmpeg.log}
-OUT_FILE=${FFMPEG_OUT:-/host/test.mp4}
+LOG_FILE=${FFMPEG_LOG:-/ffmpeg.log}
+OUT_FILE=${FFMPEG_OUT:-/test.mp4}
 touch $STDIN_FILE
 
 export FFREPORT=file=$LOG_FILE:level=32

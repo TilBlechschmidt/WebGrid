@@ -26,7 +26,7 @@ impl Timeout {
         match *self {
             // Manager
             Timeout::Queue => 120,
-            Timeout::Scheduling => 10,
+            Timeout::Scheduling => 60,
             Timeout::NodeStartup => 45,
             // Node
             Timeout::DriverStartup => 30,

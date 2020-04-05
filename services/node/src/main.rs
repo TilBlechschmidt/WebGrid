@@ -264,6 +264,7 @@ async fn terminate_session(ctx: Arc<Context>) {
     let mut con = ctx.con.clone();
     let _: Option<()> = generate_session_termination_script(false)
         .arg(ctx.config.session_id.clone())
+        .arg(Utc::now().to_rfc3339())
         .invoke_async(&mut con)
         .await
         .ok();

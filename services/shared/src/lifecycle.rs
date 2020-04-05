@@ -52,7 +52,7 @@ impl Heart {
             let mut beats = self.beats.lock().unwrap();
             beats.remove(&key);
         }
-        let _: RedisResult<()> = self.con.clone().del(key).await;
+        let _: RedisResult<()> = self.con.clone().expire(key, 1).await;
     }
 
     pub fn kill(&self) {
@@ -156,7 +156,7 @@ pub fn generate_session_termination_script(use_orchestrator_argument: bool) -> S
     redis.call('rpush', 'orchestrator:' .. orchestrator .. ':slots.reclaimed', slot)
     redis.call('smove', 'sessions.active', 'sessions.terminated', ARGV[1])
     redis.call('hset', 'session:'  .. ARGV[1] .. ':status', 'terminatedAt', ARGV[2])
-    redis.call('del', 'session:' .. ARGV[1] .. ':heartbeat.node')
+    redis.call('expire', 'session:' .. ARGV[1] .. ':heartbeat.node', 1)
     return {ARGV[1], slot, orchestrator}
     ";
 

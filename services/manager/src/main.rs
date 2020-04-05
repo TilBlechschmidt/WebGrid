@@ -65,8 +65,8 @@ async fn register(ctx: Arc<Context>) -> RedisResult<()> {
         ("host", ctx.config.manager_host.clone()),
         ("port", ctx.config.manager_port.to_string()),
     ];
-    con.hset_multiple(format!("manager:{}", ctx.config.manager_id), &data)
-        .await
+    con.hset_multiple(format!("manager:{}", ctx.config.manager_id), &data).await?;
+    con.sadd("managers", &ctx.config.manager_id).await
 }
 
 async fn deregister(ctx: Arc<Context>) -> RedisResult<()> {
