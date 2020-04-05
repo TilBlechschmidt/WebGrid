@@ -8,7 +8,8 @@ manager: service-compile
 	docker build -f images/manager/Dockerfile -t webgrid-manager .
 
 orchestrator: service-compile
-	docker build -f images/orchestrator/Dockerfile -t webgrid-orchestrator .
+	docker build -f images/orchestrator/Dockerfile -t webgrid-orchestrator:docker --build-arg type=docker .
+	docker build -f images/orchestrator/Dockerfile -t webgrid-orchestrator:k8s --build-arg type=k8s .
 
 node: service-compile
 	docker build -f images/node/Dockerfile -t webgrid-node:firefox --build-arg browser=firefox .

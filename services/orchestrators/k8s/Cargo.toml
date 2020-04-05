@@ -9,3 +9,9 @@ edition = "2018"
 [dependencies]
 orchestrator_core = { path = "../core" }
 tokio = { version = "0.2", features = ["macros"] }
+time = "0.2.9"
+kube = "0.31.0"
+kube-derive = "0.31.0"
+k8s-openapi = { version = "0.7.1", default-features = false, features = ["v1_17"] }
+serde_json = "1.0.50"
+serde = { version = "1.0.105", features = [] }
