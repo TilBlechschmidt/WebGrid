@@ -25,7 +25,7 @@ impl Context {
             config,
             con,
             logger,
-            heart: heart,
+            heart,
         }
     }
 }

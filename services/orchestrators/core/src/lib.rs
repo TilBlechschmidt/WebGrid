@@ -5,6 +5,7 @@ use chrono::prelude::*;
 use log::{debug, error, info};
 use redis::{AsyncCommands, RedisResult};
 use regex::Regex;
+use std::cmp::Ordering;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time;
@@ -137,29 +138,33 @@ async fn slot_count_adjuster(ctx: Arc<Context>) -> RedisResult<()> {
         info!("Adjusting slot amount from {} -> {}", current, target);
     }
 
-    if target < current {
-        let delta = current - target;
-        for _ in 0..delta {
-            let (_, slot_id): (String, String) = con.brpop(&available_key, 0).await?;
-            let _: () = con.srem(&slots_key, &slot_id).await?;
-        }
-    } else if target > current {
-        let delta = target - current;
-        for _ in 0..delta {
-            let slot_id = Uuid::new_v4().to_hyphenated().to_string();
+    match target.cmp(&current) {
+        Ordering::Greater => {
+            let delta = target - current;
+            for _ in 0..delta {
+                let slot_id = Uuid::new_v4().to_hyphenated().to_string();
 
-            let _: () = redis::pipe()
-                .atomic()
-                .cmd("SADD")
-                .arg(&slots_key)
-                .arg(&slot_id)
-                .cmd("RPUSH")
-                .arg(&reclaimed_key)
-                .arg(&slot_id)
-                .query_async(&mut con)
-                .await?;
+                redis::pipe()
+                    .atomic()
+                    .cmd("SADD")
+                    .arg(&slots_key)
+                    .arg(&slot_id)
+                    .cmd("RPUSH")
+                    .arg(&reclaimed_key)
+                    .arg(&slot_id)
+                    .query_async(&mut con)
+                    .await?;
+            }
         }
-    }
+        Ordering::Less => {
+            let delta = current - target;
+            for _ in 0..delta {
+                let (_, slot_id): (String, String) = con.brpop(&available_key, 0).await?;
+                con.srem::<_, _, ()>(&slots_key, &slot_id).await?;
+            }
+        }
+        Ordering::Equal => {}
+    };
 
     let slots: Vec<String> = con.smembers(slots_key).await?;
     info!("Managed slots: \n\t{:?}", slots.join("\n\t"));
@@ -205,12 +210,10 @@ pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
 
     // Register with backing store
     let info_key = format!("orchestrator:{}", ctx.config.orchestrator_id);
-    let _: () = con
-        .hset_multiple(&info_key, &[("type", type_str)])
+    con.hset_multiple::<_, _, _, ()>(&info_key, &[("type", type_str)])
         .await
         .unwrap();
-    let _: () = con
-        .sadd("orchestrators", &ctx.config.orchestrator_id)
+    con.sadd::<_, _, ()>("orchestrators", &ctx.config.orchestrator_id)
         .await
         .unwrap();
 
@@ -260,10 +263,9 @@ pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
     ctx.heart.beat(true).await;
 
     // Do a clean shutdown
-    let _: () = con
-        .srem("orchestrators", &ctx.config.orchestrator_id)
+    con.srem::<_, _, ()>("orchestrators", &ctx.config.orchestrator_id)
         .await
         .unwrap();
-    let _: () = con.del(&info_key).await.unwrap();
+    con.del::<_, ()>(&info_key).await.unwrap();
     ctx.heart.stop_beat(heartbeat_key).await;
 }

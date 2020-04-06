@@ -22,7 +22,7 @@ pub struct K8sProvisioner {
 impl K8sProvisioner {
     pub async fn new() -> Self {
         let client = Client::infer().await.unwrap();
-        let namespace = std::env::var("NAMESPACE").unwrap_or("webgrid".into());
+        let namespace = std::env::var("NAMESPACE").unwrap_or_else(|_| "webgrid".into());
 
         info!("Operating in K8s namespace {}", namespace);
 

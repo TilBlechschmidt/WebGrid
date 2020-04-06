@@ -30,7 +30,7 @@ impl Provisioner for DockerProvisioner {
         let options = Some(CreateContainerOptions { name: &name });
 
         let env: Vec<String> = vec![
-            format!("WEBGRID_REDIS_URL=redis://webgrid-redis/"),
+            "WEBGRID_REDIS_URL=redis://webgrid-redis/".to_string(),
             format!("WEBGRID_SESSION_ID={}", session_id),
             format!("FFMPEG_LOG=/host/{}-ffmpeg.log", session_id),
             format!("FFMPEG_OUT=/host/{}-ffmpeg.mp4", session_id),

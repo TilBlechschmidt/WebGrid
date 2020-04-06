@@ -83,8 +83,8 @@ async fn register(ctx: Arc<Context>) -> RedisResult<()> {
 
 async fn deregister(ctx: Arc<Context>) -> RedisResult<()> {
     let mut con = ctx.con.clone();
-    let _: () = con.srem("managers", &ctx.config.manager_id).await?;
-
+    con.srem::<_, _, ()>("managers", &ctx.config.manager_id)
+        .await?;
     con.del(format!("manager:{}", ctx.config.manager_id)).await
 }
 
