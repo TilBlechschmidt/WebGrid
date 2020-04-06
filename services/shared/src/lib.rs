@@ -1,8 +1,8 @@
 extern crate pretty_env_logger;
 
+use log::{info, trace};
 use redis::{aio::MultiplexedConnection, AsyncCommands};
 use std::fmt;
-use log::{info, trace};
 
 pub mod lifecycle;
 pub mod logging;

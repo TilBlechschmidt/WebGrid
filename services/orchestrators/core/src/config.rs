@@ -5,7 +5,7 @@ use serde::Deserialize;
 pub struct Config {
     pub redis_url: String,
     pub orchestrator_id: String,
-    pub slots: usize
+    pub slots: usize,
 }
 
 impl Config {

@@ -5,6 +5,7 @@ use hyper::service::{make_service_fn, service_fn};
 use hyper::{
     body, Body, Client as HttpClient, Error as HyperError, Method, Request, Response, Server,
 };
+use log::{debug, error, info, warn};
 use redis::{AsyncCommands, RedisResult};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -14,7 +15,6 @@ use std::net::SocketAddr;
 use std::process::Command;
 use std::sync::Arc;
 use std::time::Duration;
-use log::{debug, info, warn, error};
 
 use shared::lifecycle::{generate_session_termination_script, wait_for, DeathReason};
 use shared::logging::LogCode;
@@ -59,7 +59,7 @@ async fn await_driver_startup(ctx: Arc<Context>) -> Result<(), NodeError> {
         Ok(_) => {
             info!("Driver became responsive");
             Ok(())
-        },
+        }
         Err(_) => {
             error!("Timeout waiting for driver startup");
             ctx.logger.log(LogCode::DTIMEOUT, None).await.ok();
@@ -224,7 +224,7 @@ async fn serve_proxy(ctx: Arc<Context>, internal_session_id: String) {
                         Err(driver_response) => {
                             warn!("Upstream error {}", driver_response);
                             Err(driver_response)
-                        },
+                        }
                         Ok(driver_response) => {
                             debug!("Upstream {} code {}", path, driver_response.status());
                             let (parts, body) = driver_response.into_parts();
@@ -237,7 +237,8 @@ async fn serve_proxy(ctx: Arc<Context>, internal_session_id: String) {
 
                             let session_closed = if is_window_delete_request {
                                 lazy_static! {
-                                    static ref EMPTY_VALUE_RE: Regex = Regex::new(r#""value": ?\[\]"#).unwrap();
+                                    static ref EMPTY_VALUE_RE: Regex =
+                                        Regex::new(r#""value": ?\[\]"#).unwrap();
                                 }
 
                                 EMPTY_VALUE_RE.is_match(&body)

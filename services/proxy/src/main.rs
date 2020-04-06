@@ -1,8 +1,8 @@
 #[macro_use]
 extern crate lazy_static;
 
-use std::thread;
 use redis::Client;
+use std::thread;
 
 use shared::logging::Logger;
 

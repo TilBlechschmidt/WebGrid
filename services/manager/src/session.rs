@@ -4,15 +4,15 @@ use shared::Timeout;
 
 use chrono::prelude::*;
 use futures::future::*;
+use log::{debug, warn};
 use redis::{aio::MultiplexedConnection, pipe, AsyncCommands, Client, RedisResult};
 use regex::Regex;
 use std::sync::Arc;
 use std::time::Duration;
 use uuid::Uuid;
-use log::{debug, warn};
 
-use crate::structures::*;
 use crate::context::Context;
+use crate::structures::*;
 
 async fn create_session(
     con: &MultiplexedConnection,
@@ -53,7 +53,10 @@ async fn request_slot(
 
     let queue_timeout = Timeout::Queue.get(&con).await;
 
-    let orchestrators: Vec<String> = con.smembers("orchestrators").await.unwrap_or_else(|_| Vec::new());
+    let orchestrators: Vec<String> = con
+        .smembers("orchestrators")
+        .await
+        .unwrap_or_else(|_| Vec::new());
 
     // TODO Match orchestrators according to capability
     let matching_orchestrators = orchestrators;
@@ -63,7 +66,7 @@ async fn request_slot(
         .collect();
 
     if queues.is_empty() {
-        return Err(RequestError::NoOrchestratorAvailable)
+        return Err(RequestError::NoOrchestratorAvailable);
     }
 
     let response: Option<(String, String)> = con
@@ -74,7 +77,8 @@ async fn request_slot(
     match response {
         Some((queue, slot)) => {
             lazy_static! {
-                static ref RE: Regex = Regex::new(r"orchestrator:(?P<orchestrator>[^:]+):slots\.available").unwrap();
+                static ref RE: Regex =
+                    Regex::new(r"orchestrator:(?P<orchestrator>[^:]+):slots\.available").unwrap();
             }
 
             match RE.captures(&queue) {

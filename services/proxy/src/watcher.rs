@@ -1,10 +1,10 @@
 use crate::config::Config;
+use log::{error, info};
 use rand::seq::SliceRandom;
 use redis::{cmd, Client, Commands, Connection, PubSub, RedisResult};
 use regex::Regex;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use log::{info, error};
 
 static PATTERN_MANAGER: &str = "__keyspace@0__:manager:*:heartbeat";
 static PATTERN_SESSION: &str = "__keyspace@0__:session:*:heartbeat.node";
@@ -107,7 +107,10 @@ fn handle_manager_message(
                 let res: RedisResult<(String, String)> = con.hget(data_key, &["host", "port"]);
 
                 if let Ok((host, port)) = res {
-                    if info.add_manager_upstream(manager_id.to_string(), &host, &port).is_none() {
+                    if info
+                        .add_manager_upstream(manager_id.to_string(), &host, &port)
+                        .is_none()
+                    {
                         info!("+ Manager {} @ {}:{}", manager_id, host, port);
                     }
                 }
@@ -138,7 +141,10 @@ fn handle_session_message(
                 let res: RedisResult<(String, String)> = con.hget(data_key, &["host", "port"]);
 
                 if let Ok((host, port)) = res {
-                    if info.add_session_upstream(session_id.to_string(), &host, &port).is_none() {
+                    if info
+                        .add_session_upstream(session_id.to_string(), &host, &port)
+                        .is_none()
+                    {
                         info!("+ Session {} @ {}:{}", session_id, host, port);
                     }
                 }

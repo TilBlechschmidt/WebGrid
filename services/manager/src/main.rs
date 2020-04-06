@@ -4,15 +4,15 @@ extern crate lazy_static;
 use serde_json::json;
 use warp::Filter;
 
+use log::{debug, info, warn};
 use redis::{AsyncCommands, RedisResult};
 use std::net::SocketAddr;
 use std::sync::Arc;
-use log::{debug, info, warn};
 
 mod config;
+mod context;
 mod session;
 mod structures;
-mod context;
 
 use crate::context::Context;
 use crate::session::handle_create_session_request;
@@ -30,7 +30,10 @@ async fn handle_post(
         .unwrap_or_else(|| "unknown".to_string());
     let capabilities = request.capabilities.to_string();
 
-    info!("Session creation requested from {}\n{}", remote_addr, capabilities);
+    info!(
+        "Session creation requested from {}\n{}",
+        remote_addr, capabilities
+    );
 
     let reply_value =
         handle_create_session_request(ctx.clone(), &remote_addr, &user_agent, &capabilities);
@@ -73,16 +76,15 @@ async fn register(ctx: Arc<Context>) -> RedisResult<()> {
         ("host", ctx.config.manager_host.clone()),
         ("port", ctx.config.manager_port.to_string()),
     ];
-    con.hset_multiple(format!("manager:{}", ctx.config.manager_id), &data).await?;
+    con.hset_multiple(format!("manager:{}", ctx.config.manager_id), &data)
+        .await?;
     con.sadd("managers", &ctx.config.manager_id).await
 }
 
 async fn deregister(ctx: Arc<Context>) -> RedisResult<()> {
     let mut con = ctx.con.clone();
-    let _: () = con
-        .srem("managers", &ctx.config.manager_id)
-        .await?;
-    
+    let _: () = con.srem("managers", &ctx.config.manager_id).await?;
+
     con.del(format!("manager:{}", ctx.config.manager_id)).await
 }
 
@@ -92,7 +94,10 @@ async fn main() {
 
     register(ctx.clone()).await.unwrap();
 
-    info!("Registered as {} @ {}:{}", ctx.config.manager_id, ctx.config.manager_host, ctx.config.manager_port);
+    info!(
+        "Registered as {} @ {}:{}",
+        ctx.config.manager_id, ctx.config.manager_host, ctx.config.manager_port
+    );
 
     let heartbeat_key = format!("manager:{}:heartbeat", ctx.config.manager_id);
     ctx.heart.add_beat(heartbeat_key.clone(), 60, 120).await;

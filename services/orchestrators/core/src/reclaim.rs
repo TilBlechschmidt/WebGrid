@@ -1,5 +1,5 @@
-use redis::{aio::MultiplexedConnection, RedisResult};
 use chrono::Utc;
+use redis::{aio::MultiplexedConnection, RedisResult};
 
 pub async fn reclaim_slots(
     con: &mut MultiplexedConnection,

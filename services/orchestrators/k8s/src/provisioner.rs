@@ -1,24 +1,22 @@
+use orchestrator_core::provisioner::{async_trait, NodeInfo, Provisioner};
 
-use orchestrator_core::provisioner::{Provisioner, NodeInfo, async_trait};
-
-use k8s_openapi::api::core::v1::Service;
 use k8s_openapi::api::batch::v1::Job;
+use k8s_openapi::api::core::v1::Service;
 use serde_json::json;
 
 use kube::{
-    api::{Api, Meta, PostParams, DeleteParams, PropagationPolicy},
-    Client
+    api::{Api, DeleteParams, Meta, PostParams, PropagationPolicy},
+    Client,
 };
 
-
 use k8s_openapi::Resource;
+use log::{error, info};
 use serde::{de::DeserializeOwned, ser::Serialize};
-use log::{info, error};
 
 #[derive(Clone)]
 pub struct K8sProvisioner {
     client: Client,
-    namespace: String
+    namespace: String,
 }
 
 impl K8sProvisioner {
@@ -27,13 +25,10 @@ impl K8sProvisioner {
         let namespace = std::env::var("NAMESPACE").unwrap_or("webgrid".into());
 
         info!("Operating in K8s namespace {}", namespace);
-        
-        Self {
-            client,
-            namespace
-        }
+
+        Self { client, namespace }
     }
-    
+
     fn generate_name(session_id: &str) -> String {
         format!("session-{}", session_id)
     }
@@ -42,7 +37,10 @@ impl K8sProvisioner {
         Api::namespaced(self.client.clone(), &self.namespace)
     }
 
-    async fn create_resource<T: Resource + Meta + DeserializeOwned + Serialize + Clone>(&self, value: &T) {
+    async fn create_resource<T: Resource + Meta + DeserializeOwned + Serialize + Clone>(
+        &self,
+        value: &T,
+    ) {
         let api = self.get_api::<T>();
 
         match api.create(&PostParams::default(), value).await {
@@ -56,7 +54,10 @@ impl K8sProvisioner {
         };
     }
 
-    async fn delete_resource<T: Resource + Meta + DeserializeOwned + Serialize + Clone>(&self, name: &str) {
+    async fn delete_resource<T: Resource + Meta + DeserializeOwned + Serialize + Clone>(
+        &self,
+        name: &str,
+    ) {
         let api = self.get_api::<T>();
 
         let params = DeleteParams {
@@ -121,7 +122,8 @@ impl K8sProvisioner {
                 }
             }
 
-        })).unwrap();
+        }))
+        .unwrap();
 
         self.create_resource(&job).await;
     }
@@ -139,7 +141,8 @@ impl K8sProvisioner {
                 "ports": [{ "port": 3030, "targetPort": 3030, "protocol": "TCP" }],
                 "selector": { "app": name }
             }
-        })).unwrap();
+        }))
+        .unwrap();
 
         self.create_resource(&service).await;
     }

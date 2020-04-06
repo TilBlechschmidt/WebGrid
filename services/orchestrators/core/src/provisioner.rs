@@ -17,7 +17,7 @@ pub trait Provisioner {
 pub enum Type {
     Local,
     Docker,
-    K8s
+    K8s,
 }
 
 impl fmt::Display for Type {

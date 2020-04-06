@@ -1,13 +1,12 @@
+use orchestrator_core::provisioner::{async_trait, NodeInfo, Provisioner};
 
-use orchestrator_core::provisioner::{Provisioner, NodeInfo, async_trait};
-
-use bollard::Docker;
 use bollard::container::{
     Config, CreateContainerOptions, HostConfig, KillContainerOptions, StartContainerOptions,
 };
+use bollard::Docker;
 
-use std::default::Default;
 use log::debug;
+use std::default::Default;
 
 #[derive(Clone)]
 pub struct DockerProvisioner {
@@ -67,7 +66,7 @@ impl Provisioner for DockerProvisioner {
             port: "3030".to_string(),
         }
     }
-    
+
     async fn terminate_node(&self, session_id: &str) {
         let name = format!("webgrid-node-{}", session_id);
         debug!("Killing docker container {}", name);

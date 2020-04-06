@@ -1,7 +1,7 @@
 mod provisioner;
 
 use crate::provisioner::DockerProvisioner;
-use orchestrator_core::{start, provisioner::Type};
+use orchestrator_core::{provisioner::Type, start};
 
 #[tokio::main]
 async fn main() {

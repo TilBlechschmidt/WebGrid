@@ -1,18 +1,17 @@
+use chrono::Utc;
+use futures::{future::FutureExt, pin_mut, select};
 use hyper::{body, Client, Uri};
+use log::{debug, info, trace};
 use redis::{aio::MultiplexedConnection, AsyncCommands, RedisResult, Script};
 use std::collections::HashMap;
 use std::sync::{atomic::AtomicBool, atomic::Ordering, Arc, Mutex};
 use std::time::Duration;
-use chrono::Utc;
+use tokio::signal::{
+    ctrl_c,
+    unix::{signal, SignalKind},
+};
 use tokio::time;
 use tokio::time::{delay_for, timeout};
-use tokio::signal::{ctrl_c, unix::{SignalKind, signal}};
-use futures::{
-    future::FutureExt,
-    pin_mut,
-    select,
-};
-use log::{trace, debug, info};
 
 #[derive(Debug)]
 pub enum DeathReason {
@@ -110,7 +109,9 @@ impl Heart {
 
             for (key, (refresh_time, expiration_time)) in self.beats.lock().unwrap().iter() {
                 if passed_time % refresh_time == 0 {
-                    let _: RedisResult<()> = con.set_ex(key, Utc::now().to_rfc3339(), *expiration_time).await;
+                    let _: RedisResult<()> = con
+                        .set_ex(key, Utc::now().to_rfc3339(), *expiration_time)
+                        .await;
                 }
             }
 
@@ -158,7 +159,7 @@ pub async fn wait_for(url: &str, timeout_duration: Duration) -> Result<String, (
                     Err(_) => Ok("".to_string()),
                 };
             }
-            
+
             trace!("Received response with status != 200");
         }
 

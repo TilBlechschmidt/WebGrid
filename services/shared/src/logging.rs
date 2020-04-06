@@ -1,6 +1,6 @@
+use log::info;
 use redis::{aio::MultiplexedConnection, cmd, RedisResult};
 use std::fmt;
-use log::info;
 
 pub struct Logger {
     con: MultiplexedConnection,
@@ -11,7 +11,7 @@ pub struct Logger {
 impl Logger {
     pub fn new(con: &MultiplexedConnection, component: String) -> Logger {
         pretty_env_logger::init_timed();
-        
+
         Logger {
             con: con.clone(),
             component,

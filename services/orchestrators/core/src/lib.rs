@@ -2,29 +2,30 @@
 extern crate lazy_static;
 
 use chrono::prelude::*;
+use log::{debug, error, info};
 use redis::{AsyncCommands, RedisResult};
+use regex::Regex;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time;
 use uuid::Uuid;
-use regex::Regex;
-use log::{debug, info, error};
 
 use shared::{logging::LogCode, Timeout};
 
 mod config;
 mod context;
-mod reclaim;
 pub mod provisioner;
+mod reclaim;
 
-use crate::provisioner::{Provisioner, Type as ProvisionerType};
 use crate::context::Context;
+use crate::provisioner::{Provisioner, Type as ProvisionerType};
 use crate::reclaim::reclaim_slots;
 
 static PATTERN_SESSION: &str = "__keyspace@0__:session:*:heartbeat.node";
 
 lazy_static! {
-    static ref REGEX_SESSION: Regex = Regex::new(r"__keyspace@0__:session:(?P<sid>[^:]+):heartbeat\.node").unwrap();
+    static ref REGEX_SESSION: Regex =
+        Regex::new(r"__keyspace@0__:session:(?P<sid>[^:]+):heartbeat\.node").unwrap();
 }
 
 async fn slot_reclaimer(ctx: Arc<Context>) {
@@ -180,7 +181,7 @@ fn watch_nodes<P: Provisioner>(ctx: Arc<Context>, provisioner: P) -> redis::Redi
         let operation: String = msg.get_payload()?;
 
         if operation != "expired" {
-            continue
+            continue;
         }
 
         if let Some(caps) = REGEX_SESSION.captures(channel) {
@@ -193,7 +194,10 @@ fn watch_nodes<P: Provisioner>(ctx: Arc<Context>, provisioner: P) -> redis::Redi
     }
 }
 
-pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(provisioner_type: ProvisionerType, provisioner: P) {
+pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
+    provisioner_type: ProvisionerType,
+    provisioner: P,
+) {
     let ctx = Arc::new(Context::new().await);
     let mut con = ctx.con.clone();
 
