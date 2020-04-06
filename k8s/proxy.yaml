@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: proxy
+  name: proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: proxy
+  template:
+    metadata:
+      labels:
+        name: proxy
+    spec:
+      containers:
+        - image: registry.blechschmidt.de/webgrid-proxy
+          imagePullPolicy: Always
+          name: proxy
+          ports:
+            - containerPort: 8080
+          env:
+          - name: WEBGRID_REDIS_URL
+            value: "redis://redis/"
+          - name: RUST_LOG
+            value: debug,hyper=warn
+      initContainers:
+        - name: init-redis
+          image: redis:alpine
+          command: ['sh', '-c', "until redis-cli -h redis PING; do echo waiting for redis; sleep 2; done"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proxy
+spec:
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    name: proxy
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: proxy
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+spec:
+  tls:
+    - hosts:
+        - webgrid.blechschmidt.de
+      secretName: webgrid-tls
+  rules:
+    - host: webgrid.blechschmidt.de
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: proxy
+              servicePort: 80
