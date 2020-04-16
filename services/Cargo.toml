@@ -7,4 +7,5 @@ members = [
 	"orchestrators/core",
 	"orchestrators/docker",
 	"orchestrators/k8s",
+	"metrics"
 ]

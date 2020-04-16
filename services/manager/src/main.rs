@@ -6,9 +6,9 @@ use warp::Filter;
 
 use log::{debug, info, warn};
 use redis::{AsyncCommands, RedisResult};
+use shared::service_init;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use shared::service_init;
 
 mod config;
 mod context;
@@ -121,6 +121,8 @@ async fn main() {
     let server = warp::serve(session_route).run(listening_socket);
 
     tokio::spawn(server);
+
+    tokio::spawn(async move { metrics.process().await });
 
     ctx.heart.beat(true).await;
     ctx.heart.stop_beat(heartbeat_key).await;

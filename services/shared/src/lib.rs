@@ -11,6 +11,7 @@ use std::path::Path;
 pub mod capabilities;
 pub mod lifecycle;
 pub mod logging;
+pub mod metrics;
 
 pub fn service_init() {
     pretty_env_logger::init_timed();

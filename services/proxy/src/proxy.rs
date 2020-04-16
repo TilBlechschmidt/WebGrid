@@ -1,11 +1,16 @@
 use std::convert::Infallible;
 
 use hyper::service::{make_service_fn, service_fn};
-use hyper::{client::HttpConnector, Body, Client, Method, Request, Response, Server, StatusCode};
+use hyper::{
+    body::HttpBody, client::HttpConnector, Body, Client, Method, Request, Response, Server,
+    StatusCode,
+};
 use log::{debug, info};
 use regex::Regex;
+use tokio::sync::mpsc::UnboundedSender;
 
 use crate::watcher::RoutingInfo;
+use shared::metrics::MetricsEntry;
 
 type GenericError = Box<dyn std::error::Error + Send + Sync>;
 type ProxyResult<T> = std::result::Result<T, GenericError>;
@@ -21,13 +26,15 @@ lazy_static! {
 pub struct ProxyServer {
     info: RoutingInfo,
     client: Client<HttpConnector>,
+    metrics_tx: UnboundedSender<MetricsEntry>,
 }
 
 impl ProxyServer {
-    pub fn new(info: RoutingInfo) -> Self {
+    pub fn new(info: RoutingInfo, metrics_tx: UnboundedSender<MetricsEntry>) -> Self {
         ProxyServer {
             info,
             client: Client::new(),
+            metrics_tx,
         }
     }
 
@@ -79,13 +86,19 @@ impl ProxyServer {
     }
 
     async fn handle(&self, req: Request<Body>) -> ProxyResult<Response<Body>> {
+        let req_method = req.method().clone();
+        let req_size = req.body().size_hint().lower();
+        self.metrics_tx
+            .send(MetricsEntry::IncomingTraffic(req_size))
+            .ok();
+
         let path = req
             .uri()
             .path_and_query()
             .map(|x| x.to_string())
             .unwrap_or_else(|| "".to_string());
 
-        if req.method() == Method::POST && path == "/session" {
+        let result = if req.method() == Method::POST && path == "/session" {
             self.handle_manager_request(req).await
         } else {
             match REGEX_SESSION_PATH.captures(&path) {
@@ -100,7 +113,21 @@ impl ProxyServer {
                         .unwrap())
                 }
             }
+        };
+
+        if let Ok(response) = &result {
+            let status_code = response.status();
+            let res_size = response.body().size_hint().lower();
+
+            self.metrics_tx
+                .send(MetricsEntry::OutgoingTraffic(res_size))
+                .ok();
+            self.metrics_tx
+                .send(MetricsEntry::RequestProcessed(req_method, status_code))
+                .ok();
         }
+
+        result
     }
 
     pub async fn serve(&self) {

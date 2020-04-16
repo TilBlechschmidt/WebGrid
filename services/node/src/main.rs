@@ -18,8 +18,8 @@ use std::time::Duration;
 
 use shared::lifecycle::{generate_session_termination_script, wait_for, DeathReason};
 use shared::logging::LogCode;
-use shared::Timeout;
 use shared::service_init;
+use shared::Timeout;
 
 mod config;
 mod context;
@@ -209,13 +209,6 @@ async fn serve_proxy(ctx: Arc<Context>, internal_session_id: String) {
                             format!("session:{}:downstream", ctx.config.session_id),
                             "lastSeen",
                             Utc::now().to_rfc3339(),
-                        )
-                        .await;
-                    let _: RedisResult<()> = con
-                        .hincr(
-                            format!("session:{}:downstream", ctx.config.session_id),
-                            "fulfilledRequests",
-                            1,
                         )
                         .await;
 

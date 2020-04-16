@@ -1,5 +1,5 @@
 use log::info;
-use redis::{aio::MultiplexedConnection, cmd, RedisResult};
+use redis::{aio::MultiplexedConnection, cmd, AsyncCommands, RedisResult};
 use std::fmt;
 
 pub struct Logger {
@@ -29,8 +29,10 @@ impl Logger {
     ) -> RedisResult<()> {
         let mut con = self.con.clone();
         let key = format!("stream:{}:log", session_id);
+        let metrics_key = format!("metrics:sessions:log:{:?}", level);
 
         info!("Writing log code {} for {}", code, session_id);
+        con.hincr::<_, _, _, ()>(metrics_key, &code, 1).await.ok();
 
         cmd("XADD")
             .arg(key).arg("*")

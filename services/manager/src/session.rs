@@ -1,6 +1,7 @@
 use shared::capabilities::CapabilitiesRequest;
 use shared::lifecycle::wait_for;
 use shared::logging::LogCode;
+use shared::metrics::MetricsEntry;
 use shared::{parse_browser_string, Timeout};
 
 use chrono::prelude::*;
@@ -11,6 +12,7 @@ use regex::Regex;
 use serde_json;
 use std::sync::Arc;
 use std::time::Duration;
+use std::time::Instant;
 use uuid::Uuid;
 
 use crate::context::Context;
@@ -258,6 +260,7 @@ pub async fn handle_create_session_request(
 ) -> Result<SessionReplyValue, RequestError> {
     let client = Client::open(ctx.config.clone().redis_url).unwrap();
     let mut con = client.get_multiplexed_tokio_connection().await.unwrap();
+    let session_creation_start = Instant::now();
 
     let session_id = create_session(&con, capabilities, remote_addr, user_agent).await?;
     let heartbeat_key = format!("session:{}:heartbeat.manager", session_id);
@@ -269,6 +272,11 @@ pub async fn handle_create_session_request(
     let deferred = async {
         // TODO Run session termination workflow on error to do clean-up
         ctx.heart.stop_beat(heartbeat_key.clone()).await;
+
+        let elapsed_seconds = session_creation_start.elapsed().as_secs_f64();
+        ctx.metrics_tx
+            .send(MetricsEntry::SessionStarted(elapsed_seconds))
+            .ok();
     };
 
     match run_session_setup(ctx.clone(), &con, &session_id, capabilities).await {

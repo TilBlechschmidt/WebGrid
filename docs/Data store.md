@@ -59,10 +59,6 @@ session:<ID>:downstream = Hashes {
 	userAgent = string
 	lastSeen = string (RFC 3339)
 }
-
-session:<ID>:statistics = Hashes {
-	fulfilledRequests = number
-}
 ```
 
 ### Log event codes
@@ -135,5 +131,54 @@ manager:<ID>:heartbeat = number EX 120
 manager:<ID> = Hashes {
 	host = string
 	port = number
+}
+```
+
+## Metrics
+
+### HTTP (at proxy)
+```
+metrics:http:requestsTotal:<method> = Hashes {
+	<code> = number
+}
+
+metrics:http:net.bytes.total = Hashes {
+	in = number
+	out = number
+}
+```
+
+### Sessions
+```
+metrics:sessions:total = Hashes {
+	queued = number
+	pending = number
+	alive = number
+	terminated = number
+}
+
+// TODO Figure out how to actually set this, maybe on state change based on the previous state?
+metrics:sessions:duration.seconds.total = Hashes {
+	queued = number
+	pending = number
+	alive = number
+}
+
+metrics:sessions:startup.histogram:count
+metrics:sessions:startup.histogram:sum
+metrics:sessions:startup.histogram:buckets = Hashes {
+	<bucket> = number
+}
+
+metrics:sessions:log:<level> = Hashes {
+	<code> = number
+}
+```
+
+### Slots
+```
+metrics:slots:reclaimed.total = Hashes {
+	dead = number
+	orphaned = number
 }
 ```

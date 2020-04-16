@@ -1009,6 +1009,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3728d817d99e5ac407411fa471ff9800a778d88a24685968b36824eaf4bee400"
 
 [[package]]
+name = "metrics"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "config",
+ "hyper",
+ "log 0.4.8",
+ "redis",
+ "serde 1.0.106",
+ "shared",
+ "tokio",
+ "warp",
+]
+
+[[package]]
 name = "mime"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
