@@ -95,7 +95,6 @@ impl K8sProvisioner {
             },
             "spec": {
                 "backoffLimit": 1,
-                "ttlSecondsAfterFinished": 120,
                 "template": {
                     "metadata": { "labels": { "app": name } },
                     "spec": {

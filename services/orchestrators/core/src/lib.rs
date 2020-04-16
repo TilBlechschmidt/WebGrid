@@ -85,8 +85,6 @@ async fn job_processor<P: Provisioner>(ctx: Arc<Context>, provisioner: P) {
             let info_future = provisioner.provision_node(&session_id);
             let node_info = info_future.await;
 
-            
-
             let status_key = format!("session:{}:status", session_id);
             let orchestrator_key = format!("session:{}:orchestrator", session_id);
             let upstream_key = format!("session:{}:upstream", session_id);
@@ -94,7 +92,7 @@ async fn job_processor<P: Provisioner>(ctx: Arc<Context>, provisioner: P) {
 
             let result: RedisResult<()> = redis::pipe()
                 .atomic()
-                .cmd("LPOP").arg(&pending)
+                .cmd("RPOP").arg(&pending)
                 .cmd("HSETNX").arg(status_key).arg("pendingAt").arg(timestamp)
                 .cmd("RPUSH").arg(orchestrator_key).arg(&ctx.config.orchestrator_id)
                 .cmd("HMSET").arg(upstream_key)
@@ -111,8 +109,6 @@ async fn job_processor<P: Provisioner>(ctx: Arc<Context>, provisioner: P) {
                 debug!("Provisioned node {} {:?}", session_id, node_info);
                 ctx.logger.log(&session_id, LogCode::SCHED, None).await.ok();
             }
-
-            let _: RedisResult<()> = con.rpop(&pending).await;
         }
 
         let _: RedisResult<()> = con.brpoplpush(&backlog, &pending, 0).await;
