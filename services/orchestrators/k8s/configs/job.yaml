@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{job_name}}
+  labels:
+    app: webgrid-node
+    sessionID: {{session_id}}
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: {{job_name}}
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+      containers:
+        - name: {{job_name}}
+          image: 'registry.blechschmidt.de/webgrid-node:chrome'
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3030
+          env:
+            - name: WEBGRID_SESSION_ID
+              value: {{session_id}}
+            - name: WEBGRID_REDIS_URL
+              value: 'redis://redis/'
+          volumeMounts:
+            - mountPath: /dev/shm
+              name: dshm

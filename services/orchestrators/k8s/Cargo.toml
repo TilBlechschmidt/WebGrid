@@ -7,12 +7,13 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+shared = { path = "../../shared" }
 orchestrator_core = { path = "../core" }
 tokio = { version = "0.2", features = ["macros"] }
-time = "0.2.9"
-kube = "0.31.0"
-kube-derive = "0.31.0"
+time = "0.2.10"
+kube = "0.32.1"
+kube-derive = "0.32.1"
 k8s-openapi = { version = "0.7.1", default-features = false, features = ["v1_17"] }
-serde_json = "1.0.50"
-serde = { version = "1.0.105", features = [] }
+serde_yaml = "0.8.11"
+serde = { version = "1.0.106", features = [] }
 log = "0.4"

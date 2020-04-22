@@ -4,6 +4,10 @@ use log::{info, trace};
 use redis::{aio::MultiplexedConnection, AsyncCommands};
 use std::fmt;
 
+use std::fs::File;
+use std::path::Path;
+use std::io::Read;
+
 pub mod lifecycle;
 pub mod logging;
 
@@ -56,6 +60,20 @@ impl Timeout {
             }
         }
     }
+}
+
+pub fn load_config(name: &str) -> String {
+    let directory = std::env::var("WEBGRID_CONFIG_DIR").unwrap_or("/configs".to_string());
+    let path = Path::new(&directory).join(name);
+    let mut file = File::open(path).unwrap();
+    let mut data = String::new();
+    file.read_to_string(&mut data).unwrap();
+
+    data
+}
+
+pub fn replace_config_variable(config: String, key: &str, value: &str) -> String {
+    config.replace(&format!("{{{{{}}}}}", key), &value.to_string())
 }
 
 #[cfg(test)]

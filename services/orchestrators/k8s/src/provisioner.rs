@@ -1,8 +1,9 @@
+use shared::{load_config, replace_config_variable};
 use orchestrator_core::provisioner::{async_trait, NodeInfo, Provisioner};
 
 use k8s_openapi::api::batch::v1::Job;
 use k8s_openapi::api::core::v1::Service;
-use serde_json::json;
+use serde_yaml;
 
 use kube::{
     api::{Api, DeleteParams, Meta, PostParams, PropagationPolicy},
@@ -21,7 +22,7 @@ pub struct K8sProvisioner {
 
 impl K8sProvisioner {
     pub async fn new() -> Self {
-        let client = Client::infer().await.unwrap();
+        let client = Client::try_default().await.unwrap();
         let namespace = std::env::var("NAMESPACE").unwrap_or_else(|_| "webgrid".into());
 
         info!("Operating in K8s namespace {}", namespace);
@@ -83,66 +84,22 @@ impl K8sProvisioner {
     async fn create_job(&self, session_id: &str) {
         let name = K8sProvisioner::generate_name(&session_id);
 
-        let job: Job = serde_json::from_value(json!({
-            "apiVersion": "batch/v1",
-            "kind": "Job",
-            "metadata": {
-                "name": name,
-                "labels": {
-                    "app": "webgrid-node",
-                    "sessionID": &session_id
-                }
-            },
-            "spec": {
-                "backoffLimit": 1,
-                "template": {
-                    "metadata": { "labels": { "app": name } },
-                    "spec": {
-                        "restartPolicy": "Never",
-                        "volumes": [
-                            { "name": "dshm", "emptyDir": { "medium": "Memory" } }
-                        ],
-                        "containers": [{
-                            "name": name,
-                            "image": "registry.blechschmidt.de/webgrid-node:firefox",
-                            "imagePullPolicy": "Always",
-                            "ports": [
-                                { "containerPort": 3030 }
-                            ],
-                            "env": [
-                                { "name": "WEBGRID_SESSION_ID", "value": &session_id },
-                                { "name": "WEBGRID_REDIS_URL", "value": "redis://redis/" }
-                            ],
-                            "volumeMounts": [
-                                { "mountPath": "/dev/shm", "name": "dshm" }
-                            ]
-                        }],
-                    }
-                }
-            }
+        let mut job_yaml = load_config("job.yaml");
+        job_yaml = replace_config_variable(job_yaml, "job_name", &name);
+        job_yaml = replace_config_variable(job_yaml, "session_id", session_id);
 
-        }))
-        .unwrap();
-
+        let job: Job = serde_yaml::from_str(&job_yaml).unwrap();
         self.create_resource(&job).await;
     }
 
     async fn create_service(&self, session_id: &str) {
         let name = K8sProvisioner::generate_name(&session_id);
 
-        let service: Service = serde_json::from_value(json!({
-            "apiVersion": "v1",
-            "kind": "Service",
-            "metadata": {
-                "name": name
-            },
-            "spec": {
-                "ports": [{ "port": 3030, "targetPort": 3030, "protocol": "TCP" }],
-                "selector": { "app": name }
-            }
-        }))
-        .unwrap();
+        let mut service_yaml = load_config("job.yaml");
+        service_yaml = replace_config_variable(service_yaml, "job_name", &name);
+        service_yaml = replace_config_variable(service_yaml, "service_name", &name);
 
+        let service: Service = serde_yaml::from_str(&service_yaml).unwrap();
         self.create_resource(&service).await;
     }
 }
