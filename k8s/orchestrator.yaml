@@ -54,6 +54,8 @@ spec:
                   fieldPath: metadata.name
             - name: WEBGRID_SLOTS
               value: "5"
+            - name: WEBGRID_IMAGES
+              value: registry.blechschmidt.de/webgrid-node:firefox=firefox::68.7.0esr,registry.blechschmidt.de/webgrid-node:chrome=chrome::81.0.4044.122
             - name: RUST_LOG
               value: info
             - name: NAMESPACE

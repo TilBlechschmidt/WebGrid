@@ -33,6 +33,7 @@ Since any given component in the system may fail during slot interaction the orc
 This reclaim cycle may be used as a cleanup cycle by the orchestrator to terminate any orphaned nodes that are not referenced by an alive session in the database.
 
 ## Changing the number of slots for an orchestrator
+This is done by the orchestrator on startup (target value is read from its configuration/environment).
 
 ### Adding new slots
 The number of slots may be increased by simply adding slots to `orchestrator:<ID>:slots` and `orchestrator:<ID>:slots.available`

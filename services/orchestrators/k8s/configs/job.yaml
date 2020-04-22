@@ -19,7 +19,7 @@ spec:
             medium: Memory
       containers:
         - name: {{job_name}}
-          image: 'registry.blechschmidt.de/webgrid-node:chrome'
+          image: {{image_name}}
           imagePullPolicy: Always
           ports:
             - containerPort: 3030

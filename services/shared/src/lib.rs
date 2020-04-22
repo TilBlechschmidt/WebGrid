@@ -8,6 +8,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
+pub mod capabilities;
 pub mod lifecycle;
 pub mod logging;
 
@@ -76,10 +77,16 @@ pub fn replace_config_variable(config: String, key: &str, value: &str) -> String
     config.replace(&format!("{{{{{}}}}}", key), &value.to_string())
 }
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+pub fn split_into_two(input: &str, separator: &'static str) -> Option<(String, String)> {
+    let parts: Vec<&str> = input.splitn(2, separator).collect();
+
+    if parts.len() != 2 {
+        return None;
     }
+
+    Some((parts[0].to_string(), parts[1].to_string()))
+}
+
+pub fn parse_browser_string(input: &str) -> Option<(String, String)> {
+    split_into_two(input, "::")
 }

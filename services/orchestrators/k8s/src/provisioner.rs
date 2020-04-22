@@ -1,10 +1,7 @@
-<<<<<<< HEAD
-use shared::{load_config, replace_config_variable};
-use orchestrator_core::provisioner::{async_trait, NodeInfo, Provisioner};
-=======
-use orchestrator_core::provisioner::{async_trait, NodeInfo, Provisioner, ProvisionerCapabilities};
-use shared::{load_config, replace_config_variable};
->>>>>>> 7049028... :wrench: Replace validate script with git hooks
+use orchestrator_core::provisioner::{
+    async_trait, match_image_from_capabilities, NodeInfo, Provisioner, ProvisionerCapabilities,
+};
+use shared::{capabilities::CapabilitiesRequest, load_config, replace_config_variable};
 
 use k8s_openapi::api::batch::v1::Job;
 use k8s_openapi::api::core::v1::Service;
@@ -16,21 +13,26 @@ use kube::{
 };
 
 use k8s_openapi::Resource;
-use log::{error, info, trace};
+use log::{error, info, trace, warn};
 use serde::{de::DeserializeOwned, ser::Serialize};
 
 #[derive(Clone)]
 pub struct K8sProvisioner {
     namespace: String,
+    images: Vec<(String, String)>,
 }
 
 impl K8sProvisioner {
-    pub async fn new() -> Self {
+    pub async fn new(images: Vec<(String, String)>) -> Self {
+        if images.is_empty() {
+            warn!("No images provided! Orchestrator won't be able to schedule nodes.");
+        }
+
         let namespace = std::env::var("NAMESPACE").unwrap_or_else(|_| "webgrid".into());
 
         info!("Operating in K8s namespace {}", namespace);
 
-        Self { namespace }
+        Self { namespace, images }
     }
 
     fn generate_name(session_id: &str) -> String {
@@ -85,12 +87,13 @@ impl K8sProvisioner {
         };
     }
 
-    async fn create_job(&self, session_id: &str) {
+    async fn create_job(&self, session_id: &str, image: &str) {
         let name = K8sProvisioner::generate_name(&session_id);
 
         let mut job_yaml = load_config("job.yaml");
         job_yaml = replace_config_variable(job_yaml, "job_name", &name);
         job_yaml = replace_config_variable(job_yaml, "session_id", session_id);
+        job_yaml = replace_config_variable(job_yaml, "image_name", image);
 
         trace!("Job YAML {}", job_yaml);
 
@@ -114,8 +117,6 @@ impl K8sProvisioner {
 
 #[async_trait]
 impl Provisioner for K8sProvisioner {
-<<<<<<< HEAD
-=======
     fn capabilities(&self) -> ProvisionerCapabilities {
         ProvisionerCapabilities {
             platform_name: "linux".to_owned(),
@@ -123,16 +124,28 @@ impl Provisioner for K8sProvisioner {
         }
     }
 
->>>>>>> 7049028... :wrench: Replace validate script with git hooks
-    async fn provision_node(&self, session_id: &str) -> NodeInfo {
-        let name = K8sProvisioner::generate_name(&session_id);
+    async fn provision_node(
+        &self,
+        session_id: &str,
+        capabilities: CapabilitiesRequest,
+    ) -> NodeInfo {
+        let wrapped_image = match_image_from_capabilities(capabilities, &self.images);
+        // TODO Remove this very crude "error handling" with some proper Result<NodeInfo>!
+        if let Some(image) = wrapped_image {
+            let name = K8sProvisioner::generate_name(&session_id);
 
-        self.create_job(&session_id).await;
-        self.create_service(&session_id).await;
+            self.create_job(&session_id, &image).await;
+            self.create_service(&session_id).await;
 
-        NodeInfo {
-            host: name,
-            port: "3030".to_string(),
+            NodeInfo {
+                host: name,
+                port: "3030".to_string(),
+            }
+        } else {
+            NodeInfo {
+                host: "NO_IMAGE_FOUND".to_string(),
+                port: "1337".to_string(),
+            }
         }
     }
 

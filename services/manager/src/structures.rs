@@ -1,6 +1,6 @@
 use redis::RedisError;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{Error as JsonError, Value};
 use std::fmt;
 use warp::reject::Reject;
 
@@ -14,6 +14,7 @@ pub enum RequestError {
     HealthCheckTimeout,
     ParseError,
     NoOrchestratorAvailable,
+    InvalidCapabilities(JsonError),
 }
 
 impl Reject for RequestError {}
@@ -39,6 +40,9 @@ impl fmt::Display for RequestError {
                 f,
                 "No orchestrator available that can satisfy the required capabilities"
             ),
+            RequestError::InvalidCapabilities(e) => {
+                write!(f, "Invalid capabilities requested: {}", e)
+            }
         }
     }
 }

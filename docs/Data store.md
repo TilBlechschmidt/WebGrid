@@ -112,7 +112,9 @@ orchestrator:<ID> = Hashes {
 // TODO Add log for reclaiming, scheduling and scaling
 
 orchestrator:<ID>:heartbeat = number EX 60
-orchestrator:<ID>:capabilities = Set<string> (JSONs)
+
+orchestrator:<ID>:capabilities:platformName = string
+orchestrator:<ID>:capabilities:browsers = Set<string> (*)
 
 orchestrator:<ID>:slots.reclaimed = List<string> (slot ID)
 orchestrator:<ID>:slots.available = List<string> (slot ID)
@@ -121,6 +123,8 @@ orchestrator:<ID>:slots = Set<string> (slot ID)
 orchestrator:<ID>:backlog = List<string> (session ID)
 orchestrator:<ID>:pending = List<string> (session ID)
 ```
+
+*Browsers are represented by a string containing the `browserName` and `browserVersion` separated by `::`. For example `chrome::81.0.4044.113` or `firefox::74.0.1`.
 
 [Reliable queue documentation](https://redis.io/commands/rpoplpush#pattern-reliable-queue)
 

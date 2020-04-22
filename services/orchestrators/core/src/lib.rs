@@ -5,6 +5,7 @@ use chrono::prelude::*;
 use log::{debug, error, info};
 use redis::{AsyncCommands, RedisResult};
 use regex::Regex;
+use serde_json;
 use std::cmp::Ordering;
 use std::sync::Arc;
 use std::time::Duration;
@@ -82,7 +83,11 @@ async fn job_processor<P: Provisioner>(ctx: Arc<Context>, provisioner: P) {
 
             // TODO Look if the job is too old
 
-            let info_future = provisioner.provision_node(&session_id);
+            // TODO Proper error handling, remove unwrap
+            let raw_capabilities_request: String = con.hget(format!("session:{}:capabilities", session_id), "requested").await.unwrap();
+            let capabilities_request = serde_json::from_str(&raw_capabilities_request).unwrap();
+
+            let info_future = provisioner.provision_node(&session_id, capabilities_request);
             let node_info = info_future.await;
 
             let status_key = format!("session:{}:status", session_id);
@@ -205,6 +210,7 @@ pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
     let type_str = format!("{}", provisioner_type);
 
     // Register with backing store
+    let capabilities = provisioner.capabilities();
     let info_key = format!("orchestrator:{}", ctx.config.orchestrator_id);
     let platform_key = format!("{}:capabilities:platformName", info_key);
     let browsers_key = format!("{}:capabilities:browsers", info_key);
@@ -212,7 +218,11 @@ pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
     con.set::<_, _, ()>(&platform_key, &capabilities.platform_name)
         .await
         .unwrap();
-    // con.sadd::<_, _, ()>(&platform_key, capabilities.browsers).await.unwrap();
+    if !capabilities.browsers.is_empty() {
+        con.sadd::<_, _, ()>(&browsers_key, capabilities.browsers)
+            .await
+            .unwrap();
+    }
 
     con.hset_multiple::<_, _, _, ()>(&info_key, &[("type", type_str)])
         .await

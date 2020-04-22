@@ -163,6 +163,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn online_evaluation() {
         let mut con = setup_test().await;
 

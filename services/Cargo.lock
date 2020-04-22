@@ -1286,6 +1286,7 @@ dependencies = [
  "redis",
  "regex",
  "serde 1.0.106",
+ "serde_json",
  "shared",
  "tokio",
  "uuid",
@@ -1298,6 +1299,7 @@ dependencies = [
  "bollard",
  "log 0.4.8",
  "orchestrator_core",
+ "shared",
  "tokio",
 ]
 
@@ -1983,6 +1985,8 @@ dependencies = [
  "pretty_env_logger",
  "redis",
  "rusty-hook",
+ "serde 1.0.106",
+ "serde_json",
  "tokio",
 ]
 

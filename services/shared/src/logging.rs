@@ -127,6 +127,7 @@ pub enum LogCode {
     // -- Warn
     CLEFT,
     // -- Fail
+    INVALIDCAP,
     QUNAVAILABLE,
     QTIMEOUT,
     OTIMEOUT,
@@ -158,6 +159,7 @@ impl LogCode {
             LogCode::STARTFAIL => LogLevel::FAIL,
 
             // Manager
+            LogCode::INVALIDCAP => LogLevel::FAIL,
             LogCode::QUNAVAILABLE => LogLevel::FAIL,
             LogCode::QUEUED => LogLevel::INFO,
             LogCode::NALLOC => LogLevel::INFO,

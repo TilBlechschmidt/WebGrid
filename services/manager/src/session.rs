@@ -1,12 +1,14 @@
+use shared::capabilities::CapabilitiesRequest;
 use shared::lifecycle::wait_for;
 use shared::logging::LogCode;
-use shared::Timeout;
+use shared::{parse_browser_string, Timeout};
 
 use chrono::prelude::*;
 use futures::future::*;
 use log::{debug, warn};
 use redis::{aio::MultiplexedConnection, pipe, AsyncCommands, Client, RedisResult};
 use regex::Regex;
+use serde_json;
 use std::sync::Arc;
 use std::time::Duration;
 use uuid::Uuid;
@@ -44,23 +46,89 @@ async fn create_session(
     Ok(session_id)
 }
 
+async fn match_orchestrators(
+    con: &MultiplexedConnection,
+    capabilities: &str,
+) -> Result<Vec<String>, RequestError> {
+    let mut con = con.clone();
+
+    let requested_capabilities: CapabilitiesRequest =
+        serde_json::from_str(capabilities).map_err(RequestError::InvalidCapabilities)?;
+
+    let orchestrator_ids: Vec<String> = con
+        .smembers("orchestrators")
+        .await
+        .unwrap_or_else(|_| Vec::new());
+
+    let capability_sets = requested_capabilities.into_sets();
+    let mut matching_orchestrators = Vec::with_capacity(orchestrator_ids.len());
+
+    if capability_sets.is_empty() {
+        return Ok(orchestrator_ids);
+    }
+
+    for id in orchestrator_ids.into_iter() {
+        let platform_name: String = con
+            .get(format!("orchestrator:{}:capabilities:platformName", id))
+            .await
+            .unwrap_or_default();
+        let raw_browsers: Vec<String> = con
+            .smembers(format!("orchestrator:{}:capabilities:browsers", id))
+            .await
+            .unwrap_or_else(|_| Vec::new());
+        let browsers: Vec<(String, String)> = raw_browsers
+            .into_iter()
+            .filter_map(|raw_browser| parse_browser_string(&raw_browser))
+            .collect();
+
+        for capability in &capability_sets {
+            let mut platform_match = true;
+            let mut browser_match = true;
+
+            if let Some(requested_platform_name) = &capability.platform_name {
+                platform_match = requested_platform_name == &platform_name;
+            }
+
+            if !browsers.is_empty() {
+                browser_match = false;
+
+                for browser in &browsers {
+                    let mut version_match = true;
+                    let mut name_match = true;
+
+                    if let Some(requested_browser_name) = &capability.browser_name {
+                        name_match = &browser.0 == requested_browser_name;
+                    }
+
+                    if let Some(requested_browser_version) = &capability.browser_version {
+                        version_match = browser.1.find(requested_browser_version) == Some(0);
+                    }
+
+                    browser_match = browser_match || (version_match && name_match);
+                }
+            }
+
+            if platform_match && browser_match {
+                matching_orchestrators.push(id);
+                break;
+            }
+        }
+    }
+
+    Ok(matching_orchestrators)
+}
+
 async fn request_slot(
     con: &MultiplexedConnection,
     session_id: &str,
-    _capabilities: &str,
+    capabilities: &str,
 ) -> Result<(), RequestError> {
     let mut con = con.clone();
 
     let queue_timeout = Timeout::Queue.get(&con).await;
 
-    let orchestrators: Vec<String> = con
-        .smembers("orchestrators")
-        .await
-        .unwrap_or_else(|_| Vec::new());
-
-    // TODO Match orchestrators according to capability
-    let matching_orchestrators = orchestrators;
-    let queues: Vec<String> = matching_orchestrators
+    let queues: Vec<String> = match_orchestrators(&con, capabilities)
+        .await?
         .iter()
         .map(|orchestrator| format!("orchestrator:{}:slots.available", orchestrator))
         .collect();
@@ -218,6 +286,7 @@ pub async fn handle_create_session_request(
                 RequestError::SchedulingTimeout => LogCode::OTIMEOUT,
                 RequestError::HealthCheckTimeout => LogCode::NTIMEOUT,
                 RequestError::NoOrchestratorAvailable => LogCode::QUNAVAILABLE,
+                RequestError::InvalidCapabilities(_) => LogCode::INVALIDCAP,
             };
 
             ctx.logger.log(&session_id, log_code, None).await.ok();

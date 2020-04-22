@@ -23,7 +23,7 @@ It does not matter whether or not a Node is running bare-bones on your Desktop o
 ## Orchestrator
 Since the lifespan of a Node is tied to one specific session there needs to be an instance which handles the creation and deletion of them. The Orchestrator receives instructions from the Manager to create new Nodes and returns information on how to reach them.
 
-An Orchestrator can have multiple Node configurations available to choose from (e.g. different Browsers) and provides these capabilities to the Manager. More on that in the Manager section. Usually Orchestrators parse and forward the requests to create new nodes to a Provisioner like Docker or K8s.
+An Orchestrator can have multiple Node configurations available to choose from (e.g. different Browsers) and provides these capabilities to the Manager as a HashMap. Usually Orchestrators parse and forward the requests to create new nodes to a Provisioner like Docker or K8s however they can also just launch a local process.
 
 ### Slots
 One given Orchestrator may not have an unlimited amount of resources at its disposal. To constrain the number of Nodes that can exist at one given time, controlled by one given Orchestrator a concept of slots has been introduced.
