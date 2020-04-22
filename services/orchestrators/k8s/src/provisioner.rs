@@ -11,38 +11,37 @@ use kube::{
 };
 
 use k8s_openapi::Resource;
-use log::{error, info};
+use log::{error, info, trace};
 use serde::{de::DeserializeOwned, ser::Serialize};
 
 #[derive(Clone)]
 pub struct K8sProvisioner {
-    client: Client,
     namespace: String,
 }
 
 impl K8sProvisioner {
     pub async fn new() -> Self {
-        let client = Client::try_default().await.unwrap();
         let namespace = std::env::var("NAMESPACE").unwrap_or_else(|_| "webgrid".into());
 
         info!("Operating in K8s namespace {}", namespace);
 
-        Self { client, namespace }
+        Self { namespace }
     }
 
     fn generate_name(session_id: &str) -> String {
         format!("session-{}", session_id)
     }
 
-    fn get_api<T: Resource>(&self) -> Api<T> {
-        Api::namespaced(self.client.clone(), &self.namespace)
+    async fn get_api<T: Resource>(&self) -> Api<T> {
+        let client = Client::try_default().await.unwrap();
+        Api::namespaced(client, &self.namespace)
     }
 
     async fn create_resource<T: Resource + Meta + DeserializeOwned + Serialize + Clone>(
         &self,
         value: &T,
     ) {
-        let api = self.get_api::<T>();
+        let api = self.get_api::<T>().await;
 
         match api.create(&PostParams::default(), value).await {
             Ok(o) => {
@@ -59,7 +58,7 @@ impl K8sProvisioner {
         &self,
         name: &str,
     ) {
-        let api = self.get_api::<T>();
+        let api = self.get_api::<T>().await;
 
         let params = DeleteParams {
             dry_run: false,
@@ -88,6 +87,8 @@ impl K8sProvisioner {
         job_yaml = replace_config_variable(job_yaml, "job_name", &name);
         job_yaml = replace_config_variable(job_yaml, "session_id", session_id);
 
+        trace!("Job YAML {}", job_yaml);
+
         let job: Job = serde_yaml::from_str(&job_yaml).unwrap();
         self.create_resource(&job).await;
     }
@@ -95,9 +96,11 @@ impl K8sProvisioner {
     async fn create_service(&self, session_id: &str) {
         let name = K8sProvisioner::generate_name(&session_id);
 
-        let mut service_yaml = load_config("job.yaml");
+        let mut service_yaml = load_config("service.yaml");
         service_yaml = replace_config_variable(service_yaml, "job_name", &name);
         service_yaml = replace_config_variable(service_yaml, "service_name", &name);
+
+        trace!("Service YAML {}", service_yaml);
 
         let service: Service = serde_yaml::from_str(&service_yaml).unwrap();
         self.create_resource(&service).await;
