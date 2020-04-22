@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 SOURCE_DIR=$(pwd)
-BUILD_DIR=/tmp/webgrid-build-cache
+BUILD_DIR=$(pwd)/.cache
 
 echo "Building @ $BUILD_DIR"
 mkdir -p $BUILD_DIR
@@ -9,7 +9,7 @@ mkdir -p $BUILD_DIR/cargo-git
 mkdir -p $BUILD_DIR/cargo-registry
 mkdir -p $BUILD_DIR/target
 
-rsync -av --progress $SOURCE_DIR/* $BUILD_DIR/project --exclude target --exclude .build
+rsync -av --progress $SOURCE_DIR/* $BUILD_DIR/project --exclude target --exclude .build --exclude .cache
 
 docker run --rm -it \
 	-v "$BUILD_DIR/project":/home/rust/src \

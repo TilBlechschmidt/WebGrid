@@ -1,5 +1,6 @@
 legacy-workarea
 services/.build
+services/.cache
 
 # Created by https://www.gitignore.io/api/rust,linux,macos,windows
 # Edit at https://www.gitignore.io/?templates=rust,linux,macos,windows
