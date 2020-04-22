@@ -16,7 +16,7 @@ spec:
         app: redis
     spec:
       containers:
-        - image: redis
+        - image: redis:alpine
           imagePullPolicy: IfNotPresent
           name: redis
           args: ['--notify-keyspace-events', 'Kgx', '--maxmemory', '104857600']

@@ -41,26 +41,3 @@ spec:
       protocol: TCP
   selector:
     name: proxy
----
-apiVersion: networking.k8s.io/v1beta1
-kind: Ingress
-metadata:
-  name: proxy
-  annotations:
-    kubernetes.io/ingress.class: "nginx"
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
-spec:
-  tls:
-    - hosts:
-        - webgrid.blechschmidt.de
-      secretName: webgrid-tls
-  rules:
-    - host: webgrid.blechschmidt.de
-      http:
-        paths:
-          - path: /
-            backend:
-              serviceName: proxy
-              servicePort: 80
