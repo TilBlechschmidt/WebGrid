@@ -23,7 +23,7 @@ run:
 	sleep 1
 	docker run -it -d --rm --network webgrid --name webgrid-proxy-1 -p 80:8080 webgrid-proxy
 	docker run -it -d --rm --network webgrid --name webgrid-manager-1 -e WEBGRID_MANAGER_ID=manager-1 -e WEBGRID_MANAGER_HOST=webgrid-manager-1 webgrid-manager
-	docker run -it -d --rm --network webgrid --name webgrid-orchestrator-1 -v /var/run/docker.sock:/var/run/docker.sock -e WEBGRID_ORCHESTRATOR_id=orchestrator-1 -e WEBGRID_SLOTS=5 webgrid-orchestrator
+	docker run -it -d --rm --network webgrid --name webgrid-orchestrator-1 -v /var/run/docker.sock:/var/run/docker.sock -e WEBGRID_ORCHESTRATOR_id=orchestrator-1 -e WEBGRID_SLOTS=5 webgrid-orchestrator:docker
 
 clean:
 	-docker rm --force webgrid-redis
