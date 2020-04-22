@@ -263,6 +263,25 @@ async fn serve_proxy(ctx: Arc<Context>, internal_session_id: String) {
     tokio::spawn(server);
 }
 
+async fn resize_window(ctx: Arc<Context>, session_id: &str) -> Result<(), NodeError> {
+    let path = format!("/session/{}/window/rect", session_id);
+    let body_string = "{\"x\": 0, \"y\": 0, \"width\": 1920, \"height\": 1080}";
+    let client = HttpClient::new();
+    let req = Request::builder()
+        .method(Method::POST)
+        .uri(ctx.get_driver_url(&path))
+        .header("Content-Type", "application/json")
+        .body(Body::from(body_string))
+        .map_err(|_| NodeError::LocalSessionCreationError)?;
+
+    client
+        .request(req)
+        .await
+        .map_err(|_| NodeError::LocalSessionCreationError)?;
+
+    Ok(())
+}
+
 fn call_on_create_script(ctx: Arc<Context>) {
     match &ctx.config.on_session_create {
         Some(script) => {
@@ -280,6 +299,7 @@ fn call_on_create_script(ctx: Arc<Context>) {
 async fn node_startup(ctx: Arc<Context>) -> Result<(), NodeError> {
     start_driver(ctx.clone()).await?;
     let session_id = create_local_session(ctx.clone(), "{}".to_string()).await?;
+    resize_window(ctx.clone(), &session_id).await?;
     serve_proxy(ctx.clone(), session_id).await;
     call_on_create_script(ctx);
 
