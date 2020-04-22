@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 GECKO_VERSION=0.26.0
-CHROME_VERSION=80.0.3987.106
+CHROME_VERSION=81.0.4044.69
 PREV_PWD=$(pwd)
 TMP_DIR=$(mktemp -d)
 
@@ -19,6 +19,7 @@ function geckodriver {
 	install_packages firefox-esr
 
 	echo 'export DRIVER="/usr/bin/geckodriver"' >> /env.sh
+	echo 'export DRIVER_PORT=4444' >>/env.sh
 	echo 'export BROWSER="firefox"' >> /env.sh
 	echo "export BROWSER_VERSION=\"$( firefox -version | cut -d " " -f 3 )\"" >> /env.sh
 }
@@ -36,6 +37,7 @@ function chromedriver {
 	install_packages google-chrome-stable
 
 	echo 'export DRIVER="/usr/bin/chromedriver"' >> /env.sh
+	echo 'export DRIVER_PORT=9515' >>/env.sh
 	echo 'export BROWSER="chrome"' >> /env.sh
 	echo "export BROWSER_VERSION=\"$(/usr/bin/google-chrome -version | awk '{ print $3 }')\"" >> /env.sh
 

@@ -5,6 +5,7 @@ use serde::Deserialize;
 pub struct Config {
     pub redis_url: String,
     pub driver: String,
+    pub driver_port: u16,
     pub session_id: String,
     pub on_session_create: Option<String>,
 }

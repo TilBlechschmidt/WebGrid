@@ -51,7 +51,7 @@ async fn await_driver_startup(ctx: Arc<Context>) -> Result<(), NodeError> {
     info!("Awaiting driver startup");
 
     match wait_for(
-        &"http://localhost:3031/status".to_string(),
+        &ctx.get_driver_url("/status"),
         Duration::from_secs(timeout as u64),
     )
     .await
@@ -102,7 +102,7 @@ async fn create_local_session(
     let client = HttpClient::new();
     let req = Request::builder()
         .method(Method::POST)
-        .uri("http://127.0.0.1:3031/session")
+        .uri(ctx.get_driver_url("/session"))
         .header("Content-Type", "application/json")
         .body(Body::from(body_string))
         .map_err(|_| NodeError::LocalSessionCreationError)?;
@@ -148,7 +148,7 @@ async fn create_local_session(
 
 async fn serve_proxy(ctx: Arc<Context>, internal_session_id: String) {
     let in_addr = ([0, 0, 0, 0], 3030).into();
-    let out_addr: SocketAddr = ([127, 0, 0, 1], 3031).into();
+    let out_addr: SocketAddr = ctx.driver_addr;
     let client_main = HttpClient::new();
 
     info!("WebDriver proxy serving {:?} -> {:?}", in_addr, out_addr);

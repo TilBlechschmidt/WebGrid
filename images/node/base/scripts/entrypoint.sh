@@ -5,6 +5,7 @@ source /env.sh
 export DISPLAY=:42
 export WEBGRID_ON_SESSION_CREATE="xwit -display $DISPLAY -all -resize 1920 1080"
 export WEBGRID_DRIVER=$DRIVER
+export WEBGRID_DRIVER_PORT=$DRIVER_PORT
 
 ./start-xvfb.sh
 ./recording.sh start
