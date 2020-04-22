@@ -16,20 +16,18 @@ impl DriverManager {
     }
 
     pub fn start(&self) -> Result<(), IOError> {
-        let driver;
-
         // Chrome needs some "special handling"
-        if std::env::var("BROWSER").unwrap_or_default() == "chrome" {
-            driver = Command::new(self.path.clone())
+        let driver = if std::env::var("BROWSER").unwrap_or_default() == "chrome" {
+            Command::new(self.path.clone())
                 .arg("--whitelisted-ips")
                 .arg("*")
                 .stdout(Stdio::inherit())
-                .spawn();
+                .spawn()
         } else {
-            driver = Command::new(self.path.clone())
+            Command::new(self.path.clone())
                 .stdout(Stdio::inherit())
-                .spawn();
-        }
+                .spawn()
+        };
 
         match driver {
             Ok(child) => {

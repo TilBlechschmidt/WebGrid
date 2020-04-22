@@ -1,4 +1,4 @@
-use orchestrator_core::provisioner::{async_trait, NodeInfo, Provisioner};
+use orchestrator_core::provisioner::{async_trait, NodeInfo, Provisioner, ProvisionerCapabilities};
 
 use bollard::container::{
     Config, CreateContainerOptions, HostConfig, KillContainerOptions, StartContainerOptions,
@@ -24,6 +24,13 @@ impl DockerProvisioner {
 
 #[async_trait]
 impl Provisioner for DockerProvisioner {
+    fn capabilities(&self) -> ProvisionerCapabilities {
+        ProvisionerCapabilities {
+            platform_name: "linux".to_owned(),
+            browsers: Vec::new(),
+        }
+    }
+
     async fn provision_node(&self, session_id: &str) -> NodeInfo {
         let name = format!("webgrid-session-{}", session_id);
 

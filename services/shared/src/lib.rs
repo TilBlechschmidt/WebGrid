@@ -5,8 +5,8 @@ use redis::{aio::MultiplexedConnection, AsyncCommands};
 use std::fmt;
 
 use std::fs::File;
-use std::path::Path;
 use std::io::Read;
+use std::path::Path;
 
 pub mod lifecycle;
 pub mod logging;
@@ -63,7 +63,7 @@ impl Timeout {
 }
 
 pub fn load_config(name: &str) -> String {
-    let directory = std::env::var("WEBGRID_CONFIG_DIR").unwrap_or("/configs".to_string());
+    let directory = std::env::var("WEBGRID_CONFIG_DIR").unwrap_or_else(|_| "/configs".to_string());
     let path = Path::new(&directory).join(name);
     let mut file = File::open(path).unwrap();
     let mut data = String::new();

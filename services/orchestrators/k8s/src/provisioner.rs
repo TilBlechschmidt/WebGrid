@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 use shared::{load_config, replace_config_variable};
 use orchestrator_core::provisioner::{async_trait, NodeInfo, Provisioner};
+=======
+use orchestrator_core::provisioner::{async_trait, NodeInfo, Provisioner, ProvisionerCapabilities};
+use shared::{load_config, replace_config_variable};
+>>>>>>> 7049028... :wrench: Replace validate script with git hooks
 
 use k8s_openapi::api::batch::v1::Job;
 use k8s_openapi::api::core::v1::Service;
@@ -109,6 +114,16 @@ impl K8sProvisioner {
 
 #[async_trait]
 impl Provisioner for K8sProvisioner {
+<<<<<<< HEAD
+=======
+    fn capabilities(&self) -> ProvisionerCapabilities {
+        ProvisionerCapabilities {
+            platform_name: "linux".to_owned(),
+            browsers: Vec::new(),
+        }
+    }
+
+>>>>>>> 7049028... :wrench: Replace validate script with git hooks
     async fn provision_node(&self, session_id: &str) -> NodeInfo {
         let name = K8sProvisioner::generate_name(&session_id);
 

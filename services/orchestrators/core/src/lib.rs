@@ -206,6 +206,14 @@ pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
 
     // Register with backing store
     let info_key = format!("orchestrator:{}", ctx.config.orchestrator_id);
+    let platform_key = format!("{}:capabilities:platformName", info_key);
+    let browsers_key = format!("{}:capabilities:browsers", info_key);
+
+    con.set::<_, _, ()>(&platform_key, &capabilities.platform_name)
+        .await
+        .unwrap();
+    // con.sadd::<_, _, ()>(&platform_key, capabilities.browsers).await.unwrap();
+
     con.hset_multiple::<_, _, _, ()>(&info_key, &[("type", type_str)])
         .await
         .unwrap();
@@ -262,6 +270,8 @@ pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
     con.srem::<_, _, ()>("orchestrators", &ctx.config.orchestrator_id)
         .await
         .unwrap();
-    con.del::<_, ()>(&info_key).await.unwrap();
+    con.del::<_, ()>(&[info_key, platform_key, browsers_key])
+        .await
+        .unwrap();
     ctx.heart.stop_beat(heartbeat_key).await;
 }
