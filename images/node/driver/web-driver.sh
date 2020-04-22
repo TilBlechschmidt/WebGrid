@@ -38,6 +38,9 @@ function chromedriver {
 	echo 'export DRIVER="/usr/bin/chromedriver"' >> /env.sh
 	echo 'export BROWSER="chrome"' >> /env.sh
 	echo "export BROWSER_VERSION=\"$(/usr/bin/google-chrome -version | awk '{ print $3 }')\"" >> /env.sh
+
+	# Wrap the chrome binary so we run it with --no-sandbox
+	$PREV_PWD/wrap-chrome.sh
 }
 
 case "$1" in

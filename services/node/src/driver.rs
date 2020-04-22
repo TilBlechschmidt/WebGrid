@@ -16,11 +16,20 @@ impl DriverManager {
     }
 
     pub fn start(&self) -> Result<(), IOError> {
-        let driver = Command::new(self.path.clone())
-            .arg("--port")
-            .arg("3031")
-            .stdout(Stdio::piped())
-            .spawn();
+        let driver;
+
+        // Chrome needs some "special handling"
+        if std::env::var("BROWSER").unwrap_or_default() == "chrome" {
+            driver = Command::new(self.path.clone())
+                .arg("--whitelisted-ips")
+                .arg("*")
+                .stdout(Stdio::inherit())
+                .spawn();
+        } else {
+            driver = Command::new(self.path.clone())
+                .stdout(Stdio::inherit())
+                .spawn();
+        }
 
         match driver {
             Ok(child) => {
