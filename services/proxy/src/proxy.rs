@@ -51,20 +51,30 @@ impl ProxyServer {
     ) -> ProxyResult<Response<Body>> {
         match self.info.get_session_upstream(session_id) {
             Some(upstream) => self.forward(req, upstream).await,
-            None => Ok(Response::builder()
-                .status(StatusCode::NOT_FOUND)
-                .body(NOTFOUND.into())
-                .unwrap()),
+            None => {
+                let path = req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("");
+                debug!("{} {} -> BAD GATEWAY (session request)", req.method(), path);
+
+                Ok(Response::builder()
+                    .status(StatusCode::NOT_FOUND)
+                    .body(NOTFOUND.into())
+                    .unwrap())
+            }
         }
     }
 
     async fn handle_manager_request(&self, req: Request<Body>) -> ProxyResult<Response<Body>> {
         match self.info.get_manager_upstream() {
             Some(upstream) => self.forward(req, upstream).await,
-            None => Ok(Response::builder()
-                .status(StatusCode::BAD_GATEWAY)
-                .body(NOGATEWAY.into())
-                .unwrap()),
+            None => {
+                let path = req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("");
+                debug!("{} {} -> BAD GATEWAY (manager request)", req.method(), path);
+
+                Ok(Response::builder()
+                    .status(StatusCode::BAD_GATEWAY)
+                    .body(NOGATEWAY.into())
+                    .unwrap())
+            }
         }
     }
 
@@ -80,10 +90,15 @@ impl ProxyServer {
         } else {
             match REGEX_SESSION_PATH.captures(&path) {
                 Some(caps) => self.handle_session_request(req, &caps["sid"]).await,
-                None => Ok(Response::builder()
-                    .status(StatusCode::NOT_FOUND)
-                    .body(NOTFOUND.into())
-                    .unwrap()),
+                None => {
+                    let path = req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("");
+                    debug!("{} {} -> NOT FOUND", req.method(), path);
+
+                    Ok(Response::builder()
+                        .status(StatusCode::NOT_FOUND)
+                        .body(NOTFOUND.into())
+                        .unwrap())
+                }
             }
         }
     }
