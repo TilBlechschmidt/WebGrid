@@ -10,8 +10,6 @@ pub struct Logger {
 // Initializer
 impl Logger {
     pub fn new(con: &MultiplexedConnection, component: String) -> Logger {
-        pretty_env_logger::init_timed();
-
         Logger {
             con: con.clone(),
             component,

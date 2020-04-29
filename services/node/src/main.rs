@@ -19,6 +19,7 @@ use std::time::Duration;
 use shared::lifecycle::{generate_session_termination_script, wait_for, DeathReason};
 use shared::logging::LogCode;
 use shared::Timeout;
+use shared::service_init;
 
 mod config;
 mod context;
@@ -320,6 +321,8 @@ async fn terminate_session(ctx: Arc<Context>) {
 
 #[tokio::main]
 async fn main() {
+    service_init();
+
     let ctx = Arc::new(Context::new().await);
     ctx.heart
         .add_beat(

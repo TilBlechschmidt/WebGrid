@@ -12,6 +12,10 @@ pub mod capabilities;
 pub mod lifecycle;
 pub mod logging;
 
+pub fn service_init() {
+    pretty_env_logger::init_timed();
+}
+
 // Various timeouts in seconds
 #[derive(Debug)]
 pub enum Timeout {

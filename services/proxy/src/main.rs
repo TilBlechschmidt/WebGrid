@@ -4,7 +4,7 @@ extern crate lazy_static;
 use redis::Client;
 use std::thread;
 
-use shared::logging::Logger;
+use shared::{service_init, metrics::MetricsProcessor};
 
 mod config;
 mod proxy;
@@ -16,11 +16,12 @@ use crate::watcher::RoutingInfo;
 
 #[tokio::main]
 async fn main() {
+    service_init();
+
     let config = Config::new().unwrap();
 
     let client = Client::open(config.clone().redis_url).unwrap();
     let con = client.get_multiplexed_tokio_connection().await.unwrap();
-    let _logger = Logger::new(&con, "proxy".to_string());
 
     let info = RoutingInfo::new();
     let proxy = ProxyServer::new(info.clone());

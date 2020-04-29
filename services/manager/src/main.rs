@@ -8,6 +8,7 @@ use log::{debug, info, warn};
 use redis::{AsyncCommands, RedisResult};
 use std::net::SocketAddr;
 use std::sync::Arc;
+use shared::service_init;
 
 mod config;
 mod context;
@@ -90,7 +91,10 @@ async fn deregister(ctx: Arc<Context>) -> RedisResult<()> {
 
 #[tokio::main]
 async fn main() {
-    let ctx = Arc::new(Context::new().await);
+    service_init();
+
+    let (context, mut metrics) = Context::new().await;
+    let ctx = Arc::new(context);
 
     register(ctx.clone()).await.unwrap();
 
