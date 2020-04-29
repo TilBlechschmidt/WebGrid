@@ -17,6 +17,7 @@ type ProxyResult<T> = std::result::Result<T, GenericError>;
 
 static NOTFOUND: &[u8] = b"Not Found";
 static NOGATEWAY: &[u8] = b"No managers available to handle the request";
+static ALIVE: &[u8] = b"I'm alive";
 
 lazy_static! {
     static ref REGEX_SESSION_PATH: Regex = Regex::new(r"/session/(?P<sid>[^/]*)").unwrap();
@@ -98,7 +99,12 @@ impl ProxyServer {
             .map(|x| x.to_string())
             .unwrap_or_else(|| "".to_string());
 
-        let result = if req.method() == Method::POST && path == "/session" {
+        let result = if path == "/status" {
+            Ok(Response::builder()
+                .status(StatusCode::OK)
+                .body(ALIVE.into())
+                .unwrap())
+        } else if req.method() == Method::POST && path == "/session" {
             self.handle_manager_request(req).await
         } else {
             match REGEX_SESSION_PATH.captures(&path) {

@@ -28,6 +28,12 @@ spec:
               value: "redis://redis/"
             - name: RUST_LOG
               value: info,warp=debug
+          livenessProbe:
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            httpGet:
+              path: /metrics
+              port: 3036
       initContainers:
         - name: init-redis
           image: redis:alpine

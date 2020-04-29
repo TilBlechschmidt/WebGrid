@@ -33,6 +33,12 @@ spec:
                   fieldPath: metadata.name
             - name: RUST_LOG
               value: info
+          livenessProbe:
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            httpGet:
+              path: /status
+              port: 3033
       initContainers:
         - name: init-redis
           image: redis:alpine

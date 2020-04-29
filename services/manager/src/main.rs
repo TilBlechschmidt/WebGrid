@@ -116,9 +116,11 @@ async fn main() {
         .and(warp::addr::remote())
         .and_then(handle_post);
 
+    let health_route = warp::path("status").map(|| "I'm alive!");
+
     let listening_socket: SocketAddr = ([0, 0, 0, 0], 3033).into();
     info!("Listening at {:?}", listening_socket);
-    let server = warp::serve(session_route).run(listening_socket);
+    let server = warp::serve(session_route.or(health_route)).run(listening_socket);
 
     tokio::spawn(server);
 

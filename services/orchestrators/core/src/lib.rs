@@ -11,6 +11,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::time;
 use uuid::Uuid;
+use warp::Filter;
 
 use shared::{logging::LogCode, Timeout};
 
@@ -200,6 +201,11 @@ fn watch_nodes<P: Provisioner>(ctx: Arc<Context>, provisioner: P) -> redis::Redi
     }
 }
 
+async fn health_probe_server() {
+    let routes = warp::get().and(warp::path("status")).map(|| "I'm alive!");
+    warp::serve(routes).run(([0, 0, 0, 0], 3038)).await;
+}
+
 pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
     provisioner_type: ProvisionerType,
     provisioner: P,
@@ -272,6 +278,11 @@ pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
         slot_count_adjuster(ctx_adjuster).await.unwrap();
     });
     debug!("Start 'slot_count_adjuster'");
+
+    // Start health probe
+    tokio::spawn(async {
+        health_probe_server().await;
+    });
 
     // Run until we die!
     ctx.heart.beat(true).await;
