@@ -10,9 +10,9 @@ edition = "2018"
 shared = { path = "../shared" }
 redis = { version = "0.15.1", features = ["tokio-rt-core"] }
 tokio = { version = "0.2", features = ["macros"] }
-hyper = "0.13.4"
+hyper = "0.13.5"
 chrono = "0.4.11"
 config = "0.10"
-serde = { version = "1.0.105", features = ["derive"] }
+serde = { version = "1.0.106", features = ["derive"] }
 warp = "0.2"
 log = "0.4"
