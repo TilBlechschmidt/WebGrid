@@ -5,7 +5,7 @@ use hyper::service::{make_service_fn, service_fn};
 use hyper::{
     body, Body, Client as HttpClient, Error as HyperError, Method, Request, Response, Server,
 };
-use log::{debug, error, info, warn};
+use log::{debug, error, info, trace, warn};
 use redis::{AsyncCommands, RedisResult};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -91,14 +91,21 @@ async fn start_driver(ctx: Arc<Context>) -> Result<(), NodeError> {
     }
 }
 
-async fn create_local_session(
-    ctx: Arc<Context>,
-    requested_capabilities: String,
-) -> Result<String, NodeError> {
+async fn create_local_session(ctx: Arc<Context>) -> Result<String, NodeError> {
     let mut con = ctx.con.clone();
+
+    let capabilities_key = format!("session:{}:capabilities", ctx.config.session_id);
+    let requested_capabilities: String = con
+        .hget(capabilities_key, "requested")
+        .await
+        .map_err(|_| NodeError::LocalSessionCreationError)?;
     let body_string = format!("{{\"capabilities\": {} }}", requested_capabilities);
 
     info!("Creating local session");
+    debug!(
+        "Session creation payload: {}",
+        body_string.replace("\n", "")
+    );
 
     let client = HttpClient::new();
     let req = Request::builder()
@@ -196,13 +203,33 @@ async fn serve_proxy(ctx: Arc<Context>, internal_session_id: String) {
                     None => request_path.to_string(),
                 };
 
-                let uri = format!("http://{}{}", out_addr, path).parse().unwrap();
-                debug!("{} {} -> {}", req.method(), path, uri);
+                let req_method = req.method().clone();
+                let uri_string = format!("http://{}{}", out_addr, path);
+                let uri = uri_string.parse().unwrap();
                 *req.uri_mut() = uri;
 
-                let proxy_request = client.request(req);
+                let (req_parts, req_body) = req.into_parts();
+                let client_clone = client.clone();
 
                 async move {
+                    let req_body = match body::to_bytes(req_body).await {
+                        Ok(bytes) => {
+                            String::from_utf8(bytes.to_vec()).unwrap_or_else(|_| "".to_string())
+                        }
+                        Err(_) => "".to_string(),
+                    };
+
+                    trace!(
+                        "-> {} {} -> {}; body: '{}'",
+                        req_method,
+                        path,
+                        uri_string,
+                        req_body.replace("\n", "")
+                    );
+
+                    let rebuild_req = Request::from_parts(req_parts, Body::from(req_body));
+                    let proxy_request = client_clone.request(rebuild_req);
+
                     let mut con = ctx.con.clone();
                     let _: RedisResult<()> = con
                         .hset(
@@ -220,7 +247,7 @@ async fn serve_proxy(ctx: Arc<Context>, internal_session_id: String) {
                             Err(driver_response)
                         }
                         Ok(driver_response) => {
-                            debug!("Upstream {} code {}", path, driver_response.status());
+                            let response_status = driver_response.status();
                             let (parts, body) = driver_response.into_parts();
 
                             let body = match body::to_bytes(body).await {
@@ -228,6 +255,14 @@ async fn serve_proxy(ctx: Arc<Context>, internal_session_id: String) {
                                     .unwrap_or_else(|_| "".to_string()),
                                 Err(_) => "".to_string(),
                             };
+
+                            trace!(
+                                "<- {} {} => {}; body: '{}'",
+                                req_method,
+                                path,
+                                response_status,
+                                body.replace("\n", "")
+                            );
 
                             let session_closed = if is_window_delete_request {
                                 lazy_static! {
@@ -292,7 +327,7 @@ fn call_on_create_script(ctx: Arc<Context>) {
 
 async fn node_startup(ctx: Arc<Context>) -> Result<(), NodeError> {
     start_driver(ctx.clone()).await?;
-    let session_id = create_local_session(ctx.clone(), "{}".to_string()).await?;
+    let session_id = create_local_session(ctx.clone()).await?;
     resize_window(ctx.clone(), &session_id).await?;
     serve_proxy(ctx.clone(), session_id).await;
     call_on_create_script(ctx);
