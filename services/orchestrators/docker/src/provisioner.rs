@@ -63,7 +63,7 @@ impl Provisioner for DockerProvisioner {
             format!("WEBGRID_SESSION_ID={}", session_id),
             format!("FFMPEG_LOG=/host/{}-ffmpeg.log", session_id),
             format!("FFMPEG_OUT=/host/{}-ffmpeg.mp4", session_id),
-            "RUST_LOG=debug,hyper=warn".to_string(),
+            "RUST_LOG=trace,tokio=warn,hyper=warn".to_string(),
         ];
 
         let host_config = HostConfig {
