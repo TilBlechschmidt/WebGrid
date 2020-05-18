@@ -11,9 +11,9 @@ shared = { path = "../shared" }
 tokio = { version = "0.2", features = ["macros", "time"] }
 warp = "0.2"
 futures = "0.3.4"
-serde = { version = "1.0.106", features = ["derive"] }
+serde = { version = "1.0.110", features = ["derive"] }
 serde_json = "1.0.48"
-redis = { version = "0.15.1", features = ["tokio-rt-core"] }
+redis = { version = "0.16.0", features = ["tokio-rt-core"] }
 chrono = "0.4.11"
 uuid = { version = "0.8", features = ["v4"] }
 regex = "1"

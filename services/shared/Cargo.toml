@@ -8,9 +8,9 @@ edition = "2018"
 
 [dependencies]
 hyper = "0.13"
-redis = "0.15.1"
+redis = "0.16.0"
 tokio = { version = "0.2", features = ["signal"] }
-futures = "0.3.4"
+futures = "0.3.5"
 chrono = "0.4.11"
 log = "0.4"
 pretty_env_logger = "0.4"
