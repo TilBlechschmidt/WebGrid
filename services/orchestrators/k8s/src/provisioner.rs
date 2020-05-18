@@ -11,6 +11,7 @@ use serde_yaml;
 
 use kube::{
     api::{Api, DeleteParams, Meta, PostParams, PropagationPolicy},
+    error::Error as KubeError,
     Client,
 };
 
@@ -49,18 +50,20 @@ impl K8sProvisioner {
     async fn create_resource<T: Resource + Meta + DeserializeOwned + Serialize + Clone>(
         &self,
         value: &T,
-    ) {
+    ) -> Result<T, KubeError> {
         let api = self.get_api::<T>().await;
 
         match api.create(&PostParams::default(), value).await {
             Ok(o) => {
                 let name = Meta::name(&o);
                 info!("Created {} {}", T::KIND, name);
+                Ok(o)
             }
             Err(e) => {
                 error!("Failed to create {} {:?}", T::KIND, e);
+                Err(e)
             }
-        };
+        }
     }
 
     async fn delete_resource<T: Resource + Meta + DeserializeOwned + Serialize + Clone>(
@@ -89,7 +92,7 @@ impl K8sProvisioner {
         };
     }
 
-    async fn create_job(&self, session_id: &str, image: &str) {
+    async fn create_job(&self, session_id: &str, image: &str) -> Result<String, KubeError> {
         let name = K8sProvisioner::generate_name(&session_id);
 
         let mut job_yaml = load_config("job.yaml");
@@ -100,20 +103,35 @@ impl K8sProvisioner {
         trace!("Job YAML {}", job_yaml);
 
         let job: Job = serde_yaml::from_str(&job_yaml).unwrap();
-        self.create_resource(&job).await;
+        let resource = self.create_resource(&job).await?;
+
+        Ok(self.unwrap_uid(resource).unwrap_or_default())
     }
 
-    async fn create_service(&self, session_id: &str) {
+    async fn create_service(&self, session_id: &str, job_uid: &str) -> Result<String, KubeError> {
         let name = K8sProvisioner::generate_name(&session_id);
 
         let mut service_yaml = load_config("service.yaml");
         service_yaml = replace_config_variable(service_yaml, "job_name", &name);
         service_yaml = replace_config_variable(service_yaml, "service_name", &name);
+        service_yaml = replace_config_variable(service_yaml, "job_uid", job_uid);
 
         trace!("Service YAML {}", service_yaml);
 
         let service: Service = serde_yaml::from_str(&service_yaml).unwrap();
-        self.create_resource(&service).await;
+        let resource = self.create_resource(&service).await?;
+
+        Ok(self.unwrap_uid(resource).unwrap_or_default())
+    }
+
+    fn unwrap_uid<T: Resource + Meta + DeserializeOwned + Serialize + Clone>(
+        &self,
+        resource: T,
+    ) -> Option<String> {
+        match &Meta::meta(&resource).uid {
+            Some(uid) => Some(uid.to_owned()),
+            None => None,
+        }
     }
 }
 
@@ -132,15 +150,15 @@ impl Provisioner for K8sProvisioner {
         capabilities: CapabilitiesRequest,
     ) -> NodeInfo {
         let wrapped_image = match_image_from_capabilities(capabilities, &self.images);
+
         // TODO Remove this very crude "error handling" with some proper Result<NodeInfo>!
         if let Some(image) = wrapped_image {
-            let name = K8sProvisioner::generate_name(&session_id);
-
-            self.create_job(&session_id, &image).await;
-            self.create_service(&session_id).await;
+            if let Ok(job_uid) = self.create_job(&session_id, &image).await {
+                self.create_service(&session_id, &job_uid).await.ok();
+            }
 
             NodeInfo {
-                host: name,
+                host: K8sProvisioner::generate_name(&session_id),
                 port: ServicePort::Node.port().to_string(),
             }
         } else {
@@ -154,7 +172,8 @@ impl Provisioner for K8sProvisioner {
     async fn terminate_node(&self, session_id: &str) {
         let name = K8sProvisioner::generate_name(&session_id);
 
-        self.delete_resource::<Service>(&name).await;
+        // Service will be auto-deleted by K8s garbage collector
+        // This requires the ownerReference to be set in the service yaml!
         self.delete_resource::<Job>(&name).await;
     }
 }
