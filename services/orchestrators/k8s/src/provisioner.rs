@@ -1,7 +1,9 @@
 use orchestrator_core::provisioner::{
     async_trait, match_image_from_capabilities, NodeInfo, Provisioner, ProvisionerCapabilities,
 };
-use shared::{capabilities::CapabilitiesRequest, load_config, replace_config_variable};
+use shared::{
+    capabilities::CapabilitiesRequest, load_config, ports::ServicePort, replace_config_variable,
+};
 
 use k8s_openapi::api::batch::v1::Job;
 use k8s_openapi::api::core::v1::Service;
@@ -139,7 +141,7 @@ impl Provisioner for K8sProvisioner {
 
             NodeInfo {
                 host: name,
-                port: "3030".to_string(),
+                port: ServicePort::Node.port().to_string(),
             }
         } else {
             NodeInfo {

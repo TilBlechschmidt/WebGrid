@@ -4,8 +4,8 @@ metadata:
   name: {{service_name}}
 spec:
   ports:
-    - port: 3030
-      targetPort: 3030
+    - port: 40003
+      targetPort: 40003
       protocol: TCP
   selector:
     app: {{job_name}}

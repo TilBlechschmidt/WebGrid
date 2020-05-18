@@ -1,8 +1,8 @@
 use redis::{aio::MultiplexedConnection, Client};
-use std::net::SocketAddr;
 use warp::Filter;
 
 use log::info;
+use shared::ports::ServicePort;
 use shared::service_init;
 
 mod config;
@@ -50,7 +50,7 @@ async fn main() {
         .and(with_con)
         .and_then(handle_post);
 
-    let listening_socket: SocketAddr = ([0, 0, 0, 0], 3036).into();
+    let listening_socket = ServicePort::Metrics.socket_addr();
     info!("Listening at {:?}", listening_socket);
     let server = warp::serve(session_route).run(listening_socket);
 

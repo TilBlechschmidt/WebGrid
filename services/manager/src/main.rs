@@ -6,6 +6,7 @@ use warp::Filter;
 
 use log::{debug, info, warn};
 use redis::{AsyncCommands, RedisResult};
+use shared::ports::ServicePort;
 use shared::service_init;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -75,7 +76,7 @@ async fn register(ctx: Arc<Context>) -> RedisResult<()> {
     let mut con = ctx.con.clone();
     let data = [
         ("host", ctx.config.manager_host.clone()),
-        ("port", ctx.config.manager_port.to_string()),
+        ("port", ServicePort::Manager.port().to_string()),
     ];
     con.hset_multiple(format!("manager:{}", ctx.config.manager_id), &data)
         .await?;
@@ -100,7 +101,9 @@ async fn main() {
 
     info!(
         "Registered as {} @ {}:{}",
-        ctx.config.manager_id, ctx.config.manager_host, ctx.config.manager_port
+        ctx.config.manager_id,
+        ctx.config.manager_host,
+        ServicePort::Manager.port()
     );
 
     let heartbeat_key = format!("manager:{}:heartbeat", ctx.config.manager_id);
@@ -118,7 +121,7 @@ async fn main() {
 
     let health_route = warp::path("status").map(|| "I'm alive!");
 
-    let listening_socket: SocketAddr = ([0, 0, 0, 0], 3033).into();
+    let listening_socket = ServicePort::Manager.socket_addr();
     info!("Listening at {:?}", listening_socket);
     let server = warp::serve(session_route.or(health_route)).run(listening_socket);
 

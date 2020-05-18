@@ -14,7 +14,7 @@ COPY images/node/base/scripts .
 COPY services/.build/node /usr/local/bin/node-service
 
 CMD /scripts/entrypoint.sh
-EXPOSE 3030
+EXPOSE 40003
 
 # ----
 

@@ -11,6 +11,7 @@ use tokio::sync::mpsc::UnboundedSender;
 
 use crate::watcher::RoutingInfo;
 use shared::metrics::MetricsEntry;
+use shared::ports::ServicePort;
 
 type GenericError = Box<dyn std::error::Error + Send + Sync>;
 type ProxyResult<T> = std::result::Result<T, GenericError>;
@@ -147,7 +148,7 @@ impl ProxyServer {
             }
         });
 
-        let addr = ([0, 0, 0, 0], 8080).into();
+        let addr = ServicePort::Proxy.socket_addr();
         let server = Server::bind(&addr).serve(make_svc);
 
         info!("Listening on {}", addr);

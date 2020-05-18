@@ -13,7 +13,7 @@ use tokio::time;
 use uuid::Uuid;
 use warp::Filter;
 
-use shared::{logging::LogCode, Timeout};
+use shared::{logging::LogCode, ports::ServicePort, Timeout};
 
 mod config;
 mod context;
@@ -203,7 +203,8 @@ fn watch_nodes<P: Provisioner>(ctx: Arc<Context>, provisioner: P) -> redis::Redi
 
 async fn health_probe_server() {
     let routes = warp::get().and(warp::path("status")).map(|| "I'm alive!");
-    warp::serve(routes).run(([0, 0, 0, 0], 3038)).await;
+    let address = ServicePort::Orchestrator.socket_addr();
+    warp::serve(routes).run(address).await;
 }
 
 pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(

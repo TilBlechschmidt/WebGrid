@@ -2,6 +2,7 @@ use orchestrator_core::provisioner::{
     async_trait, match_image_from_capabilities, NodeInfo, Provisioner, ProvisionerCapabilities,
 };
 use shared::capabilities::CapabilitiesRequest;
+use shared::ports::ServicePort;
 
 use bollard::container::{
     Config, CreateContainerOptions, HostConfig, KillContainerOptions, StartContainerOptions,
@@ -92,7 +93,7 @@ impl Provisioner for DockerProvisioner {
 
         NodeInfo {
             host: name,
-            port: "3030".to_string(),
+            port: ServicePort::Node.port().to_string(),
         }
     }
 

@@ -19,7 +19,7 @@ spec:
           imagePullPolicy: Always
           name: proxy
           ports:
-            - containerPort: 8080
+            - containerPort: 40005
           env:
           - name: WEBGRID_REDIS_URL
             value: "redis://redis/"
@@ -30,7 +30,7 @@ spec:
             periodSeconds: 5
             httpGet:
               path: /status
-              port: 8080
+              port: 40005
       initContainers:
         - name: init-redis
           image: redis:alpine
@@ -43,7 +43,7 @@ metadata:
 spec:
   ports:
     - port: 80
-      targetPort: 8080
+      targetPort: 40005
       protocol: TCP
   selector:
     name: proxy

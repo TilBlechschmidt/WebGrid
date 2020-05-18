@@ -50,7 +50,7 @@ spec:
             periodSeconds: 5
             httpGet:
               path: /status
-              port: 3038
+              port: 40004
           env:
             - name: WEBGRID_REDIS_URL
               value: "redis://redis/"

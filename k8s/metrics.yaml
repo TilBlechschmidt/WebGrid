@@ -13,7 +13,7 @@ spec:
     metadata:
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "3036"
+        prometheus.io/port: "40002"
       labels:
         name: metrics
     spec:
@@ -22,7 +22,7 @@ spec:
           imagePullPolicy: Always
           name: metrics
           ports:
-            - containerPort: 3036
+            - containerPort: 40002
           env:
             - name: WEBGRID_REDIS_URL
               value: "redis://redis/"
@@ -33,7 +33,7 @@ spec:
             periodSeconds: 5
             httpGet:
               path: /metrics
-              port: 3036
+              port: 40002
       initContainers:
         - name: init-redis
           image: redis:alpine

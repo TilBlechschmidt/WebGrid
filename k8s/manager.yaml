@@ -19,7 +19,7 @@ spec:
           imagePullPolicy: Always
           name: manager
           ports:
-            - containerPort: 3033
+            - containerPort: 40001
           env:
             - name: WEBGRID_REDIS_URL
               value: "redis://redis/"
@@ -38,7 +38,7 @@ spec:
             periodSeconds: 5
             httpGet:
               path: /status
-              port: 3033
+              port: 40001
       initContainers:
         - name: init-redis
           image: redis:alpine
