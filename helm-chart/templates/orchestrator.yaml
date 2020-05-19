@@ -35,7 +35,7 @@ spec:
           configMap:
             name: {{ include "web-grid.fullname" . }}-orchestrator
       containers:
-        - image: "{{ .Values.image.repository }}/webgrid-orchestrator:k8s"
+        - image: "{{ .Values.image.repository }}/webgrid-orchestrator-k8s"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: {{ .Chart.Name }}-orchestrator
           volumeMounts:
@@ -55,7 +55,7 @@ spec:
             - name: WEBGRID_SLOTS
               value: "5"
             - name: WEBGRID_IMAGES
-              value: "{{ .Values.image.repository }}/webgrid-node:firefox=firefox::68.7.0esr,{{ .Values.image.repository }}/webgrid-node:chrome=chrome::81.0.4044.122"
+              value: "{{ .Values.image.repository }}/webgrid-node-firefox=firefox::68.7.0esr,{{ .Values.image.repository }}/webgrid-node-chrome=chrome::81.0.4044.122"
             - name: RUST_LOG
               value: {{ .Values.logLevel }}
             - name: WEBGRID_CONFIG_DIR
