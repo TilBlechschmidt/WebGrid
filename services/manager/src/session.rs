@@ -7,7 +7,7 @@ use shared::{parse_browser_string, Timeout};
 use chrono::prelude::*;
 use futures::future::*;
 use log::{debug, warn};
-use redis::{aio::MultiplexedConnection, pipe, AsyncCommands, Client, RedisResult};
+use redis::{aio::ConnectionManager, pipe, AsyncCommands, RedisResult};
 use regex::Regex;
 use serde_json;
 use std::sync::Arc;
@@ -19,7 +19,7 @@ use crate::context::Context;
 use crate::structures::*;
 
 async fn create_session(
-    con: &MultiplexedConnection,
+    con: &ConnectionManager,
     capabilities: &str,
     ip: &str,
     user_agent: &str,
@@ -49,7 +49,7 @@ async fn create_session(
 }
 
 async fn match_orchestrators(
-    con: &MultiplexedConnection,
+    con: &ConnectionManager,
     capabilities: &str,
 ) -> Result<Vec<String>, RequestError> {
     let mut con = con.clone();
@@ -121,7 +121,7 @@ async fn match_orchestrators(
 }
 
 async fn request_slot(
-    con: &MultiplexedConnection,
+    con: &ConnectionManager,
     session_id: &str,
     capabilities: &str,
 ) -> Result<(), RequestError> {
@@ -174,10 +174,7 @@ async fn request_slot(
     }
 }
 
-async fn await_scheduling(
-    con: &MultiplexedConnection,
-    session_id: &str,
-) -> Result<(), RequestError> {
+async fn await_scheduling(con: &ConnectionManager, session_id: &str) -> Result<(), RequestError> {
     let mut con = con.clone();
 
     let scheduling_timeout = Timeout::Scheduling.get(&con).await;
@@ -195,7 +192,7 @@ async fn await_scheduling(
 }
 
 async fn await_healthcheck(
-    con: &MultiplexedConnection,
+    con: &ConnectionManager,
     session_id: &str,
 ) -> Result<String, RequestError> {
     let mut con = con.clone();
@@ -218,7 +215,7 @@ async fn await_healthcheck(
 
 async fn run_session_setup(
     ctx: Arc<Context>,
-    con: &MultiplexedConnection,
+    con: &ConnectionManager,
     session_id: &str,
     capabilities: &str,
 ) -> Result<(), RequestError> {
@@ -258,8 +255,7 @@ pub async fn handle_create_session_request(
     user_agent: &str,
     capabilities: &str,
 ) -> Result<SessionReplyValue, RequestError> {
-    let client = Client::open(ctx.config.clone().redis_url).unwrap();
-    let mut con = client.get_multiplexed_tokio_connection().await.unwrap();
+    let mut con = ctx.create_client().await;
     let session_creation_start = Instant::now();
 
     let session_id = create_session(&con, capabilities, remote_addr, user_agent).await?;

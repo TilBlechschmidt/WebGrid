@@ -1,7 +1,7 @@
 extern crate pretty_env_logger;
 
 use log::{info, trace};
-use redis::{aio::MultiplexedConnection, AsyncCommands};
+use redis::{aio::ConnectionManager, AsyncCommands};
 use std::fmt;
 
 use std::fs::File;
@@ -9,6 +9,7 @@ use std::io::Read;
 use std::path::Path;
 
 pub mod capabilities;
+pub mod database;
 pub mod lifecycle;
 pub mod logging;
 pub mod metrics;
@@ -50,7 +51,7 @@ impl Timeout {
         }
     }
 
-    pub async fn get(&self, con: &MultiplexedConnection) -> usize {
+    pub async fn get(&self, con: &ConnectionManager) -> usize {
         let mut con = con.clone();
         let key = format!("{}", self).to_lowercase();
 

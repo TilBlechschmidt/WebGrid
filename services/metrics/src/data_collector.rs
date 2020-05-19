@@ -1,5 +1,5 @@
 use crate::{Metric, MetricType, MetricValue};
-use redis::{aio::MultiplexedConnection, AsyncCommands};
+use redis::{aio::ConnectionManager, AsyncCommands};
 use shared::metrics::SESSION_STARTUP_HISTOGRAM_BUCKETS;
 
 static HTTP_METHODS: [&str; 9] = [
@@ -7,7 +7,7 @@ static HTTP_METHODS: [&str; 9] = [
 ];
 static LOG_LEVELS: [&str; 3] = ["INFO", "WARN", "FAIL"];
 
-pub async fn traffic_value(con: &mut MultiplexedConnection, direction: &str) -> MetricValue {
+pub async fn traffic_value(con: &mut ConnectionManager, direction: &str) -> MetricValue {
     let bytes: f64 = con
         .hget("metrics:http:net.bytes.total", direction)
         .await
@@ -16,7 +16,7 @@ pub async fn traffic_value(con: &mut MultiplexedConnection, direction: &str) -> 
     MetricValue::from_value(bytes).with_label("direction", direction)
 }
 
-pub async fn proxy_traffic(con: &MultiplexedConnection) -> Metric {
+pub async fn proxy_traffic(con: &ConnectionManager) -> Metric {
     let mut con = con.clone();
 
     Metric {
@@ -31,7 +31,7 @@ pub async fn proxy_traffic(con: &MultiplexedConnection) -> Metric {
     }
 }
 
-pub async fn proxy_requests(con: &MultiplexedConnection) -> Metric {
+pub async fn proxy_requests(con: &ConnectionManager) -> Metric {
     let mut con = con.clone();
     let mut metric = Metric {
         name: "webgrid_proxy_http_requests_total".to_string(),
@@ -59,7 +59,7 @@ pub async fn proxy_requests(con: &MultiplexedConnection) -> Metric {
     metric
 }
 
-pub async fn session_log(con: &MultiplexedConnection) -> Metric {
+pub async fn session_log(con: &ConnectionManager) -> Metric {
     let mut con = con.clone();
     let mut metric = Metric {
         name: "webgrid_session_status_codes_total".to_string(),
@@ -87,7 +87,7 @@ pub async fn session_log(con: &MultiplexedConnection) -> Metric {
     metric
 }
 
-pub async fn session_startup_duration(con: &MultiplexedConnection) -> Metric {
+pub async fn session_startup_duration(con: &ConnectionManager) -> Metric {
     let mut con = con.clone();
     let mut metric = Metric {
         name: "session_startup_duration_seconds".to_string(),
@@ -141,7 +141,7 @@ pub async fn session_startup_duration(con: &MultiplexedConnection) -> Metric {
     metric
 }
 
-pub async fn sessions_active(con: &MultiplexedConnection) -> Metric {
+pub async fn sessions_active(con: &ConnectionManager) -> Metric {
     let mut con = con.clone();
 
     Metric {

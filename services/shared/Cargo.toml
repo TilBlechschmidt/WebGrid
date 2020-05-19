@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 hyper = "0.13"
-redis = "0.16.0"
+redis = { version = "0.16.0", features = ["connection-manager"] }
 tokio = { version = "0.2", features = ["signal"] }
 futures = "0.3.5"
 chrono = "0.4.11"

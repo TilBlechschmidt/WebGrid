@@ -2,7 +2,7 @@ use chrono::Utc;
 use futures::{future::FutureExt, pin_mut, select};
 use hyper::{body, Client, Uri};
 use log::{debug, info, trace};
-use redis::{aio::MultiplexedConnection, AsyncCommands, RedisResult, Script};
+use redis::{aio::ConnectionManager, AsyncCommands, RedisResult, Script};
 use std::collections::HashMap;
 use std::sync::{atomic::AtomicBool, atomic::Ordering, Arc, Mutex};
 use std::time::Duration;
@@ -24,12 +24,12 @@ pub struct Heart {
     original_lifetime: Option<usize>,
     lifetime: Arc<Mutex<Option<usize>>>,
     beating: Arc<AtomicBool>,
-    con: MultiplexedConnection,
+    con: ConnectionManager,
     beats: Arc<Mutex<HashMap<String, (usize, usize)>>>,
 }
 
 impl Heart {
-    pub fn new(con: &MultiplexedConnection, lifetime: Option<usize>) -> Heart {
+    pub fn new(con: &ConnectionManager, lifetime: Option<usize>) -> Heart {
         if let Some(lifetime) = lifetime {
             info!("Lifetime set to {} seconds", lifetime);
         }

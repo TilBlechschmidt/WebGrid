@@ -1,7 +1,8 @@
-use redis::{aio::MultiplexedConnection, Client};
+use redis::aio::ConnectionManager;
 use warp::Filter;
 
 use log::info;
+use shared::database::connect;
 use shared::ports::ServicePort;
 use shared::service_init;
 
@@ -13,7 +14,7 @@ use crate::config::Config;
 use data_collector::*;
 use structures::*;
 
-async fn handle_post(con: MultiplexedConnection) -> Result<impl warp::Reply, warp::Rejection> {
+async fn handle_post(con: ConnectionManager) -> Result<impl warp::Reply, warp::Rejection> {
     let metrics: Vec<String> = vec![
         proxy_requests(&con).await,
         proxy_traffic(&con).await,
@@ -38,8 +39,7 @@ async fn main() {
 
     let config = Config::new().unwrap();
 
-    let client = Client::open(config.clone().redis_url).unwrap();
-    let con = client.get_multiplexed_tokio_connection().await.unwrap();
+    let con = connect(config.clone().redis_url).await;
 
     let heart = shared::lifecycle::Heart::new(&con, None);
 

@@ -3,7 +3,7 @@ extern crate lazy_static;
 
 use chrono::prelude::*;
 use log::{debug, error, info};
-use redis::{AsyncCommands, RedisResult};
+use redis::{AsyncCommands, Client, RedisResult};
 use regex::Regex;
 use serde_json;
 use std::cmp::Ordering;
@@ -49,7 +49,7 @@ async fn slot_reclaimer(ctx: Arc<Context>) {
 }
 
 async fn slot_recycler(ctx: Arc<Context>) {
-    let mut con = ctx.client.get_multiplexed_tokio_connection().await.unwrap();
+    let mut con = ctx.create_client().await;
 
     let source = format!(
         "orchestrator:{}:slots.reclaimed",
@@ -71,7 +71,7 @@ async fn slot_recycler(ctx: Arc<Context>) {
 
 #[rustfmt::skip]
 async fn job_processor<P: Provisioner>(ctx: Arc<Context>, provisioner: P) {
-    let mut con = ctx.client.get_multiplexed_tokio_connection().await.unwrap();
+    let mut con = ctx.create_client().await;
 
     let backlog = format!("orchestrator:{}:backlog", ctx.config.orchestrator_id);
     let pending = format!("orchestrator:{}:pending", ctx.config.orchestrator_id);
@@ -122,7 +122,7 @@ async fn job_processor<P: Provisioner>(ctx: Arc<Context>, provisioner: P) {
 }
 
 async fn slot_count_adjuster(ctx: Arc<Context>) -> RedisResult<()> {
-    let mut con = ctx.client.get_multiplexed_tokio_connection().await?;
+    let mut con = ctx.create_client().await;
     let slots_key = format!("orchestrator:{}:slots", ctx.config.orchestrator_id);
     let reclaimed_key = format!(
         "orchestrator:{}:slots.reclaimed",
@@ -177,7 +177,10 @@ async fn slot_count_adjuster(ctx: Arc<Context>) -> RedisResult<()> {
 fn watch_nodes<P: Provisioner>(ctx: Arc<Context>, provisioner: P) -> redis::RedisResult<()> {
     let mut rt = tokio::runtime::Runtime::new().unwrap();
 
-    let mut pubsub_con = ctx.client.get_connection()?;
+    // TODO Improve error handling here! Otherwise we won't get proper node-cleanup ...
+    // Maybe there is a way to do this with redis::aio 🤷‍♂️
+    let client = Client::open(ctx.config.clone().redis_url)?;
+    let mut pubsub_con = client.get_connection()?;
     let mut pubsub = pubsub_con.as_pubsub();
 
     pubsub.psubscribe(PATTERN_SESSION)?;

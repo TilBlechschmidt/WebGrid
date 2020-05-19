@@ -1,15 +1,15 @@
 use log::info;
-use redis::{aio::MultiplexedConnection, cmd, AsyncCommands, RedisResult};
+use redis::{aio::ConnectionManager, cmd, AsyncCommands, RedisResult};
 use std::fmt;
 
 pub struct Logger {
-    con: MultiplexedConnection,
+    con: ConnectionManager,
     component: String,
 }
 
 // Initializer
 impl Logger {
-    pub fn new(con: &MultiplexedConnection, component: String) -> Logger {
+    pub fn new(con: &ConnectionManager, component: String) -> Logger {
         Logger {
             con: con.clone(),
             component,
@@ -61,11 +61,7 @@ pub struct SessionLogger {
 }
 
 impl SessionLogger {
-    pub fn new(
-        con: &MultiplexedConnection,
-        component: String,
-        session_id: String,
-    ) -> SessionLogger {
+    pub fn new(con: &ConnectionManager, component: String, session_id: String) -> SessionLogger {
         SessionLogger {
             logger: Logger::new(con, component),
             session_id,

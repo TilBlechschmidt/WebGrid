@@ -1,8 +1,8 @@
 use chrono::Utc;
-use redis::{aio::MultiplexedConnection, RedisResult};
+use redis::{aio::ConnectionManager, RedisResult};
 
 pub async fn reclaim_slots(
-    con: &mut MultiplexedConnection,
+    con: &mut ConnectionManager,
     orchestrator_id: &str,
 ) -> RedisResult<(Vec<String>, Vec<String>)> {
     // TODO: The terminate_session function is a duplicate of shared::lifecycle, extract it! Maybe a lua builder or smth similar in shared library?
@@ -96,23 +96,22 @@ pub async fn reclaim_slots(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use redis::{aio::MultiplexedConnection, cmd, Client, RedisResult, Script};
+    use redis::{aio::ConnectionManager, cmd, RedisResult, Script};
+    use shared::database::connect;
 
-    async fn setup_test() -> MultiplexedConnection {
-        let redis_url = "redis://localhost/";
-        let client = Client::open(redis_url).unwrap();
-        let mut con = client.get_multiplexed_tokio_connection().await.unwrap();
-
+    async fn setup_test() -> ConnectionManager {
+        let redis_url = "redis://localhost/".to_owned();
+        let mut con = connect(redis_url).await;
         let _: RedisResult<()> = cmd("FLUSHALL").query_async(&mut con).await;
 
         return con;
     }
 
-    async fn cleanup(con: &mut MultiplexedConnection) {
+    async fn cleanup(con: &mut ConnectionManager) {
         let _: RedisResult<()> = cmd("FLUSHALL").query_async(con).await;
     }
 
-    async fn load_test_data(con: &mut MultiplexedConnection) {
+    async fn load_test_data(con: &mut ConnectionManager) {
         // Creates the following:
         // 5 Sessions
         // -> session1 is assigned to a manager which is alive

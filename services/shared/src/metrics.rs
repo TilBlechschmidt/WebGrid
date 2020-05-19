@@ -1,6 +1,6 @@
 use hyper::http::{Method, StatusCode};
 use log::warn;
-use redis::{aio::MultiplexedConnection, AsyncCommands, RedisResult};
+use redis::{aio::ConnectionManager, AsyncCommands, RedisResult};
 use std::{fmt, fmt::Display};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 
@@ -35,11 +35,11 @@ pub enum MetricsEntry {
 pub struct MetricsProcessor {
     tx: UnboundedSender<MetricsEntry>,
     rx: UnboundedReceiver<MetricsEntry>,
-    con: MultiplexedConnection,
+    con: ConnectionManager,
 }
 
 impl MetricsProcessor {
-    pub fn new(con: &MultiplexedConnection) -> Self {
+    pub fn new(con: &ConnectionManager) -> Self {
         let (tx, rx) = unbounded_channel();
 
         Self {

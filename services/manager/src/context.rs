@@ -1,4 +1,5 @@
-use redis::{aio::MultiplexedConnection, Client};
+use redis::aio::ConnectionManager;
+use shared::database::connect;
 use shared::lifecycle::Heart;
 use shared::logging::Logger;
 use shared::metrics::{MetricsEntry, MetricsProcessor};
@@ -8,7 +9,7 @@ use crate::config::Config;
 
 pub struct Context {
     pub config: Config,
-    pub con: MultiplexedConnection,
+    pub con: ConnectionManager,
     pub logger: Logger,
     pub heart: Heart,
     pub metrics_tx: UnboundedSender<MetricsEntry>,
@@ -17,9 +18,7 @@ pub struct Context {
 impl Context {
     pub async fn new() -> (Self, MetricsProcessor) {
         let config = Config::new().unwrap();
-
-        let client = Client::open(config.clone().redis_url).unwrap();
-        let con = client.get_multiplexed_tokio_connection().await.unwrap();
+        let con = connect(config.clone().redis_url).await;
 
         let logger = Logger::new(&con, "manager".to_string());
         let heart = Heart::new(&con, None);
@@ -35,5 +34,9 @@ impl Context {
         };
 
         (ctx, metrics)
+    }
+
+    pub async fn create_client(&self) -> ConnectionManager {
+        connect(self.config.clone().redis_url).await
     }
 }

@@ -1,10 +1,9 @@
 #[macro_use]
 extern crate lazy_static;
 
-use redis::Client;
 use std::thread;
 
-use shared::{metrics::MetricsProcessor, service_init};
+use shared::{database::connect, metrics::MetricsProcessor, service_init};
 
 mod config;
 mod proxy;
@@ -19,9 +18,7 @@ async fn main() {
     service_init();
 
     let config = Config::new().unwrap();
-
-    let client = Client::open(config.clone().redis_url).unwrap();
-    let con = client.get_multiplexed_tokio_connection().await.unwrap();
+    let con = connect(config.clone().redis_url).await;
 
     let mut metrics = MetricsProcessor::new(&con);
     let info = RoutingInfo::new();

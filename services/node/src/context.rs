@@ -1,4 +1,5 @@
-use redis::{aio::MultiplexedConnection, Client};
+use redis::aio::ConnectionManager;
+use shared::database::connect;
 use shared::lifecycle::Heart;
 use shared::logging::SessionLogger;
 use shared::Timeout;
@@ -9,7 +10,7 @@ use crate::driver::DriverManager;
 
 pub struct Context {
     pub config: Config,
-    pub con: MultiplexedConnection,
+    pub con: ConnectionManager,
     pub logger: SessionLogger,
     pub driver: DriverManager,
     pub driver_addr: SocketAddr,
@@ -20,8 +21,7 @@ impl Context {
     pub async fn new() -> Self {
         let config = Config::new().unwrap();
 
-        let client = Client::open(config.clone().redis_url).unwrap();
-        let con = client.get_multiplexed_tokio_connection().await.unwrap();
+        let con = connect(config.clone().redis_url).await;
 
         let logger = SessionLogger::new(&con, "node".to_string(), config.session_id.clone());
         let heart = Heart::new(&con, Some(Timeout::SessionTermination.get(&con).await));
