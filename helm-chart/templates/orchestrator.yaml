@@ -76,7 +76,3 @@ spec:
               port: health-probe
           resources:
             {{- toYaml .Values.resources.orchestrator | nindent 12 }}
-      initContainers:
-        - name: init-redis
-          image: redis:alpine
-          command: ['sh', '-c', "until redis-cli -h {{ include "web-grid.redisServiceName" . }} PING; do echo waiting for redis; sleep 2; done"]

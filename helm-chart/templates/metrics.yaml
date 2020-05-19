@@ -55,7 +55,3 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.resources.proxy | nindent 12 }}
-      initContainers:
-        - name: init-redis
-          image: redis:alpine
-          command: ['sh', '-c', "until redis-cli -h {{ include "web-grid.redisServiceName" . }} PING; do echo waiting for redis; sleep 2; done"]
