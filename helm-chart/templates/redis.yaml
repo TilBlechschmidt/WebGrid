@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "web-grid.fullname" . }}-redis
+  labels:
+    web-grid/component: redis
+    {{- include "web-grid.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      web-grid/component: redis
+      {{- include "web-grid.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9121"
+      labels:
+        web-grid/component: redis
+        {{- include "web-grid.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.nodeSelector.redis }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity.redis }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations.redis }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - image: redis:alpine
+          imagePullPolicy: IfNotPresent
+          name: {{ .Chart.Name }}-redis
+          # ------- TODO Replace maxmemory with calculated value! -------
+          args: ['--notify-keyspace-events', 'Kgx', '--maxmemory', '104857600']
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources.redis | nindent 12 }}    
+        - image: oliver006/redis_exporter:latest
+          name: redis-exporter
+          ports:
+            - containerPort: 9121
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "web-grid.fullname" . }}-redis
+  labels:
+    {{- include "web-grid.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: 6379
+      targetPort: redis
+      protocol: TCP
+      name: redis
+  selector:
+    web-grid/component: redis
+    {{- include "web-grid.selectorLabels" . | nindent 4 }}
+  

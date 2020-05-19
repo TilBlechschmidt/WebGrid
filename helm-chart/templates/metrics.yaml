@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "web-grid.fullname" . }}-metrics
+  labels:
+    web-grid/component: metrics
+    {{- include "web-grid.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount.metrics }}
+  selector:
+    matchLabels:
+      web-grid/component: metrics
+      {{- include "web-grid.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "40002"
+      labels:
+        web-grid/component: metrics
+        {{- include "web-grid.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.nodeSelector.metrics }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity.metrics }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations.metrics }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - image: "{{ .Values.image.repository }}/webgrid-metrics"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          name: {{ .Chart.Name }}-metrics
+          ports:
+            - name: http
+              containerPort: 40002
+              protocol: TCP
+          env:
+            - name: WEBGRID_REDIS_URL
+              value: "{{ include "web-grid.redisURL" . }}"
+            - name: RUST_LOG
+              value: {{ .Values.logLevel }}
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: http
+          resources:
+            {{- toYaml .Values.resources.proxy | nindent 12 }}
+      initContainers:
+        - name: init-redis
+          image: redis:alpine
+          command: ['sh', '-c', "until redis-cli -h {{ include "web-grid.redisServiceName" . }} PING; do echo waiting for redis; sleep 2; done"]
