@@ -77,6 +77,19 @@ impl Heart {
         }
     }
 
+    pub async fn termination_signal() {
+        let mut sigterm_stream = signal(SignalKind::terminate()).unwrap();
+        let sigterm = sigterm_stream.recv().fuse();
+        let ctrl_c = ctrl_c().fuse();
+
+        pin_mut!(sigterm, ctrl_c);
+
+        select! {
+            (_) = sigterm => (),
+            (_) = ctrl_c => (),
+        };
+    }
+
     pub async fn beat(&self, handle_signals: bool) -> DeathReason {
         let mut con = self.con.clone();
         let mut interval = time::interval(Duration::from_secs(1));
@@ -87,17 +100,8 @@ impl Heart {
         if handle_signals {
             let cloned_heart = self.clone();
             tokio::spawn(async move {
-                let mut sigterm_stream = signal(SignalKind::terminate()).unwrap();
-                let sigterm = sigterm_stream.recv().fuse();
-                let ctrl_c = ctrl_c().fuse();
-
-                pin_mut!(sigterm, ctrl_c);
-
-                select! {
-                    (_) = sigterm => cloned_heart.kill(),
-                    (_) = ctrl_c => cloned_heart.kill(),
-                };
-
+                Heart::termination_signal().await;
+                cloned_heart.kill();
                 info!("Received shutdown signal!");
             });
         }

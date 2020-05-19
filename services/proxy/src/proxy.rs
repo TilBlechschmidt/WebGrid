@@ -10,6 +10,7 @@ use regex::Regex;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::watcher::RoutingInfo;
+use shared::lifecycle::Heart;
 use shared::metrics::MetricsEntry;
 use shared::ports::ServicePort;
 
@@ -150,8 +151,9 @@ impl ProxyServer {
 
         let addr = ServicePort::Proxy.socket_addr();
         let server = Server::bind(&addr).serve(make_svc);
+        let graceful = server.with_graceful_shutdown(Heart::termination_signal());
 
         info!("Listening on {}", addr);
-        server.await.unwrap();
+        graceful.await.unwrap();
     }
 }
