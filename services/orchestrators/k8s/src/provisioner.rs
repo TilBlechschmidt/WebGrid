@@ -39,7 +39,9 @@ impl K8sProvisioner {
     }
 
     fn generate_name(session_id: &str) -> String {
-        format!("session-{}", session_id)
+        let prefix = std::env::var("WEBGRID_RESOURCE_PREFIX").unwrap_or_default();
+        let short_id = &session_id[..8];
+        format!("{}session-{}", prefix, short_id)
     }
 
     async fn get_api<T: Resource>(&self) -> Api<T> {
@@ -115,6 +117,7 @@ impl K8sProvisioner {
         service_yaml = replace_config_variable(service_yaml, "job_name", &name);
         service_yaml = replace_config_variable(service_yaml, "service_name", &name);
         service_yaml = replace_config_variable(service_yaml, "job_uid", job_uid);
+        service_yaml = replace_config_variable(service_yaml, "session_id", session_id);
 
         trace!("Service YAML {}", service_yaml);
 
