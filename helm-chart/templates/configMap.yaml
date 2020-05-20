@@ -46,7 +46,7 @@ data:
         web-grid/sessionID: {{ "{{session_id}}" }}
         {{- include "web-grid.labels" . | nindent 8 }}
     spec:
-      backoffLimit: 1
+      backoffLimit: 0
       template:
         metadata:
           labels:
