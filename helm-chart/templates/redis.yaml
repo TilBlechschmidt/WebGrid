@@ -1,3 +1,20 @@
+{{- if ne .Values.storageClassName.redis "emptyDir" }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "web-grid.fullname" . }}-redis
+  labels:
+    web-grid/component: redis
+    {{- include "web-grid.labels" . | nindent 4 }}
+spec:
+  storageClassName: {{ .Values.storageClassName.redis }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100M
+---
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -32,18 +49,34 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+        - name: redis-config
+          configMap:
+            name: {{ include "web-grid.fullname" . }}-redis
+        - name: redis-persistence
+          {{- if eq .Values.storageClassName.redis "emptyDir" }}
+          emptyDir:
+            medium: Memory
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "web-grid.fullname" . }}-redis
+          {{- end }}
       containers:
         - image: redis:alpine
           imagePullPolicy: IfNotPresent
           name: {{ .Chart.Name }}-redis
-          # ------- TODO Replace maxmemory with calculated value! -------
-          args: ['--notify-keyspace-events', 'Kgx', '--maxmemory', '104857600']
+          args: ['/config/redis.conf']
           ports:
             - name: redis
               containerPort: 6379
               protocol: TCP
+          volumeMounts:
+            - name: redis-config
+              mountPath: /config
+            - name: redis-persistence
+              mountPath: /data
           resources:
-            {{- toYaml .Values.resources.redis | nindent 12 }}    
+            {{- toYaml .Values.resources.redis | nindent 12 }}
         - image: oliver006/redis_exporter:latest
           name: redis-exporter
           ports:
