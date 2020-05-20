@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"path": "services"
+		},
+		{
+			"path": "images"
+		},
+		{
+			"path": "helm-chart"
+		},
+		{
+			"path": "docs"
+		}
+	],
+	"settings": {
+		"editor.formatOnSave": true,
+		"files.autoSave": "onFocusChange",
+		"rust.clippy_preference": "on"
+	}
+}

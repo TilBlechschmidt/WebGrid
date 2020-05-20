@@ -104,7 +104,7 @@ mod tests {
         let mut con = connect(redis_url).await;
         let _: RedisResult<()> = cmd("FLUSHALL").query_async(&mut con).await;
 
-        return con;
+        con
     }
 
     async fn cleanup(con: &mut ConnectionManager) {

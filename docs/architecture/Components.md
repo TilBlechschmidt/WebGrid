@@ -1,6 +1,6 @@
 # Components
 
-![](assets/Component-overview.jpeg)
+![](../assets/Component-overview.jpeg)
 
 The WebGrid consist of multiple components which interoperate to provide the reliable scaling functionality. Namely these are:
 
@@ -33,7 +33,7 @@ They are basically just IDs which are generated when the component is created an
 Since any given component may die while processing requests each slot has a "parent" which is responsible for it. While a Node is running, it has the responsibility for its own slot. If it dies unexpectedly (and thus its heartbeat ceases to exist) the Orchestrator may reclaim its slot, adding it back to the list of available ones. This process is explained in more detail in the [Workflows](./Workflows.md) document.
 
 Here is an image of the slot lifecycle:
-![](assets/Slot-lifecycle.jpeg)
+![](../assets/Slot-lifecycle.jpeg)
 
 ## Manager
 The Manager processes requests from clients to create new sessions by determining which orchestrators match the requested capabilities, requesting a slot and verifying the Node scheduling and startup process. A session leaves the responsibility of the manager as soon as the startup sequence has completed. For more details consult the [Scheduling Workflow](./Workflows.md)

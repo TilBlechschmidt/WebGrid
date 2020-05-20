@@ -1,4 +1,5 @@
 # Data store
+All application data is stored in a Redis in-memory database. Below is a list of all keys that are currently in use, annotated with their type and format (if applicable).
 
 ## Root lists
 ```
@@ -62,7 +63,6 @@ session:<ID>:downstream = Hashes {
 ```
 
 ### Log event codes
-Warnings are informative but automatic recovery is possible while failures are fatal and the session terminates.
 
 #### Node
 - Info
