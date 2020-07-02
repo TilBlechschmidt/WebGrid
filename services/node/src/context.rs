@@ -1,42 +1,33 @@
-use redis::aio::ConnectionManager;
-use shared::database::connect;
-use shared::lifecycle::Heart;
-use shared::logging::SessionLogger;
-use shared::Timeout;
-use std::net::SocketAddr;
+use crate::tasks::DriverReference;
+use helpers::{env, keys};
+use lifecycle::HeartBeat;
+use resources::DefaultResourceManager;
+use scheduling::JobScheduler;
 
-use crate::config::Config;
-use crate::driver::DriverManager;
-
+#[derive(Clone)]
 pub struct Context {
-    pub config: Config,
-    pub con: ConnectionManager,
-    pub logger: SessionLogger,
-    pub driver: DriverManager,
-    pub driver_addr: SocketAddr,
-    pub heart: Heart,
+    pub resource_manager: DefaultResourceManager,
+    pub driver_reference: DriverReference,
+    pub heart_beat: HeartBeat<DefaultResourceManager>,
 }
 
 impl Context {
-    pub async fn new() -> Self {
-        let config = Config::new().unwrap();
-
-        let con = connect(config.clone().redis_url).await;
-
-        let logger = SessionLogger::new(&con, "node".to_string(), config.session_id.clone());
-        let heart = Heart::new(&con, Some(Timeout::SessionTermination.get(&con).await));
-
-        Context {
-            driver: DriverManager::new(config.driver.clone()),
-            driver_addr: ([127, 0, 0, 1], config.driver_port).into(),
-            config,
-            con,
-            logger,
-            heart,
+    pub fn new() -> Self {
+        Self {
+            resource_manager: DefaultResourceManager::new(),
+            driver_reference: DriverReference::new(),
+            heart_beat: HeartBeat::new(),
         }
     }
 
-    pub fn get_driver_url(&self, path: &str) -> String {
-        format!("http://{}{}", self.driver_addr.to_string(), path)
+    pub async fn spawn_heart_beat(&self, scheduler: &JobScheduler) {
+        self.heart_beat
+            .add_beat(
+                &keys::session::heartbeat::node(&env::service::node::ID),
+                60,
+                120,
+            )
+            .await;
+        scheduler.spawn_job(self.heart_beat.clone(), self.resource_manager.clone());
     }
 }
