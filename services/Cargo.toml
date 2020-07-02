@@ -1,6 +1,5 @@
 [workspace]
 members = [
-	"shared",
 	"libraries/helpers",
 	"libraries/resources",
 	"libraries/lifecycle",
