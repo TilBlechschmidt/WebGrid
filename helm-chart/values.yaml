@@ -34,10 +34,10 @@ resources:
   orchestrator: {}
   session:
     limits:
-      memory: 2000Mi
+      memory: 3000Mi
     requests:
       cpu: '1'
-      memory: 2000Mi
+      memory: 3000Mi
 
 nodeSelector:
   redis: {}
