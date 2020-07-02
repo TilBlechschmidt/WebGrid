@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 GECKO_VERSION=0.26.0
-CHROME_VERSION=81.0.4044.69
+CHROME_VERSION=83.0.4103.39
 PREV_PWD=$(pwd)
 TMP_DIR=$(mktemp -d)
 
@@ -34,7 +34,7 @@ function chromedriver {
 	# Install chrome
 	wget --no-check-certificate -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
 	echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/google-chrome.list
-	install_packages google-chrome-stable
+	install_packages google-chrome-stable libnss3
 
 	echo 'export DRIVER="/usr/bin/chromedriver"' >> /env.sh
 	echo 'export DRIVER_PORT=9515' >>/env.sh
