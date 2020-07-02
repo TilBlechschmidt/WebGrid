@@ -1,8 +1,7 @@
+use helpers::{CapabilitiesRequest, ServicePort};
 use orchestrator_core::provisioner::{
     async_trait, match_image_from_capabilities, NodeInfo, Provisioner, ProvisionerCapabilities,
 };
-use shared::capabilities::CapabilitiesRequest;
-use shared::ports::ServicePort;
 
 use bollard::container::{
     Config, CreateContainerOptions, HostConfig, KillContainerOptions, StartContainerOptions,

@@ -7,17 +7,33 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-shared = { path = "../../shared" }
+scheduling = { path = "../../libraries/scheduling" }
+resources = { path = "../../libraries/resources" }
+lifecycle = { path = "../../libraries/lifecycle" }
+helpers = { path = "../../libraries/helpers" }
+testing = { path = "../../libraries/testing" }
+tokio = { version = "0.2", features = ["macros"] }
+async-trait = "0.1.31"
+log = "0.4.8"
+anyhow = "1.0.31"
 redis = { version = "0.16.0", features = ["tokio-rt-core"] }
-tokio = { version = "0.2", features = ["macros", "time"] }
-config = "0.10"
 serde = { version = "1.0.110", features = ["derive"] }
 serde_json = "1.0"
-chrono = "0.4.11"
-uuid = { version = "0.8", features = ["v4"] }
-futures = "0.3.4"
-async-trait = "0.1.31"
 lazy_static = "1.4.0"
 regex = "1"
-log = "0.4"
-warp = "0.2"
+futures = "0.3.4"
+uuid = { version = "0.8", features = ["v4"] }
+chrono = "0.4.11"
+
+#shared = { path = "../../shared" }
+#redis = { version = "0.16.0", features = ["tokio-rt-core"] }
+#tokio = { version = "0.2", features = ["macros", "time"] }
+#config = "0.10"
+#
+#
+#
+#async-trait = "0.1.31"
+#
+#
+#log = "0.4"
+#warp = "0.2"

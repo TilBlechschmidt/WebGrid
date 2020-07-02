@@ -1,35 +1,35 @@
-use redis::aio::ConnectionManager;
-use shared::database::connect;
-use shared::lifecycle::Heart;
-use shared::logging::Logger;
+use crate::{Provisioner, ProvisionerType};
+use helpers::keys;
+use lifecycle::HeartBeat;
+use resources::DefaultResourceManager;
+use scheduling::JobScheduler;
+use std::sync::Arc;
 
-use crate::config::Config;
-
+#[derive(Clone)]
 pub struct Context {
-    pub config: Config,
-    pub con: ConnectionManager,
-    pub logger: Logger,
-    pub heart: Heart,
+    pub resource_manager: DefaultResourceManager,
+    pub heart_beat: HeartBeat<DefaultResourceManager>,
+    pub provisioner: Arc<Box<dyn Provisioner + Send + Sync + 'static>>,
+    pub provisioner_type: ProvisionerType,
 }
 
 impl Context {
-    pub async fn new() -> Self {
-        let config = Config::new().unwrap();
-
-        let con = connect(config.clone().redis_url).await;
-
-        let logger = Logger::new(&con, "orchestrator".to_string());
-        let heart = Heart::new(&con, None);
-
-        Context {
-            config,
-            con,
-            logger,
-            heart,
+    pub fn new<P: Provisioner + Send + Sync + Clone + 'static>(
+        provisioner_type: ProvisionerType,
+        provisioner: P,
+    ) -> Self {
+        Self {
+            resource_manager: DefaultResourceManager::new(),
+            heart_beat: HeartBeat::new(),
+            provisioner: Arc::new(Box::new(provisioner)),
+            provisioner_type,
         }
     }
 
-    pub async fn create_client(&self) -> ConnectionManager {
-        connect(self.config.clone().redis_url).await
+    pub async fn spawn_heart_beat(&self, scheduler: &JobScheduler) {
+        self.heart_beat
+            .add_beat(&keys::orchestrator::HEARTBEAT, 60, 120)
+            .await;
+        scheduler.spawn_job(self.heart_beat.clone(), self.resource_manager.clone());
     }
 }

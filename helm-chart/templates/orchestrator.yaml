@@ -42,8 +42,8 @@ spec:
             - name: orchestrator-config
               mountPath: /configs
           ports:
-            - name: health-probe
-              containerPort: 40004
+            - name: status
+              containerPort: 47002
               protocol: TCP
           env:
             - name: WEBGRID_REDIS_URL
@@ -66,13 +66,14 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            - name: WEBGRID_STATUS_SERVER_ENABLED
+              value: "true"
           livenessProbe:
-            httpGet:
-              path: /status
-              port: health-probe
+            tcpSocket:
+              port: status
           readinessProbe:
             httpGet:
               path: /status
-              port: health-probe
+              port: status
           resources:
             {{- toYaml .Values.resources.orchestrator | nindent 12 }}

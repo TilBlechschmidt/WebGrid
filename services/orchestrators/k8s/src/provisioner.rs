@@ -1,8 +1,6 @@
+use helpers::{load_config, replace_config_variable, CapabilitiesRequest, ServicePort};
 use orchestrator_core::provisioner::{
     async_trait, match_image_from_capabilities, NodeInfo, Provisioner, ProvisionerCapabilities,
-};
-use shared::{
-    capabilities::CapabilitiesRequest, load_config, ports::ServicePort, replace_config_variable,
 };
 
 use k8s_openapi::api::batch::v1::Job;

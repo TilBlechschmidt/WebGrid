@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-shared = { path = "../../shared" }
+helpers = { path = "../../libraries/helpers" }
 orchestrator_core = { path = "../core" }
 tokio = { version = "0.2", features = ["macros"] }
 bollard = "0.5"

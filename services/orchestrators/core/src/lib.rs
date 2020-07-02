@@ -1,302 +1,48 @@
-#[macro_use]
-extern crate lazy_static;
+use lifecycle::{service_init, Heart};
+use log::info;
+use scheduling::{schedule, JobScheduler, StatusServer};
 
-use chrono::prelude::*;
-use log::{debug, error, info};
-use redis::{AsyncCommands, Client, RedisResult};
-use regex::Regex;
-use serde_json;
-use std::cmp::Ordering;
-use std::sync::Arc;
-use std::time::Duration;
-use tokio::time;
-use uuid::Uuid;
-use warp::Filter;
-
-use shared::{logging::LogCode, ports::ServicePort, Timeout};
-
-mod config;
 mod context;
+mod jobs;
 pub mod provisioner;
-mod reclaim;
 
-use crate::context::Context;
-use crate::provisioner::{Provisioner, Type as ProvisionerType};
-use crate::reclaim::reclaim_slots;
-
-static PATTERN_SESSION: &str = "__keyspace@0__:session:*:heartbeat.node";
-
-lazy_static! {
-    static ref REGEX_SESSION: Regex =
-        Regex::new(r"__keyspace@0__:session:(?P<sid>[^:]+):heartbeat\.node").unwrap();
-}
-
-async fn slot_reclaimer(ctx: Arc<Context>) {
-    let mut con = ctx.con.clone();
-    let interval_seconds = Timeout::SlotReclaimInterval.get(&con).await as u64;
-    let mut interval = time::interval(Duration::from_secs(interval_seconds));
-
-    loop {
-        interval.tick().await;
-
-        let result = reclaim_slots(&mut con, &ctx.config.orchestrator_id).await;
-        if let Ok((dead, orphaned)) = result {
-            info!("Reclaim cycle executed (D: {:?}, O: {:?})", dead, orphaned);
-        } else {
-            error!("Reclaim cycle failed with error {:?}", result);
-        }
-    }
-}
-
-async fn slot_recycler(ctx: Arc<Context>) {
-    let mut con = ctx.create_client().await;
-
-    let source = format!(
-        "orchestrator:{}:slots.reclaimed",
-        ctx.config.orchestrator_id
-    );
-    let destination = format!(
-        "orchestrator:{}:slots.available",
-        ctx.config.orchestrator_id
-    );
-
-    loop {
-        let slot: RedisResult<String> = con.brpoplpush(&source, &destination, 0).await;
-
-        if let Ok(slot) = slot {
-            info!("Recycled slot {}", slot);
-        }
-    }
-}
-
-#[rustfmt::skip]
-async fn job_processor<P: Provisioner>(ctx: Arc<Context>, provisioner: P) {
-    let mut con = ctx.create_client().await;
-
-    let backlog = format!("orchestrator:{}:backlog", ctx.config.orchestrator_id);
-    let pending = format!("orchestrator:{}:pending", ctx.config.orchestrator_id);
-
-    loop {
-        // While loop first to process leftover tasks from prior instance
-        while let Ok(session_id) = con.lindex(&pending, -1).await {
-            let session_id: String = session_id;
-            info!("Starting job {}", session_id);
-
-            // TODO Look if the job is too old
-
-            // TODO Proper error handling, remove unwrap
-            let raw_capabilities_request: String = con.hget(format!("session:{}:capabilities", session_id), "requested").await.unwrap();
-            let capabilities_request = serde_json::from_str(&raw_capabilities_request).unwrap();
-
-            let info_future = provisioner.provision_node(&session_id, capabilities_request);
-            let node_info = info_future.await;
-
-            let status_key = format!("session:{}:status", session_id);
-            let orchestrator_key = format!("session:{}:orchestrator", session_id);
-            let upstream_key = format!("session:{}:upstream", session_id);
-            let timestamp = Utc::now().to_rfc3339();
-
-            let result: RedisResult<()> = redis::pipe()
-                .atomic()
-                .cmd("RPOP").arg(&pending)
-                .cmd("HSETNX").arg(status_key).arg("pendingAt").arg(timestamp)
-                .cmd("RPUSH").arg(orchestrator_key).arg(&ctx.config.orchestrator_id)
-                .cmd("HMSET").arg(upstream_key)
-                    .arg("host").arg(&node_info.host)
-                    .arg("port").arg(&node_info.port)
-                .query_async(&mut con)
-                .await;
-
-            if result.is_err() {
-                debug!("Failed to provision node {} {:?}", session_id, result);
-                ctx.logger.log(&session_id, LogCode::STARTFAIL, None).await.ok();
-                provisioner.terminate_node(&session_id).await;
-            } else {
-                debug!("Provisioned node {} {:?}", session_id, node_info);
-                ctx.logger.log(&session_id, LogCode::SCHED, None).await.ok();
-            }
-        }
-
-        let _: RedisResult<()> = con.brpoplpush(&backlog, &pending, 0).await;
-    }
-}
-
-async fn slot_count_adjuster(ctx: Arc<Context>) -> RedisResult<()> {
-    let mut con = ctx.create_client().await;
-    let slots_key = format!("orchestrator:{}:slots", ctx.config.orchestrator_id);
-    let reclaimed_key = format!(
-        "orchestrator:{}:slots.reclaimed",
-        ctx.config.orchestrator_id
-    );
-    let available_key = format!(
-        "orchestrator:{}:slots.available",
-        ctx.config.orchestrator_id
-    );
-
-    let target: usize = ctx.config.slots;
-    let current: usize = con.scard(&slots_key).await?;
-
-    if target != current {
-        info!("Adjusting slot amount from {} -> {}", current, target);
-    }
-
-    match target.cmp(&current) {
-        Ordering::Greater => {
-            let delta = target - current;
-            for _ in 0..delta {
-                let slot_id = Uuid::new_v4().to_hyphenated().to_string();
-
-                redis::pipe()
-                    .atomic()
-                    .cmd("SADD")
-                    .arg(&slots_key)
-                    .arg(&slot_id)
-                    .cmd("RPUSH")
-                    .arg(&reclaimed_key)
-                    .arg(&slot_id)
-                    .query_async(&mut con)
-                    .await?;
-            }
-        }
-        Ordering::Less => {
-            let delta = current - target;
-            for _ in 0..delta {
-                let (_, slot_id): (String, String) = con.brpop(&available_key, 0).await?;
-                con.srem::<_, _, ()>(&slots_key, &slot_id).await?;
-            }
-        }
-        Ordering::Equal => {}
-    };
-
-    let slots: Vec<String> = con.smembers(slots_key).await?;
-    info!("Managed slots: \n\t{:?}", slots.join("\n\t"));
-
-    Ok(())
-}
-
-fn watch_nodes<P: Provisioner>(ctx: Arc<Context>, provisioner: P) -> redis::RedisResult<()> {
-    let mut rt = tokio::runtime::Runtime::new().unwrap();
-
-    // TODO Improve error handling here! Otherwise we won't get proper node-cleanup ...
-    // Maybe there is a way to do this with redis::aio 🤷‍♂️
-    let client = Client::open(ctx.config.clone().redis_url)?;
-    let mut pubsub_con = client.get_connection()?;
-    let mut pubsub = pubsub_con.as_pubsub();
-
-    pubsub.psubscribe(PATTERN_SESSION)?;
-
-    loop {
-        let msg = pubsub.get_message()?;
-        let channel: &str = msg.get_channel_name();
-        let operation: String = msg.get_payload()?;
-
-        if operation != "expired" {
-            continue;
-        }
-
-        if let Some(caps) = REGEX_SESSION.captures(channel) {
-            let session_id = &caps["sid"];
-            info!("Cleaning up dead node {}", session_id);
-            rt.block_on(async {
-                provisioner.terminate_node(session_id).await;
-            });
-        }
-    }
-}
-
-async fn health_probe_server() {
-    let routes = warp::get().and(warp::path("status")).map(|| "I'm alive!");
-    let address = ServicePort::Orchestrator.socket_addr();
-    warp::serve(routes).run(address).await;
-}
+use context::Context;
+use jobs::*;
+use provisioner::{Provisioner, Type as ProvisionerType};
 
 pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
     provisioner_type: ProvisionerType,
     provisioner: P,
 ) {
-    let ctx = Arc::new(Context::new().await);
-    let mut con = ctx.con.clone();
+    service_init();
 
-    let type_str = format!("{}", provisioner_type);
+    let (mut heart, _) = Heart::new();
 
-    // Register with backing store
-    let capabilities = provisioner.capabilities();
-    let info_key = format!("orchestrator:{}", ctx.config.orchestrator_id);
-    let platform_key = format!("{}:capabilities:platformName", info_key);
-    let browsers_key = format!("{}:capabilities:browsers", info_key);
+    let context = Context::new(provisioner_type, provisioner);
+    let scheduler = JobScheduler::new();
 
-    con.set::<_, _, ()>(&platform_key, &capabilities.platform_name)
-        .await
-        .unwrap();
-    if !capabilities.browsers.is_empty() {
-        con.sadd::<_, _, ()>(&browsers_key, capabilities.browsers)
-            .await
-            .unwrap();
-    }
+    context.spawn_heart_beat(&scheduler).await;
 
-    con.hset_multiple::<_, _, _, ()>(&info_key, &[("type", type_str)])
-        .await
-        .unwrap();
-    con.sadd::<_, _, ()>("orchestrators", &ctx.config.orchestrator_id)
-        .await
-        .unwrap();
+    let status_job = StatusServer::new(&scheduler);
+    let registration_job = RegistrationJob::new();
+    let node_watcher_job = NodeWatcherJob::new();
+    let slot_reclaim_job = SlotReclaimJob::new();
+    let slot_recycle_job = SlotRecycleJob::new();
+    let processor_job = ProcessorJob::new();
+    let slot_count_adjuster_job = SlotCountAdjusterJob::new();
 
-    info!("Registered as '{}'", ctx.config.orchestrator_id);
-
-    // Create heartbeat
-    let heartbeat_key = format!("orchestrator:{}:heartbeat", ctx.config.orchestrator_id);
-    ctx.heart.add_beat(heartbeat_key.clone(), 60, 120).await;
-
-    // Start node watcher
-    let ctx_watcher = ctx.clone();
-    let prov_watcher = provisioner.clone();
-    std::thread::spawn(move || {
-        watch_nodes(ctx_watcher, prov_watcher).unwrap();
-    });
-    debug!("Start 'node_watcher'");
-
-    // Start slot reclaimer
-    let ctx_reclaimer = ctx.clone();
-    tokio::spawn(async {
-        slot_reclaimer(ctx_reclaimer).await;
-    });
-    debug!("Start 'slot_reclaimer'");
-
-    // Start slot recycler (.reclaimed -> .available)
-    let ctx_recycler = ctx.clone();
-    tokio::spawn(async {
-        slot_recycler(ctx_recycler).await;
-    });
-    debug!("Start 'slot_recycler'");
-
-    // Start job processor
-    let ctx_job_processor = ctx.clone();
-    tokio::spawn(async move {
-        job_processor(ctx_job_processor, provisioner).await;
-    });
-    debug!("Start 'job_processor'");
-
-    // Run slot count adjuster
-    let ctx_adjuster = ctx.clone();
-    tokio::spawn(async {
-        slot_count_adjuster(ctx_adjuster).await.unwrap();
-    });
-    debug!("Start 'slot_count_adjuster'");
-
-    // Start health probe
-    tokio::spawn(async {
-        health_probe_server().await;
+    schedule!(scheduler, context, {
+        status_job,
+        registration_job
+        node_watcher_job
+        processor_job
+        slot_count_adjuster_job
+        slot_reclaim_job
+        slot_recycle_job
     });
 
-    // Run until we die!
-    ctx.heart.beat(true).await;
+    let death_reason = heart.death().await;
+    info!("Heart died: {}", death_reason);
 
-    // Do a clean shutdown
-    con.srem::<_, _, ()>("orchestrators", &ctx.config.orchestrator_id)
-        .await
-        .unwrap();
-    con.del::<_, ()>(&[info_key, platform_key, browsers_key])
-        .await
-        .unwrap();
-    ctx.heart.stop_beat(heartbeat_key).await;
+    scheduler.terminate_jobs().await;
 }

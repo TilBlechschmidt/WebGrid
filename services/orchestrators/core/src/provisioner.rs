@@ -1,5 +1,4 @@
-use shared::capabilities::CapabilitiesRequest;
-use shared::{parse_browser_string, split_into_two};
+use helpers::{parse_browser_string, split_into_two, CapabilitiesRequest};
 
 pub use async_trait::async_trait;
 use std::fmt;
@@ -23,7 +22,7 @@ pub trait Provisioner {
     async fn terminate_node(&self, session_id: &str);
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Type {
     Local,
     Docker,
