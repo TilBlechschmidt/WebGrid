@@ -1,42 +1,58 @@
-use redis::aio::ConnectionManager;
-use shared::database::connect;
-use shared::lifecycle::Heart;
-use shared::logging::Logger;
-use shared::metrics::{MetricsEntry, MetricsProcessor};
-use tokio::sync::mpsc::UnboundedSender;
+use helpers::keys;
+use lifecycle::HeartBeat;
+use resources::DefaultResourceManager;
+use scheduling::JobScheduler;
+use std::ops::Deref;
 
-use crate::config::Config;
-
+#[derive(Clone)]
 pub struct Context {
-    pub config: Config,
-    pub con: ConnectionManager,
-    pub logger: Logger,
-    pub heart: Heart,
-    pub metrics_tx: UnboundedSender<MetricsEntry>,
+    pub resource_manager: DefaultResourceManager,
+    pub heart_beat: HeartBeat<DefaultResourceManager>,
 }
 
 impl Context {
-    pub async fn new() -> (Self, MetricsProcessor) {
-        let config = Config::new().unwrap();
-        let con = connect(config.clone().redis_url).await;
-
-        let logger = Logger::new(&con, "manager".to_string());
-        let heart = Heart::new(&con, None);
-
-        let metrics = MetricsProcessor::new(&con);
-
-        let ctx = Self {
-            config,
-            con,
-            logger,
-            heart,
-            metrics_tx: metrics.get_tx(),
-        };
-
-        (ctx, metrics)
+    pub fn new() -> Self {
+        Self {
+            resource_manager: DefaultResourceManager::new(),
+            heart_beat: HeartBeat::new(),
+        }
     }
 
-    pub async fn create_client(&self) -> ConnectionManager {
-        connect(self.config.clone().redis_url).await
+    pub async fn spawn_heart_beat(&self, scheduler: &JobScheduler) {
+        self.heart_beat
+            .add_beat(&keys::manager::HEARTBEAT, 60, 120)
+            .await;
+        scheduler.spawn_job(self.heart_beat.clone(), self.resource_manager.clone());
+    }
+}
+
+pub struct SessionCreationContext {
+    context: Context,
+    pub remote_addr: String,
+    pub user_agent: String,
+    pub capabilities: String,
+}
+
+impl SessionCreationContext {
+    pub fn new(
+        context: Context,
+        remote_addr: String,
+        user_agent: String,
+        capabilities: String,
+    ) -> Self {
+        Self {
+            context,
+            remote_addr,
+            user_agent,
+            capabilities,
+        }
+    }
+}
+
+impl Deref for SessionCreationContext {
+    type Target = Context;
+
+    fn deref(&self) -> &Self::Target {
+        &self.context
     }
 }

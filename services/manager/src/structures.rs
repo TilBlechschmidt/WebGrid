@@ -15,6 +15,7 @@ pub enum RequestError {
     ParseError,
     NoOrchestratorAvailable,
     InvalidCapabilities(JsonError),
+    ResourceUnavailable,
 }
 
 impl Reject for RequestError {}
@@ -42,6 +43,9 @@ impl fmt::Display for RequestError {
             ),
             RequestError::InvalidCapabilities(e) => {
                 write!(f, "Invalid capabilities requested: {}", e)
+            }
+            RequestError::ResourceUnavailable => {
+                write!(f, "Required resource has become unavailable.")
             }
         }
     }
