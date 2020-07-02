@@ -1,36 +1,35 @@
-#[macro_use]
-extern crate lazy_static;
+use lifecycle::{service_init, Heart};
+use log::info;
+use scheduling::{schedule, JobScheduler, StatusServer};
 
-use std::thread;
+mod context;
+mod jobs;
+mod routing_info;
 
-use shared::{database::connect, metrics::MetricsProcessor, service_init};
-
-mod config;
-mod proxy;
-mod watcher;
-
-use crate::config::Config;
-use crate::proxy::ProxyServer;
-use crate::watcher::RoutingInfo;
+use context::Context;
+use jobs::{ProxyJob, WatcherJob};
 
 #[tokio::main]
 async fn main() {
     service_init();
 
-    let config = Config::new().unwrap();
-    let con = connect(config.clone().redis_url).await;
+    let (mut heart, _) = Heart::new();
 
-    let mut metrics = MetricsProcessor::new(&con);
-    let info = RoutingInfo::new();
-    let proxy = ProxyServer::new(info.clone(), metrics.get_tx());
+    let context = Context::new();
+    let scheduler = JobScheduler::new();
 
-    tokio::spawn(async move {
-        metrics.process().await;
+    let status_job = StatusServer::new(&scheduler);
+    let watcher_job = WatcherJob::new();
+    let proxy_job = ProxyJob::new();
+
+    schedule!(scheduler, context, {
+        status_job,
+        watcher_job,
+        proxy_job
     });
 
-    thread::spawn(move || {
-        watcher::main_loop(info, config).unwrap();
-    });
+    let death_reason = heart.death().await;
+    info!("Heart died: {}", death_reason);
 
-    proxy.serve().await;
+    scheduler.terminate_jobs().await;
 }

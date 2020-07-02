@@ -37,19 +37,23 @@ spec:
             - name: http
               containerPort: 40005
               protocol: TCP
+            - name: status
+              containerPort: 47002
+              protocol: TCP
           env:
-          - name: WEBGRID_REDIS_URL
-            value: "{{ include "web-grid.redisURL" . }}"
-          - name: RUST_LOG
-            value: {{ .Values.logLevel }}
+            - name: WEBGRID_REDIS_URL
+              value: "{{ include "web-grid.redisURL" . }}"
+            - name: RUST_LOG
+              value: {{ .Values.logLevel }}
+            - name: WEBGRID_STATUS_SERVER_ENABLED
+              value: "true"
           livenessProbe:
-            httpGet:
-              path: /status
-              port: http
+            tcpSocket:
+              port: status
           readinessProbe:
             httpGet:
               path: /status
-              port: http
+              port: status
           resources:
             {{- toYaml .Values.resources.proxy | nindent 12 }}
 ---
