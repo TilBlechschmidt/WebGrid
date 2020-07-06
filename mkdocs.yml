@@ -1,0 +1,97 @@
+# Project information
+site_name: WebGrid
+site_description: Decentralized, scalable and robust implementation of a selenium-grid equivalent. Based on the WebDriver specification by the W3C.
+site_author: Til Blechschmidt
+site_url: https://tilblechschmidt.github.io/webgrid/
+
+# Repository
+repo_name: TilBlechschmidt/WebGrid
+repo_url: https://github.com/TilBlechschmidt/WebGrid
+
+# Copyright
+copyright: Copyright &copy; 2019 - 2020 Til Blechschmidt
+
+# Navigation
+nav:
+  - "index.md"
+  - "getting-started.md"
+  - "Features":
+      - "features/api.md"
+      - "features/screen-recording.md"
+      - "features/hybrid-grid.md"
+  - "Kubernetes":
+      - "kubernetes/configuration.md"
+      - "kubernetes/access.md"
+      - "kubernetes/storage.md"
+      - "kubernetes/scaling.md"
+  - "Contribute":
+      - "contribute/index.md"
+      - "contribute/other.md"
+
+# Configuration
+theme:
+  name: material
+  language: en
+  palette:
+    primary: teal
+    accent: teal
+    scheme: preference
+  font:
+    text: Roboto
+    code: Roboto Mono
+  features:
+    - tabs
+
+# Extras
+extra:
+  social:
+    - icon: fontawesome/brands/github-alt
+      link: https://github.com/TilBlechschmidt
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/themegatb
+
+# Plugins
+plugins:
+  - search
+  - git-revision-date-localized
+  - codeinclude
+  - mermaid2:
+      arguments:
+        theme: "dark"
+  - helm-repo:
+      chart: distribution/kubernetes/chart
+      helm_repo_url: https://webgrid.dev/
+  - mkdocs-simple-hooks:
+      hooks:
+        on_post_build: "docs.hooks:copy_readme"
+
+extra_javascript:
+  - https://unpkg.com/mermaid@8.5.0/dist/mermaid.min.js
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tabbed
+  - pymdownx.tilde

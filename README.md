@@ -1,9 +1,26 @@
 # WebGrid
 <p align="center">
-  <img width="75%" src="http://placekitten.com/882/250" alt="Banner">
+  <img width="75%" src="https://placekitten.com/882/250" alt="Banner">
 </p>
 <p align="center">
   <b>Scalable, fast, resilient WebDriver network.</b>
+</p>
+<p align="center">
+  <a href="https://github.com/TilBlechschmidt/WebGrid/blob/main/CODE_OF_CONDUCT.md">
+    <img src="https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg" alt="Contributor Covenant">
+  </a>
+  <a href="https://github.com/TilBlechschmidt/WebGrid/blob/main/LICENSE.md">
+    <img alt="GitHub" src="https://img.shields.io/github/license/TilBlechschmidt/WebGrid">
+  </a>
+
+  <br>
+
+  <a href="">
+    <img alt="Maintenance" src="https://img.shields.io/maintenance/yes/2020">
+  </a>
+  <a href="https://github.com/TilBlechschmidt/WebGrid/commits/main">
+    <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/TilBlechschmidt/WebGrid">
+  </a>
 </p>
 
 ## About

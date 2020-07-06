@@ -1,3 +1,5 @@
+const embedScriptTag = document.currentScript
+
 // {{Hls.js-embed}}
 
 function fetchVideoURL(sessionID, host) {
@@ -8,8 +10,9 @@ function fetchVideoURL(sessionID, host) {
             }
         }`
 
-        var xhr = new XMLHttpRequest()
-        xhr.open('POST', `${host}/api`, true)
+        let xhr = new XMLHttpRequest()
+        const cleanedHost = host.substring(0, host.lastIndexOf('/'))
+        xhr.open('POST', `${cleanedHost}/api`, true)
         xhr.setRequestHeader('Content-type', 'application/json')
         xhr.onload = function () {
             try {
@@ -73,8 +76,10 @@ class VideoElement extends HTMLElement {
     }
 
     loadMedia() {
+        const scriptSrc = embedScriptTag.src
+
         const sessionID = this.getAttribute('session-id')
-        const host = this.getAttribute('host') || ''
+        const host = this.getAttribute('host') || scriptSrc
         const video = this.root.getElementById('webgrid-video')
 
         fetchVideoURL(sessionID, host).then(videoURL => {

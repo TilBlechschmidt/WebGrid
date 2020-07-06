@@ -1,5 +1,5 @@
 apiVersion: v2
-name: web-grid
+name: webgrid
 description: Scalable WebDriver provisioner
 
 # A chart can be either an 'application' or a 'library' chart.
