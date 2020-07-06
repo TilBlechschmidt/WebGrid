@@ -5,7 +5,6 @@ use orchestrator_core::provisioner::{
 
 use k8s_openapi::api::batch::v1::Job;
 use k8s_openapi::api::core::v1::Service;
-use serde_yaml;
 
 use kube::{
     api::{Api, DeleteParams, Meta, PostParams, PropagationPolicy},

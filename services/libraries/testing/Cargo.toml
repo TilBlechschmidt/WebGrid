@@ -11,10 +11,10 @@ edition = "2018"
 helpers = { path = "../helpers" }
 resources = { path = "../resources" }
 scheduling = { path = "../scheduling" }
-async-trait = "0.1.31"
-redis = { version = "0.16.0", default-features = false, features = ["tokio-comp"] }
-lazy_static = "1.4.0"
-tokio = { version = "0.2.21", default-features = false, features = ["rt-threaded", "io-driver"] }
+async-trait = "0.1"
+redis = { version = "0.16", default-features = false, features = ["tokio-comp"] }
+lazy_static = "1.4"
+tokio = { version = "0.2", default-features = false, features = ["rt-threaded", "io-driver"] }
 
 [dev_dependencies]
-futures = "0.3.5"
+futures = "0.3"

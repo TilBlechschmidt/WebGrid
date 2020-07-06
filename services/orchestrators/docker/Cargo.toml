@@ -10,5 +10,5 @@ edition = "2018"
 helpers = { path = "../../libraries/helpers" }
 orchestrator_core = { path = "../core" }
 tokio = { version = "0.2", features = ["macros"] }
-bollard = "0.5"
+bollard = "0.7"
 log = "0.4"

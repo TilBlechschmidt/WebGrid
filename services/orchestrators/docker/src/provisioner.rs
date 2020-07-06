@@ -4,9 +4,9 @@ use orchestrator_core::provisioner::{
 };
 
 use bollard::container::{
-    Config, CreateContainerOptions, HostConfig, KillContainerOptions, StartContainerOptions,
+    Config, CreateContainerOptions, KillContainerOptions, StartContainerOptions,
 };
-use bollard::Docker;
+use bollard::{models::HostConfig, Docker};
 
 use log::{debug, warn};
 use std::default::Default;
@@ -67,9 +67,9 @@ impl Provisioner for DockerProvisioner {
 
         let host_config = HostConfig {
             auto_remove: Some(true),
-            network_mode: Some("webgrid"),
+            network_mode: Some("webgrid".to_string()),
             shm_size: Some(1024 * 1024 * 1024 * 2),
-            binds: Some(vec!["/tmp/vr:/host"]),
+            binds: Some(vec!["/tmp/vr:/host".to_string()]),
             ..Default::default()
         };
 

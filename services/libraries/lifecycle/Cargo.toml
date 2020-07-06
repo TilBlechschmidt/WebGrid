@@ -9,11 +9,11 @@ edition = "2018"
 [dependencies]
 scheduling = { path = "../scheduling" }
 resources = { path = "../resources" }
-async-trait = "0.1.31"
-futures = "0.3.5"
-log = "0.4.8"
-chrono = "0.4.11"
-redis = { version = "0.16.0", default-features = false, features = ["tokio-comp"] }
-pretty_env_logger = "0.4.0"
-anyhow = "1.0.31"
-tokio = { version = "0.2.21", default-features = false, features = ["rt-threaded", "io-driver", "signal"] }
+async-trait = "0.1"
+futures = "0.3"
+log = "0.4"
+chrono = "0.4"
+redis = { version = "0.16", default-features = false, features = ["tokio-comp"] }
+pretty_env_logger = "0.4"
+anyhow = "1.0"
+tokio = { version = "0.2", default-features = false, features = ["rt-threaded", "io-driver", "signal"] }
