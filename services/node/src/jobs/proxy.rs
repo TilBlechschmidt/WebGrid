@@ -1,7 +1,6 @@
 use crate::Context;
 use anyhow::Result;
 use async_trait::async_trait;
-use helpers::{env, ServicePort};
 use hyper::{
     body,
     client::HttpConnector,
@@ -24,6 +23,7 @@ pub struct ProxyJob {
     client: HttpClient<HttpConnector>,
     internal_session_id: String,
     heart_stone: HeartStone,
+    port: u16,
 }
 
 #[async_trait]
@@ -35,12 +35,13 @@ impl Job for ProxyJob {
 
     async fn execute(&self, manager: TaskManager<Self::Context>) -> Result<()> {
         let internal_session_id = self.internal_session_id.clone();
-        let client_main = self.client.clone();
+        let client = self.client.clone();
         let heart_stone = self.heart_stone.clone();
+        let driver_port = manager.context.options.driver_port;
 
         let make_svc = make_service_fn(|_conn| {
-            let client = client_main.clone();
-            let external_session_id = (*env::service::node::ID).clone();
+            let client = client.clone();
+            let external_session_id = manager.context.id.clone();
             let internal_session_id = internal_session_id.clone();
             let heart_stone = heart_stone.clone();
 
@@ -52,12 +53,13 @@ impl Job for ProxyJob {
                         internal_session_id.clone(),
                         external_session_id.clone(),
                         heart_stone.clone(),
+                        driver_port,
                     )
                 }))
             }
         });
 
-        let addr = ServicePort::Node.socket_addr();
+        let addr = ([0, 0, 0, 0], self.port).into();
         let server = Server::bind(&addr).serve(make_svc);
         let graceful = server.with_graceful_shutdown(manager.termination_signal());
 
@@ -70,11 +72,12 @@ impl Job for ProxyJob {
 }
 
 impl ProxyJob {
-    pub fn new(internal_session_id: String, heart_stone: HeartStone) -> Self {
+    pub fn new(port: u16, internal_session_id: String, heart_stone: HeartStone) -> Self {
         Self {
             client: HttpClient::new(),
             internal_session_id,
             heart_stone,
+            port,
         }
     }
 
@@ -135,6 +138,7 @@ impl ProxyJob {
         internal_session_id: String,
         external_session_id: String,
         mut heart_stone: HeartStone,
+        driver_port: u16,
     ) -> Result<Response<Body>, HyperError> {
         // Reset the lifetime
         heart_stone.reset_lifetime().await;
@@ -165,7 +169,7 @@ impl ProxyJob {
         };
 
         // Overwrite the original path with the translated one
-        let driver_addr: SocketAddr = ([127, 0, 0, 1], *env::service::node::DRIVER_PORT).into();
+        let driver_addr: SocketAddr = ([127, 0, 0, 1], driver_port).into();
         let req_method = req.method().clone();
         let uri_string = format!("http://{}{}", driver_addr, path);
         let uri = uri_string.parse().unwrap();

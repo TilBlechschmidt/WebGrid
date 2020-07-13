@@ -246,6 +246,8 @@ mod subtasks {
                 .await
                 .unwrap_or_else(|_| Vec::new());
 
+            // TODO Filter orchestrators by heartbeat
+
             let capability_sets = requested_capabilities.into_sets();
             let mut matching_orchestrators = Vec::with_capacity(orchestrator_ids.len());
 

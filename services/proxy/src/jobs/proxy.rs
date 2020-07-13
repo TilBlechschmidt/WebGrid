@@ -1,7 +1,6 @@
 use crate::{routing_info::RoutingInfo, Context};
 use anyhow::Result;
 use async_trait::async_trait;
-use helpers::ServicePort;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{client::HttpConnector, Body, Client, Method, Request, Response, Server, StatusCode};
 use lazy_static::lazy_static;
@@ -20,6 +19,7 @@ lazy_static! {
 #[derive(Clone)]
 pub struct ProxyJob {
     client: Client<HttpConnector>,
+    port: u16,
     // metrics_tx: UnboundedSender<MetricsEntry>,
 }
 
@@ -43,7 +43,7 @@ impl Job for ProxyJob {
             }
         });
 
-        let addr = ServicePort::Proxy.socket_addr();
+        let addr = ([0, 0, 0, 0], self.port).into();
         let server = Server::bind(&addr).serve(make_svc);
         let graceful = server.with_graceful_shutdown(manager.termination_signal());
 
@@ -56,10 +56,10 @@ impl Job for ProxyJob {
 }
 
 impl ProxyJob {
-    pub fn new(/*metrics_tx: UnboundedSender<MetricsEntry>*/) -> Self {
+    pub fn new(port: u16 /*metrics_tx: UnboundedSender<MetricsEntry>*/) -> Self {
         Self {
             client: Client::new(),
-            // metrics_tx,
+            port, // metrics_tx,
         }
     }
 

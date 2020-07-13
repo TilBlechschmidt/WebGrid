@@ -2,7 +2,7 @@ use crate::{
     structs::{NodeError, SessionCreateResponse},
     Context,
 };
-use helpers::{env, keys};
+use helpers::keys;
 use hyper::{body, Body, Client as HttpClient, Method, Request};
 use lifecycle::logging::{LogCode, SessionLogger};
 use log::{debug, error, info};
@@ -12,14 +12,20 @@ use scheduling::TaskManager;
 use std::{net::SocketAddr, process::Command};
 
 pub async fn initialize_session(manager: TaskManager<Context>) -> Result<String, NodeError> {
-    let external_session_id: String = (*env::service::node::ID).clone();
+    let external_session_id: String = manager.context.id.clone();
+    let driver_port = manager.context.options.driver_port;
+    let on_session_create = manager.context.options.on_session_create.clone();
+
     let log_con = with_redis_resource!(manager);
     let mut logger = SessionLogger::new(log_con, "node".to_string(), external_session_id.clone());
 
     let internal_session_id = subtasks::create_local_session(manager, &mut logger).await?;
 
-    subtasks::resize_window(&internal_session_id).await?;
-    subtasks::call_on_create_script();
+    subtasks::resize_window(&internal_session_id, driver_port).await?;
+
+    if let Some(ref script) = on_session_create {
+        subtasks::call_on_create_script(&script);
+    }
 
     Ok(internal_session_id)
 }
@@ -31,7 +37,8 @@ mod subtasks {
         manager: TaskManager<Context>,
         logger: &mut SessionLogger<C>,
     ) -> Result<String, NodeError> {
-        let external_session_id: String = (*env::service::node::ID).clone();
+        let external_session_id: String = manager.context.id.clone();
+        let driver_port = manager.context.options.driver_port;
         let mut con = with_redis_resource!(manager);
 
         // Read the requested capabilities from the database and construct a request body
@@ -52,7 +59,7 @@ mod subtasks {
 
         // Construct a request to the local driver
         let client = HttpClient::new();
-        let socket_addr: SocketAddr = ([127, 0, 0, 1], *env::service::node::DRIVER_PORT).into();
+        let socket_addr: SocketAddr = ([127, 0, 0, 1], driver_port).into();
         let url = format!("http://{}/session", socket_addr);
         let req = Request::builder()
             .method(Method::POST)
@@ -104,8 +111,8 @@ mod subtasks {
         Ok(internal_session_id)
     }
 
-    pub async fn resize_window(session_id: &str) -> Result<(), NodeError> {
-        let socket_addr: SocketAddr = ([127, 0, 0, 1], *env::service::node::DRIVER_PORT).into();
+    pub async fn resize_window(session_id: &str, driver_port: u16) -> Result<(), NodeError> {
+        let socket_addr: SocketAddr = ([127, 0, 0, 1], driver_port).into();
         let url = format!("http://{}/session/{}/window/rect", socket_addr, session_id);
         let body_string = "{\"x\": 0, \"y\": 0, \"width\": 1920, \"height\": 1080}";
         let client = HttpClient::new();
@@ -124,9 +131,7 @@ mod subtasks {
         Ok(())
     }
 
-    pub fn call_on_create_script() {
-        let script = (*env::service::node::ON_SESSION_CREATE).clone();
-
+    pub fn call_on_create_script(script: &str) {
         info!("Calling on_create_script {}", script);
 
         let parts: Vec<String> = script.split_whitespace().map(|s| s.to_string()).collect();

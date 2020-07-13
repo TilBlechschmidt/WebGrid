@@ -11,7 +11,7 @@ RUN ./packages.sh
 WORKDIR /scripts
 COPY images/node/base/scripts .
 
-COPY services/.build/node /usr/local/bin/node-service
+COPY services/.build/webgrid /usr/local/bin/webgrid
 
 CMD /scripts/entrypoint.sh
 EXPOSE 40003

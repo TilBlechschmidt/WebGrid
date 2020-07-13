@@ -9,7 +9,6 @@ edition = "2018"
 [dependencies]
 helpers = { path = "../../libraries/helpers" }
 orchestrator_core = { path = "../core" }
-tokio = { version = "0.2", features = ["macros"] }
 time = "0.2"
 kube = { version = "0.35", default-features = false, features = ["rustls-tls"] }
 kube-derive = "0.35"
@@ -17,3 +16,4 @@ k8s-openapi = { version = "0.8", default-features = false, features = ["v1_17"] 
 serde_yaml = "0.8"
 serde = { version = "1.0", features = [] }
 log = "0.4"
+structopt = "0.3"

@@ -21,4 +21,5 @@ futures = "0.3"
 thiserror = "1.0"
 anyhow = "1.0"
 hyper = "0.13"
-tokio = { version = "0.2", default-features = false, features = ["rt-threaded", "io-driver", "macros"] }
+tokio = { version = "0.2", default-features = false }
+structopt = "0.3"

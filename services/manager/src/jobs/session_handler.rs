@@ -4,7 +4,6 @@ use crate::{
 };
 use anyhow::Result;
 use async_trait::async_trait;
-use helpers::ServicePort;
 use log::{debug, info, warn};
 use scheduling::{Job, JobScheduler, TaskManager};
 use serde_json::json;
@@ -12,7 +11,9 @@ use std::net::SocketAddr;
 use warp::{http::StatusCode, reply, Filter};
 
 #[derive(Clone)]
-pub struct SessionHandlerJob {}
+pub struct SessionHandlerJob {
+    port: u16,
+}
 
 #[async_trait]
 impl Job for SessionHandlerJob {
@@ -24,10 +25,9 @@ impl Job for SessionHandlerJob {
     async fn execute(&self, manager: TaskManager<Self::Context>) -> Result<()> {
         let routes = self.routes(manager.clone());
 
-        let (addr, server) = warp::serve(routes).bind_with_graceful_shutdown(
-            ServicePort::Manager.socket_addr(),
-            manager.termination_signal(),
-        );
+        let source_addr: SocketAddr = ([0, 0, 0, 0], self.port).into();
+        let (addr, server) = warp::serve(routes)
+            .bind_with_graceful_shutdown(source_addr, manager.termination_signal());
 
         info!("Listening at {:?}", addr);
         manager.ready().await;
@@ -39,8 +39,8 @@ impl Job for SessionHandlerJob {
 }
 
 impl SessionHandlerJob {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(port: u16) -> Self {
+        Self { port }
     }
 
     fn routes(

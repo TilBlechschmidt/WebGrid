@@ -1,4 +1,4 @@
-use helpers::{CapabilitiesRequest, ServicePort};
+use helpers::CapabilitiesRequest;
 use orchestrator_core::provisioner::{
     async_trait, match_image_from_capabilities, NodeInfo, Provisioner, ProvisionerCapabilities,
 };
@@ -15,10 +15,11 @@ use std::default::Default;
 pub struct DockerProvisioner {
     docker: Docker,
     images: Vec<(String, String)>,
+    node_port: u16,
 }
 
 impl DockerProvisioner {
-    pub fn new(images: Vec<(String, String)>) -> Self {
+    pub fn new(node_port: u16, images: Vec<(String, String)>) -> Self {
         if images.is_empty() {
             warn!("No images provided! Orchestrator won't be able to schedule nodes.");
         }
@@ -29,6 +30,7 @@ impl DockerProvisioner {
         Self {
             docker: connection,
             images,
+            node_port,
         }
     }
 }
@@ -58,8 +60,8 @@ impl Provisioner for DockerProvisioner {
         let options = Some(CreateContainerOptions { name: &name });
 
         let env: Vec<String> = vec![
-            "WEBGRID_REDIS_URL=redis://webgrid-redis/".to_string(),
-            format!("WEBGRID_SESSION_ID={}", session_id),
+            "REDIS=redis://webgrid-redis/".to_string(),
+            format!("ID={}", session_id),
             format!("FFMPEG_LOG=/host/{}-ffmpeg.log", session_id),
             format!("FFMPEG_OUT=/host/{}-ffmpeg.mp4", session_id),
             "RUST_LOG=trace,tokio=warn,hyper=warn".to_string(),
@@ -92,7 +94,7 @@ impl Provisioner for DockerProvisioner {
 
         NodeInfo {
             host: name,
-            port: ServicePort::Node.port().to_string(),
+            port: self.node_port.to_string(),
         }
     }
 

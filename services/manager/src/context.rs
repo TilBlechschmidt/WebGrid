@@ -11,16 +11,16 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new() -> Self {
+    pub fn new(redis_url: String) -> Self {
         Self {
-            resource_manager: DefaultResourceManager::new(),
+            resource_manager: DefaultResourceManager::new(redis_url),
             heart_beat: HeartBeat::new(),
         }
     }
 
-    pub async fn spawn_heart_beat(&self, scheduler: &JobScheduler) {
+    pub async fn spawn_heart_beat(&self, id: &str, scheduler: &JobScheduler) {
         self.heart_beat
-            .add_beat(&keys::manager::HEARTBEAT, 60, 120)
+            .add_beat(&keys::manager::heartbeat(id), 60, 120)
             .await;
         scheduler.spawn_job(self.heart_beat.clone(), self.resource_manager.clone());
     }

@@ -22,7 +22,7 @@ impl Job for RegistrationJob {
         manager.ready().await;
 
         manager.termination_signal().await;
-        subjobs::deregister(&mut con).await?;
+        subjobs::deregister(&mut con, &manager.context).await?;
 
         Ok(())
     }
@@ -36,13 +36,13 @@ impl RegistrationJob {
 
 mod subjobs {
     use super::*;
-    use helpers::{env, keys};
+    use helpers::keys;
 
     pub async fn register<C: AsyncCommands + ConnectionLike>(
         con: &mut C,
         context: &Context,
     ) -> Result<()> {
-        let orchestrator_id: String = (*env::service::orchestrator::ID).clone();
+        let orchestrator_id = context.id.clone();
         let type_str = format!("{}", context.provisioner_type);
         let capabilities = context.provisioner.capabilities();
 
@@ -74,8 +74,11 @@ mod subjobs {
         Ok(())
     }
 
-    pub async fn deregister<C: AsyncCommands + ConnectionLike>(con: &mut C) -> Result<()> {
-        let orchestrator_id: String = (*env::service::orchestrator::ID).clone();
+    pub async fn deregister<C: AsyncCommands + ConnectionLike>(
+        con: &mut C,
+        context: &Context,
+    ) -> Result<()> {
+        let orchestrator_id = context.id.clone();
 
         con.srem::<_, _, ()>(&(*keys::orchestrator::LIST), &orchestrator_id)
             .await

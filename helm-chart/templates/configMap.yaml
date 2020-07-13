@@ -82,9 +82,9 @@ data:
               env:
                 - name: RUST_LOG
                   value: {{ .Values.logLevel }}
-                - name: WEBGRID_SESSION_ID
+                - name: ID
                   value: {{ "{{session_id}}" }}
-                - name: WEBGRID_REDIS_URL
+                - name: REDIS
                   value: "{{ include "web-grid.redisURL" . }}"
               volumeMounts:
                 - mountPath: /dev/shm

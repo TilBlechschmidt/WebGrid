@@ -2,7 +2,7 @@ use crate::Context;
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::offset::Utc;
-use helpers::{env, lua::terminate_session, Timeout};
+use helpers::{lua::terminate_session, Timeout};
 use log::{error, info};
 use redis::{aio::ConnectionLike, RedisResult, Script};
 use resources::{with_shared_redis_resource, ResourceManager};
@@ -23,7 +23,7 @@ impl Job for SlotReclaimJob {
         let mut con = with_shared_redis_resource!(manager);
         let interval_seconds = Timeout::SlotReclaimInterval.get(&mut con).await as u64;
         let mut interval = time::interval(Duration::from_secs(interval_seconds));
-        let orchestrator_id = (*env::service::orchestrator::ID).clone();
+        let orchestrator_id = manager.context.id.clone();
 
         manager.ready().await;
 

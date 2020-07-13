@@ -1,17 +1,17 @@
 mod backoff;
 mod capabilities;
 mod healthcheck;
-mod ports;
+mod options;
 mod timeout;
 
-pub mod env;
+pub mod constants;
 pub mod keys;
 pub mod lua;
 
 pub use backoff::Backoff;
 pub use capabilities::*;
 pub use healthcheck::wait_for;
-pub use ports::ServicePort;
+pub use options::SharedOptions;
 pub use timeout::Timeout;
 
 pub fn split_into_two(input: &str, separator: &'static str) -> Option<(String, String)> {

@@ -1,5 +1,6 @@
 [workspace]
 members = [
+	"webgrid",
 	"libraries/helpers",
 	"libraries/resources",
 	"libraries/lifecycle",
@@ -13,3 +14,6 @@ members = [
 	"orchestrators/k8s",
 	"metrics"
 ]
+
+[profile.release]
+lto = true

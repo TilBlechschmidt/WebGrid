@@ -1,7 +1,7 @@
 use crate::Context;
 use anyhow::Result;
 use async_trait::async_trait;
-use helpers::{env, keys};
+use helpers::keys;
 use log::info;
 use redis::{AsyncCommands, RedisResult};
 use resources::{with_redis_resource, ResourceManager};
@@ -18,7 +18,7 @@ impl Job for SlotRecycleJob {
 
     async fn execute(&self, manager: TaskManager<Self::Context>) -> Result<()> {
         let mut con = with_redis_resource!(manager);
-        let orchestrator_id = (*env::service::orchestrator::ID).clone();
+        let orchestrator_id = manager.context.id.clone();
 
         let source = keys::orchestrator::slots::reclaimed(&orchestrator_id);
         let destination = keys::orchestrator::slots::available(&orchestrator_id);

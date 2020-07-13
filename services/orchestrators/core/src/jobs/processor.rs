@@ -2,7 +2,7 @@ use crate::Context;
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::offset::Utc;
-use helpers::{env, keys};
+use helpers::keys;
 use lifecycle::logging::{LogCode, Logger};
 use log::{debug, info};
 use redis::{AsyncCommands, RedisResult};
@@ -22,7 +22,7 @@ impl Job for ProcessorJob {
         let mut con = with_redis_resource!(manager);
         let log_con = with_redis_resource!(manager);
         let mut logger = Logger::new(log_con, "orchestrator".to_string());
-        let orchestrator_id = (*env::service::orchestrator::ID).clone();
+        let orchestrator_id = manager.context.id.clone();
 
         manager.ready().await;
 

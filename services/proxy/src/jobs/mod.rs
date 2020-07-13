@@ -1,5 +1,5 @@
 mod proxy;
 mod watcher;
 
-pub use proxy::ProxyJob;
+pub use self::proxy::ProxyJob;
 pub use watcher::WatcherJob;

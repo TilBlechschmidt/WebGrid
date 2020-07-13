@@ -8,9 +8,9 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new() -> Self {
+    pub fn new(redis_url: String) -> Self {
         Self {
-            resource_manager: DefaultResourceManager::new(),
+            resource_manager: DefaultResourceManager::new(redis_url),
             routing_info: RoutingInfo::new(),
         }
     }

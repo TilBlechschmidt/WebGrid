@@ -11,24 +11,28 @@ pub struct Context {
     pub heart_beat: HeartBeat<DefaultResourceManager>,
     pub provisioner: Arc<Box<dyn Provisioner + Send + Sync + 'static>>,
     pub provisioner_type: ProvisionerType,
+    pub id: String,
 }
 
 impl Context {
     pub fn new<P: Provisioner + Send + Sync + Clone + 'static>(
         provisioner_type: ProvisionerType,
         provisioner: P,
+        redis_url: String,
+        id: String,
     ) -> Self {
         Self {
-            resource_manager: DefaultResourceManager::new(),
+            resource_manager: DefaultResourceManager::new(redis_url),
             heart_beat: HeartBeat::new(),
             provisioner: Arc::new(Box::new(provisioner)),
             provisioner_type,
+            id,
         }
     }
 
     pub async fn spawn_heart_beat(&self, scheduler: &JobScheduler) {
         self.heart_beat
-            .add_beat(&keys::orchestrator::HEARTBEAT, 60, 120)
+            .add_beat(&keys::orchestrator::heartbeat(&self.id), 60, 120)
             .await;
         scheduler.spawn_job(self.heart_beat.clone(), self.resource_manager.clone());
     }

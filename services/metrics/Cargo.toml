@@ -12,8 +12,8 @@ resources = { path = "../libraries/resources" }
 lifecycle = { path = "../libraries/lifecycle" }
 helpers = { path = "../libraries/helpers" }
 async-trait = "0.1"
-tokio = { version = "0.2", default-features = false, features = ["rt-threaded", "io-driver", "macros", "sync"] }
 log = "0.4"
+structopt = "0.3"
 
 #redis = { version = "0.16.0", features = ["tokio-rt-core"] }
 #tokio = { version = "0.2", features = ["macros"] }

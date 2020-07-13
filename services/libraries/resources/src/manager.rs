@@ -1,6 +1,5 @@
 use crate::{RedisResource, SharedRedisResource, StandaloneRedisResource};
 use async_trait::async_trait;
-use helpers::env;
 use scheduling::TaskResourceHandle;
 
 use crate::{ResourceManager, ResourceManagerResult};
@@ -11,10 +10,8 @@ pub struct DefaultResourceManager {
 }
 
 impl DefaultResourceManager {
-    pub fn new() -> Self {
-        Self {
-            redis_url: env::resources::redis::URL.clone(),
-        }
+    pub fn new(redis_url: String) -> Self {
+        Self { redis_url }
     }
 }
 

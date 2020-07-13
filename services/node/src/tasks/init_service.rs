@@ -1,5 +1,5 @@
 use crate::{structs::NodeError, Context};
-use helpers::{env, Timeout};
+use helpers::Timeout;
 use lifecycle::{
     logging::{LogCode, SessionLogger},
     Heart, HeartStone,
@@ -17,7 +17,7 @@ pub async fn initialize_service(
         Timeout::SessionTermination.get(&mut con).await as u64,
     ));
 
-    let external_session_id: String = (*env::service::node::ID).clone();
+    let external_session_id: String = manager.context.id.clone();
     let mut logger = SessionLogger::new(con, "node".to_string(), external_session_id.clone());
     logger.log(LogCode::BOOT, None).await.ok();
 

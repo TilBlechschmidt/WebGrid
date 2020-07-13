@@ -1,0 +1,9 @@
+# This file is parsed by libraries/helpers/build.rs and translated to Rust constants.
+ports:
+  base: 40001
+  offsets:
+    manager: 0
+    metrics: 1
+    node: 2
+    orchestrator: 3
+    proxy: 4

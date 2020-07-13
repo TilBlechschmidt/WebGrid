@@ -2,7 +2,6 @@ use crate::{Job, JobScheduler, JobStatus, TaskManager};
 use anyhow::Result;
 use async_trait::async_trait;
 use futures::lock::Mutex;
-use helpers::env;
 use hyper::{
     header::CONTENT_TYPE,
     service::{make_service_fn, service_fn},
@@ -39,18 +38,20 @@ struct StatusResponse<'a> {
 #[derive(Clone)]
 pub struct StatusServer<C> {
     status: Arc<Mutex<HashMap<String, JobStatus>>>,
+    config: Option<Option<u16>>,
     phantom: PhantomData<C>,
 }
 
 impl<C> StatusServer<C> {
-    pub fn new(scheduler: &JobScheduler) -> Self {
+    pub fn new(scheduler: &JobScheduler, config: Option<Option<u16>>) -> Self {
         Self {
             status: scheduler.status.clone(),
+            config,
             phantom: PhantomData,
         }
     }
 
-    async fn hello_world(
+    async fn generate_report(
         status_map: Arc<Mutex<HashMap<String, JobStatus>>>,
         _req: Request<Body>,
     ) -> Result<Response<Body>, Infallible> {
@@ -96,30 +97,32 @@ impl<C: Send + Sync + 'static> Job for StatusServer<C> {
     const SUPPORTS_GRACEFUL_TERMINATION: bool = true;
 
     async fn execute(&self, manager: TaskManager<Self::Context>) -> Result<()> {
-        if !(*env::global::STATUS_SERVER_ENABLED) {
+        if let Some(port_config) = self.config {
+            let port = port_config.unwrap_or(47002);
+
+            let status = self.status.clone();
+            let make_svc = make_service_fn(|_conn| {
+                let status = status.clone();
+
+                async move {
+                    Ok::<_, HyperError>(service_fn(move |req| {
+                        StatusServer::<C>::generate_report(status.clone(), req)
+                    }))
+                }
+            });
+
+            let addr = ([0, 0, 0, 0], port).into();
+            let server = Server::bind(&addr).serve(make_svc);
+            let graceful = server.with_graceful_shutdown(manager.termination_signal());
+
+            info!("Status server listening on {}", addr);
+            manager.ready().await;
+            graceful.await?;
+
+            Ok(())
+        } else {
             info!("Status server is disabled, exiting.");
-            return Ok(());
+            Ok(())
         }
-
-        let status = self.status.clone();
-        let make_svc = make_service_fn(|_conn| {
-            let status = status.clone();
-
-            async move {
-                Ok::<_, HyperError>(service_fn(move |req| {
-                    StatusServer::<C>::hello_world(status.clone(), req)
-                }))
-            }
-        });
-
-        let addr = ([0, 0, 0, 0], *env::global::STATUS_PORT).into();
-        let server = Server::bind(&addr).serve(make_svc);
-        let graceful = server.with_graceful_shutdown(manager.termination_signal());
-
-        info!("Status server listening on {}", addr);
-        manager.ready().await;
-        graceful.await?;
-
-        Ok(())
     }
 }

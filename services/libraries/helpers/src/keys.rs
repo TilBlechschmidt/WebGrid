@@ -11,7 +11,6 @@ macro_rules! static_keys {
 pub mod orchestrator {
     static_keys! {
         LIST = "orchestrators".to_string();
-        HEARTBEAT = format!("orchestrator:{}:heartbeat", *crate::env::service::orchestrator::ID);
     }
 
     fn orchestrator_prefix(orchestrator_id: &str) -> String {
@@ -28,6 +27,10 @@ pub mod orchestrator {
 
     pub fn pending(orchestrator_id: &str) -> String {
         format!("{}:pending", orchestrator_prefix(orchestrator_id))
+    }
+
+    pub fn heartbeat(orchestrator_id: &str) -> String {
+        format!("{}:heartbeat", orchestrator_prefix(orchestrator_id))
     }
 
     pub mod capabilities {
@@ -68,8 +71,18 @@ pub mod orchestrator {
 pub mod manager {
     static_keys! {
         LIST = "managers".to_string();
-        HEARTBEAT = format!("manager:{}:heartbeat", *crate::env::service::manager::ID);
-        METADATA = format!("manager:{}", *crate::env::service::manager::ID);
+    }
+
+    pub fn manager_prefix(manager_id: &str) -> String {
+        format!("manager:{}", manager_id)
+    }
+
+    pub fn metadata(manager_id: &str) -> String {
+        manager_prefix(manager_id)
+    }
+
+    pub fn heartbeat(manager_id: &str) -> String {
+        format!("{}:heartbeat", manager_prefix(manager_id))
     }
 }
 

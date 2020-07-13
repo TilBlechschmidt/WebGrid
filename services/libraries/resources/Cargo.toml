@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 helpers = { path = "../helpers" }
 scheduling = { path = "../scheduling" }
-tokio = { version = "0.2", default-features = false, features = ["rt-threaded", "io-driver"] }
+tokio = { version = "0.2", default-features = false }
 async-trait = "0.1"
 futures = "0.3"
 log = "0.4"

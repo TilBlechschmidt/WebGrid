@@ -1,7 +1,7 @@
 use crate::Context;
 use anyhow::Result;
 use async_trait::async_trait;
-use helpers::{env, keys};
+use helpers::keys;
 use log::info;
 use redis::{aio::ConnectionLike, AsyncCommands};
 use resources::{with_redis_resource, with_shared_redis_resource, ResourceManager};
@@ -10,7 +10,9 @@ use std::cmp::Ordering;
 use uuid::Uuid;
 
 #[derive(Clone)]
-pub struct SlotCountAdjusterJob {}
+pub struct SlotCountAdjusterJob {
+    slot_count: usize,
+}
 
 #[async_trait]
 impl Job for SlotCountAdjusterJob {
@@ -22,7 +24,7 @@ impl Job for SlotCountAdjusterJob {
     async fn execute(&self, manager: TaskManager<Self::Context>) -> Result<()> {
         let mut con = with_shared_redis_resource!(manager);
 
-        subjobs::adjust_slots(&manager, &mut con).await?;
+        subjobs::adjust_slots(&manager, &mut con, self.slot_count).await?;
         manager.ready().await;
 
         // This job continues running as a dummy so it will be re-run if the redis connection dies
@@ -32,8 +34,8 @@ impl Job for SlotCountAdjusterJob {
 }
 
 impl SlotCountAdjusterJob {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(slot_count: usize) -> Self {
+        Self { slot_count }
     }
 }
 
@@ -43,10 +45,10 @@ mod subjobs {
     pub async fn adjust_slots<C: AsyncCommands + ConnectionLike>(
         manager: &TaskManager<Context>,
         con: &mut C,
+        target: usize,
     ) -> Result<()> {
-        let orchestrator_id = (*env::service::orchestrator::ID).clone();
+        let orchestrator_id = manager.context.id.clone();
 
-        let target: usize = *env::service::orchestrator::SLOT_COUNT;
         let current: usize = con
             .scard(keys::orchestrator::slots::allocated(&orchestrator_id))
             .await?;

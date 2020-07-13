@@ -30,9 +30,10 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-        - image: "{{ .Values.image.repository }}/webgrid-proxy"
+        - image: "{{ .Values.image.repository }}/webgrid"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: {{ .Chart.Name }}-proxy
+          args: ["proxy", "--status-server"]
           ports:
             - name: http
               containerPort: 40005
@@ -41,12 +42,10 @@ spec:
               containerPort: 47002
               protocol: TCP
           env:
-            - name: WEBGRID_REDIS_URL
+            - name: REDIS
               value: "{{ include "web-grid.redisURL" . }}"
             - name: RUST_LOG
               value: {{ .Values.logLevel }}
-            - name: WEBGRID_STATUS_SERVER_ENABLED
-              value: "true"
           livenessProbe:
             tcpSocket:
               port: status

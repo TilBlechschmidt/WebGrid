@@ -35,9 +35,10 @@ spec:
           configMap:
             name: {{ include "web-grid.fullname" . }}-orchestrator
       containers:
-        - image: "{{ .Values.image.repository }}/webgrid-orchestrator-k8s"
+        - image: "{{ .Values.image.repository }}/webgrid"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: {{ .Chart.Name }}-orchestrator
+          args: ["orchestrator", "kubernetes", "--status-server"]
           volumeMounts:
             - name: orchestrator-config
               mountPath: /configs
@@ -46,18 +47,18 @@ spec:
               containerPort: 47002
               protocol: TCP
           env:
-            - name: WEBGRID_REDIS_URL
+            - name: REDIS
               value: "{{ include "web-grid.redisURL" . }}"
-            - name: WEBGRID_ORCHESTRATOR_ID
+            - name: ID
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            - name: WEBGRID_SLOTS
+            - name: SLOT_COUNT
               value: "5"
-            - name: WEBGRID_IMAGES
+            - name: IMAGES
               value: "{{ .Values.image.repository }}/webgrid-node-firefox=firefox::68.7.0esr,{{ .Values.image.repository }}/webgrid-node-chrome=chrome::81.0.4044.122"
             - name: RUST_LOG
-              value: {{ .Values.logLevel }}
+              value: trace,warp=warn,hyper=warn # {{ .Values.logLevel }}
             - name: WEBGRID_CONFIG_DIR
               value: "/configs"
             - name: WEBGRID_RESOURCE_PREFIX
@@ -66,8 +67,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-            - name: WEBGRID_STATUS_SERVER_ENABLED
-              value: "true"
           livenessProbe:
             tcpSocket:
               port: status

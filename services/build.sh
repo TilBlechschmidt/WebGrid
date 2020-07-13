@@ -19,5 +19,7 @@ docker run --rm -it \
 	ekidd/rust-musl-builder \
 	cargo build --release --workspace --locked
 
+# TODO: Strip debug symbols from binary
+
 mkdir -p $SOURCE_DIR/.build
 find $BUILD_DIR/target/x86_64-unknown-linux-musl/release -type f -perm 0755 -maxdepth 1 -exec cp {} $SOURCE_DIR/.build/ \;

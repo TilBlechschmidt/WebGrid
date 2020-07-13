@@ -30,9 +30,10 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-        - image: "{{ .Values.image.repository }}/webgrid-manager"
+        - image: "{{ .Values.image.repository }}/webgrid"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: {{ .Chart.Name }}-manager
+          args: ["manager", "--status-server"]
           ports:
             - name: http
               containerPort: 40001
@@ -41,20 +42,18 @@ spec:
               containerPort: 47002
               protocol: TCP
           env:
-            - name: WEBGRID_REDIS_URL
+            - name: REDIS
               value: "{{ include "web-grid.redisURL" . }}"
-            - name: WEBGRID_MANAGER_HOST
+            - name: MANAGER_HOST
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
-            - name: WEBGRID_MANAGER_ID
+            - name: ID
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
             - name: RUST_LOG
               value: {{ .Values.logLevel }}
-            - name: WEBGRID_STATUS_SERVER_ENABLED
-              value: "true"
           livenessProbe:
             tcpSocket:
               port: status

@@ -1,4 +1,4 @@
-use helpers::{load_config, replace_config_variable, CapabilitiesRequest, ServicePort};
+use helpers::{load_config, replace_config_variable, CapabilitiesRequest};
 use orchestrator_core::provisioner::{
     async_trait, match_image_from_capabilities, NodeInfo, Provisioner, ProvisionerCapabilities,
 };
@@ -20,10 +20,11 @@ use serde::{de::DeserializeOwned, ser::Serialize};
 pub struct K8sProvisioner {
     namespace: String,
     images: Vec<(String, String)>,
+    node_port: u16,
 }
 
 impl K8sProvisioner {
-    pub async fn new(images: Vec<(String, String)>) -> Self {
+    pub async fn new(node_port: u16, images: Vec<(String, String)>) -> Self {
         if images.is_empty() {
             warn!("No images provided! Orchestrator won't be able to schedule nodes.");
         }
@@ -32,7 +33,11 @@ impl K8sProvisioner {
 
         info!("Operating in K8s namespace {}", namespace);
 
-        Self { namespace, images }
+        Self {
+            namespace,
+            images,
+            node_port,
+        }
     }
 
     fn generate_name(session_id: &str) -> String {
@@ -159,7 +164,7 @@ impl Provisioner for K8sProvisioner {
 
             NodeInfo {
                 host: K8sProvisioner::generate_name(&session_id),
-                port: ServicePort::Node.port().to_string(),
+                port: self.node_port.to_string(),
             }
         } else {
             NodeInfo {
