@@ -2,22 +2,11 @@ use anyhow::Result;
 use helpers::SharedOptions;
 use structopt::StructOpt;
 
-mod orchestrator;
+mod services;
 
-use crate::orchestrator::*;
-
-#[cfg(feature = "service_manager")]
-use manager::{run as manager, Options as ManagerOptions};
-#[cfg(feature = "service_metrics")]
-use metrics::{run as metrics, Options as MetricsOptions};
-#[cfg(feature = "service_node")]
-use node::{run as node, Options as NodeOptions};
-#[cfg(feature = "docker")]
-use orchestrator_docker::run as docker;
-#[cfg(feature = "kubernetes")]
-use orchestrator_k8s::run as k8s;
-#[cfg(feature = "proxy")]
-use proxy::{run as proxy, Options as ProxyOptions};
+#[cfg(feature = "orchestrator")]
+use crate::services::orchestrator::{provisioners, Provisioner};
+use crate::services::*;
 
 #[derive(Debug, StructOpt)]
 #[structopt(about = "Decentralized, scalable and robust selenium-grid equivalent.")]
@@ -31,20 +20,20 @@ struct MainOptions {
 
 #[derive(Debug, StructOpt)]
 enum Command {
-    #[cfg(feature = "service_metrics")]
-    Metrics(MetricsOptions),
+    #[cfg(feature = "metrics")]
+    Metrics(metrics::Options),
 
-    #[cfg(feature = "service_manager")]
-    Manager(ManagerOptions),
+    #[cfg(feature = "manager")]
+    Manager(manager::Options),
 
-    #[cfg(feature = "service_node")]
-    Node(NodeOptions),
+    #[cfg(feature = "node")]
+    Node(node::Options),
 
-    #[cfg(feature = "service_proxy")]
-    Proxy(ProxyOptions),
+    #[cfg(feature = "proxy")]
+    Proxy(proxy::Options),
 
-    #[cfg(feature = "service_orchestrator")]
-    Orchestrator(OrchestratorOptions),
+    #[cfg(feature = "orchestrator")]
+    Orchestrator(orchestrator::Options),
 }
 
 #[tokio::main]
@@ -57,28 +46,28 @@ async fn main() -> Result<()> {
         .init();
 
     match main_options.cmd {
-        #[cfg(feature = "service_metrics")]
-        Command::Metrics(options) => metrics(shared_options, options).await,
+        #[cfg(feature = "metrics")]
+        Command::Metrics(options) => metrics::run(shared_options, options).await,
 
-        #[cfg(feature = "service_manager")]
-        Command::Manager(options) => manager(shared_options, options).await,
+        #[cfg(feature = "manager")]
+        Command::Manager(options) => manager::run(shared_options, options).await,
 
-        #[cfg(feature = "service_node")]
-        Command::Node(options) => node(shared_options, options).await?,
+        #[cfg(feature = "node")]
+        Command::Node(options) => node::run(shared_options, options).await?,
 
-        #[cfg(feature = "service_proxy")]
-        Command::Proxy(options) => proxy(shared_options, options).await,
+        #[cfg(feature = "proxy")]
+        Command::Proxy(options) => proxy::run(shared_options, options).await,
 
-        #[cfg(feature = "service_orchestrator")]
+        #[cfg(feature = "orchestrator")]
         Command::Orchestrator(core_options) => match core_options.provisioner {
             #[cfg(feature = "docker")]
             Provisioner::Docker(options) => {
-                docker(shared_options, core_options.core, options).await
+                provisioners::docker::run(shared_options, core_options.core, options).await
             }
 
             #[cfg(feature = "kubernetes")]
             Provisioner::Kubernetes(options) => {
-                k8s(shared_options, core_options.core, options).await
+                provisioners::kubernetes::run(shared_options, core_options.core, options).await
             }
         },
     }

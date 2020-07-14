@@ -12,24 +12,18 @@ dependencies = [
 
 [[package]]
 name = "addr2line"
-version = "0.12.2"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "602d785912f476e480434627e8732e6766b760c045bbf897d9dfaa9f4fbd399c"
+checksum = "1b6a2d3371669ab3ca9797670853d61402b03d0b4b9ebf33d677dfa720203072"
 dependencies = [
  "gimli",
 ]
 
 [[package]]
 name = "adler"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ccc9a9dd069569f212bc4330af9f17c4afb5e8ce185e83dbb14f1349dda18b10"
-
-[[package]]
-name = "adler32"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "567b077b825e468cc974f0020d4082ee6e03132512f207ef1a02fd5d00d1f32d"
+checksum = "ee2a4ec343196209d6594e19543ae87a39f96d5534d7174822a3ad825dd6ed7e"
 
 [[package]]
 name = "aho-corasick"
@@ -178,14 +172,14 @@ checksum = "f8aac770f1885fd7e387acedd76065302551364496e46b3dd00860b2f8359b9d"
 
 [[package]]
 name = "backtrace"
-version = "0.3.49"
+version = "0.3.50"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05100821de9e028f12ae3d189176b41ee198341eb8f369956407fea2f5cc666c"
+checksum = "46254cf2fdcdf1badb5934448c1bcbe046a56537b3987d96c51a7afc5d03f293"
 dependencies = [
  "addr2line",
  "cfg-if",
  "libc",
- "miniz_oxide 0.3.7",
+ "miniz_oxide",
  "object",
  "rustc-demangle",
 ]
@@ -570,7 +564,7 @@ dependencies = [
  "cfg-if",
  "crc32fast",
  "libc",
- "miniz_oxide 0.4.0",
+ "miniz_oxide",
 ]
 
 [[package]]
@@ -740,9 +734,9 @@ dependencies = [
 
 [[package]]
 name = "gimli"
-version = "0.21.0"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bcc8e0c9bce37868955864dbecd2b1ab2bdf967e6f28066d65aaac620444b65c"
+checksum = "aaf91faf136cb47367fa430cd46e37a788775e7fa104f8b4bcb3861dc389b724"
 
 [[package]]
 name = "h2"
@@ -1117,29 +1111,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "manager"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "chrono",
- "futures",
- "helpers",
- "lazy_static 1.4.0",
- "lifecycle",
- "log 0.4.8",
- "redis",
- "regex",
- "resources",
- "scheduling",
- "serde",
- "serde_json",
- "structopt",
- "uuid",
- "warp",
-]
-
-[[package]]
 name = "maplit"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1164,19 +1135,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3728d817d99e5ac407411fa471ff9800a778d88a24685968b36824eaf4bee400"
 
 [[package]]
-name = "metrics"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "helpers",
- "lifecycle",
- "log 0.4.8",
- "resources",
- "scheduling",
- "structopt",
-]
-
-[[package]]
 name = "mime"
 version = "0.3.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1190,15 +1148,6 @@ checksum = "2684d4c2e97d99848d30b324b00c8fcc7e5c897b7cbb5819b09e7c90e8baf212"
 dependencies = [
  "mime",
  "unicase",
-]
-
-[[package]]
-name = "miniz_oxide"
-version = "0.3.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "791daaae1ed6889560f8c4359194f56648355540573244a5448a83ba1ecc7435"
-dependencies = [
- "adler32",
 ]
 
 [[package]]
@@ -1304,30 +1253,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "node"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "chrono",
- "helpers",
- "hyper",
- "lazy_static 1.4.0",
- "lifecycle",
- "log 0.4.8",
- "redis",
- "regex",
- "resources",
- "scheduling",
- "serde",
- "serde_json",
- "storage",
- "structopt",
- "thiserror",
- "tokio",
-]
-
-[[package]]
 name = "num-integer"
 version = "0.1.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1405,57 +1330,6 @@ dependencies = [
  "libc",
  "pkg-config",
  "vcpkg",
-]
-
-[[package]]
-name = "orchestrator_core"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "chrono",
- "futures",
- "helpers",
- "lazy_static 1.4.0",
- "lifecycle",
- "log 0.4.8",
- "redis",
- "regex",
- "resources",
- "scheduling",
- "serde",
- "serde_json",
- "structopt",
- "testing",
- "tokio",
- "uuid",
-]
-
-[[package]]
-name = "orchestrator_docker"
-version = "0.1.0"
-dependencies = [
- "bollard",
- "helpers",
- "log 0.4.8",
- "orchestrator_core",
- "structopt",
-]
-
-[[package]]
-name = "orchestrator_k8s"
-version = "0.1.0"
-dependencies = [
- "helpers",
- "k8s-openapi",
- "kube",
- "kube-derive",
- "log 0.4.8",
- "orchestrator_core",
- "serde",
- "serde_yaml",
- "structopt",
- "time 0.2.16",
 ]
 
 [[package]]
@@ -1589,28 +1463,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "beae6331a816b1f65d04c45b078fd8e6c93e8071771f41b8163255bbd8d7c8fa"
 dependencies = [
  "unicode-xid",
-]
-
-[[package]]
-name = "proxy"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "futures",
- "helpers",
- "hyper",
- "lazy_static 1.4.0",
- "lifecycle",
- "log 0.4.8",
- "rand",
- "redis",
- "regex",
- "resources",
- "scheduling",
- "structopt",
- "thiserror",
- "tokio",
 ]
 
 [[package]]
@@ -2722,17 +2574,35 @@ name = "webgrid"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
+ "bollard",
+ "chrono",
+ "futures",
  "helpers",
- "manager",
- "metrics",
- "node",
- "orchestrator_core",
- "orchestrator_docker",
- "orchestrator_k8s",
+ "hyper",
+ "k8s-openapi",
+ "kube",
+ "kube-derive",
+ "lazy_static 1.4.0",
+ "lifecycle",
+ "log 0.4.8",
  "pretty_env_logger",
- "proxy",
+ "rand",
+ "redis",
+ "regex",
+ "resources",
+ "scheduling",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "storage",
  "structopt",
+ "testing",
+ "thiserror",
+ "time 0.2.16",
  "tokio",
+ "uuid",
+ "warp",
 ]
 
 [[package]]
