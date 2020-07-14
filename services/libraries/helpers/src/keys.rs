@@ -119,6 +119,10 @@ pub mod session {
         format!("{}:orchestrator", session_prefix(session_id))
     }
 
+    pub fn storage(session_id: &str) -> String {
+        format!("{}:storage", session_prefix(session_id))
+    }
+
     pub mod heartbeat {
         use super::session_prefix;
 

@@ -5,6 +5,7 @@ members = [
 	"libraries/resources",
 	"libraries/lifecycle",
 	"libraries/scheduling",
+	"libraries/storage",
 	"libraries/testing",
 	"manager",
 	"node",
