@@ -62,9 +62,8 @@ impl Provisioner for DockerProvisioner {
         let env: Vec<String> = vec![
             "REDIS=redis://webgrid-redis/".to_string(),
             format!("ID={}", session_id),
-            format!("FFMPEG_LOG=/host/{}-ffmpeg.log", session_id),
-            format!("FFMPEG_OUT=/host/{}-ffmpeg.mp4", session_id),
-            "RUST_LOG=trace,tokio=warn,hyper=warn".to_string(),
+            format!("STORAGE_DIRECTORY=/host"),
+            "RUST_LOG=trace,tokio=warn,hyper=warn,mio=warn,want=warn".to_string(),
         ];
 
         let host_config = HostConfig {

@@ -11,6 +11,7 @@ scheduling = { path = "../libraries/scheduling" }
 resources = { path = "../libraries/resources" }
 lifecycle = { path = "../libraries/lifecycle" }
 helpers = { path = "../libraries/helpers" }
+storage = { path = "../libraries/storage" }
 async-trait = "0.1"
 tokio = { version = "0.2", default-features = false, features = ["sync"] }
 log = "0.4"

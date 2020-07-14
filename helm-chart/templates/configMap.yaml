@@ -86,6 +86,8 @@ data:
                   value: {{ "{{session_id}}" }}
                 - name: REDIS
                   value: "{{ include "web-grid.redisURL" . }}"
+                - name: STORAGE_DIRECTORY
+                  value: "/storage"
               volumeMounts:
                 - mountPath: /dev/shm
                   name: dshm

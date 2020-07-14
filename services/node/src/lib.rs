@@ -7,11 +7,12 @@ use structopt::StructOpt;
 
 mod context;
 mod jobs;
+mod recorder;
 mod structs;
 mod tasks;
 
 use context::Context;
-use jobs::ProxyJob;
+use jobs::{ProxyJob, RecorderJob};
 use tasks::{initialize_service, initialize_session, start_driver, stop_driver, terminate};
 
 #[derive(Debug, StructOpt, Clone)]
@@ -45,6 +46,26 @@ pub struct Options {
     /// Script to execute when browser session has been created
     #[structopt(long, env)]
     on_session_create: Option<String>,
+
+    /// Directory in which to store video recordings
+    // TODO Make recording optional!
+    // TODO Provide quality presets for recording output
+    #[structopt(long, env, parse(from_os_str))]
+    storage_directory: PathBuf,
+
+    /// Framerate of the video input defined by --recording-input
+    ///
+    /// Note that this *does not* set the framerate but is rather the framerate the input you pass in has.
+    #[structopt(long, env, default_value = "5")]
+    recording_framerate: usize,
+
+    /// ffmpeg input parameter specification
+    #[structopt(
+        long,
+        env,
+        default_value = "-rtbufsize 1500M -probesize 100M -framerate 5 -video_size 1920x1080 -f x11grab -i :42 -vf scale=w=1280:h=720:force_original_aspect_ratio=decrease"
+    )]
+    recording_input: String,
 }
 
 async fn launch_session(
@@ -63,12 +84,14 @@ async fn launch_session(
 
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);
     let proxy_job = ProxyJob::new(options.port, internal_session_id, heart_stone);
+    let recorder_job = RecorderJob::new();
 
     context.spawn_heart_beat(&scheduler).await;
 
     schedule!(scheduler, context, {
         status_job,
-        proxy_job
+        proxy_job,
+        recorder_job,
     });
 
     let death_reason = heart.death().await;

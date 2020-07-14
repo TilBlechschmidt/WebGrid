@@ -5,6 +5,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum NodeError {
+    #[error("storage is unavailable")]
+    StorageUnavailable,
     #[error("unable to launch driver")]
     DriverStart(IOError),
     #[error("no status response from driver")]
