@@ -13,7 +13,7 @@ scheduling = { path = "../libraries/scheduling" }
 resources = { path = "../libraries/resources" }
 lifecycle = { path = "../libraries/lifecycle" }
 helpers = { path = "../libraries/helpers" }
-storage = { path = "../libraries/storage" }
+storage_lib = { path = "../libraries/storage", package = "storage" }
 async-trait = "0.1"
 lazy_static = "1.4"
 rand = "0.7"
@@ -45,11 +45,12 @@ serde_yaml = { version = "0.8", optional = true }
 testing = { path = "../libraries/testing" }
 
 [features]
-default = ["proxy", "manager", "node", "metrics", "docker", "kubernetes"]
+default = ["proxy", "manager", "node", "metrics", "storage", "docker", "kubernetes"]
 proxy = []
 manager = []
 node = []
 metrics = []
+storage = []
 orchestrator = []
 kubernetes = ["orchestrator", "time", "kube", "kube-derive", "k8s-openapi", "serde_yaml"]
 docker = ["orchestrator", "bollard"]

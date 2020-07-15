@@ -8,7 +8,7 @@ use redis::AsyncCommands;
 use resources::{with_redis_resource, ResourceManager};
 use scheduling::TaskManager;
 use std::time::Duration;
-use storage::StorageHandler;
+use storage_lib::StorageHandler;
 
 pub async fn initialize_service(
     manager: TaskManager<Context>,

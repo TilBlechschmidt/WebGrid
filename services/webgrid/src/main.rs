@@ -32,6 +32,9 @@ enum Command {
     #[cfg(feature = "proxy")]
     Proxy(proxy::Options),
 
+    #[cfg(feature = "storage")]
+    Storage(storage::Options),
+
     #[cfg(feature = "orchestrator")]
     Orchestrator(orchestrator::Options),
 }
@@ -57,6 +60,9 @@ async fn main() -> Result<()> {
 
         #[cfg(feature = "proxy")]
         Command::Proxy(options) => proxy::run(shared_options, options).await,
+
+        #[cfg(feature = "storage")]
+        Command::Storage(options) => storage::run(shared_options, options).await?,
 
         #[cfg(feature = "orchestrator")]
         Command::Orchestrator(core_options) => match core_options.provisioner {

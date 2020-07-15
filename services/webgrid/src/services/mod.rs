@@ -12,3 +12,6 @@ pub mod metrics;
 
 #[cfg(feature = "orchestrator")]
 pub mod orchestrator;
+
+#[cfg(feature = "storage")]
+pub mod storage;

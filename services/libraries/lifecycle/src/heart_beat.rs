@@ -14,8 +14,14 @@ enum BeatChange {
     Expire(String),
 }
 
+pub enum BeatValue {
+    Timestamp,
+    Constant(String),
+}
+
 #[derive(Clone)]
 pub struct HeartBeat<C> {
+    value: Arc<BeatValue>,
     changes: Arc<Mutex<Vec<BeatChange>>>,
     beats: Arc<Mutex<HashMap<String, (usize, usize)>>>,
     phantom: PhantomData<C>,
@@ -23,7 +29,12 @@ pub struct HeartBeat<C> {
 
 impl<C> HeartBeat<C> {
     pub fn new() -> Self {
+        HeartBeat::with_value(BeatValue::Timestamp)
+    }
+
+    pub fn with_value(value: BeatValue) -> Self {
         Self {
+            value: Arc::new(value),
             changes: Arc::new(Mutex::new(Vec::new())),
             beats: Arc::new(Mutex::new(HashMap::new())),
             phantom: PhantomData,
@@ -77,7 +88,10 @@ impl<C: Send + Sync + ResourceManager> Job for HeartBeat<C> {
         let mut terminating = false;
 
         loop {
-            let value = Utc::now().to_rfc3339();
+            let value = match &(*self.value) {
+                BeatValue::Timestamp => Utc::now().to_rfc3339(),
+                BeatValue::Constant(value) => value.to_owned(),
+            };
 
             // Shut down gracefully if termination signal has been triggered
             if manager.termination_signal_triggered() {
@@ -118,7 +132,7 @@ impl<C: Send + Sync + ResourceManager> Job for HeartBeat<C> {
             for (key, (refresh_time, expiration_time)) in self.beats.lock().await.iter() {
                 if passed_time % refresh_time == 0 {
                     redis
-                        .set_ex::<_, _, ()>(key, Utc::now().to_rfc3339(), *expiration_time)
+                        .set_ex::<_, _, ()>(key, value.clone(), *expiration_time)
                         .await
                         .context(format!("unable to update beat at {}", key))?;
                 }

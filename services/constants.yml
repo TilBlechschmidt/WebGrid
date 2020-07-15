@@ -7,3 +7,4 @@ ports:
     node: 2
     orchestrator: 3
     proxy: 4
+    storage: 5

@@ -11,14 +11,17 @@ use scheduling::{Job, TaskManager};
 use thiserror::Error;
 use tokio::task::yield_now;
 
-static PATTERN_MANAGER: &str = "__keyspace@0__:manager:*:heartbeat";
-static PATTERN_SESSION: &str = "__keyspace@0__:session:*:heartbeat.node";
+const PATTERN_MANAGER: &str = "__keyspace@0__:manager:*:heartbeat";
+const PATTERN_SESSION: &str = "__keyspace@0__:session:*:heartbeat.node";
+const PATTERN_STORAGE: &str = "__keyspace@0__:storage:*:*:host";
 
 lazy_static! {
     static ref REGEX_MANAGER: Regex =
         Regex::new(r"__keyspace@0__:manager:(?P<mid>[^:]+):heartbeat").unwrap();
     static ref REGEX_SESSION: Regex =
         Regex::new(r"__keyspace@0__:session:(?P<sid>[^:]+):heartbeat\.node").unwrap();
+    static ref REGEX_STORAGE: Regex =
+        Regex::new(r"__keyspace@0__:storage:(?P<sid>[^:]+):(?P<pid>[^:]+):host").unwrap();
 }
 
 #[derive(Error, Debug)]
@@ -55,6 +58,11 @@ impl Job for WatcherJob {
             .psubscribe(PATTERN_SESSION)
             .await
             .context("unable to subscribe to session list")?;
+
+        pubsub
+            .psubscribe(PATTERN_STORAGE)
+            .await
+            .context("unable to subscribe to storage list")?;
 
         manager.ready().await;
 
@@ -118,6 +126,9 @@ impl WatcherJob {
                 .await;
         } else if pattern == Some(PATTERN_SESSION.to_string()) {
             self.handle_session_message(channel, &operation, &info, con)
+                .await;
+        } else if pattern == Some(PATTERN_STORAGE.to_string()) {
+            self.handle_storage_message(channel, &operation, &info, con)
                 .await;
         }
 
@@ -194,6 +205,43 @@ impl WatcherJob {
                 "expired" => {
                     info!("- Session {}", session_id);
                     info.remove_session_upstream(session_id).await;
+                }
+                &_ => {}
+            }
+        }
+    }
+
+    async fn handle_storage_message(
+        &self,
+        channel: &str,
+        operation: &str,
+        info: &RoutingInfo,
+        con: &mut (impl ConnectionLike + AsyncCommands),
+    ) {
+        if let Some(caps) = REGEX_STORAGE.captures(channel) {
+            let storage_id = &caps["sid"];
+            let provider_id = &caps["pid"];
+
+            match operation {
+                "expire" => {
+                    let data_key = format!("storage:{}:{}:host", storage_id, provider_id);
+
+                    if let Ok(host) = con.get::<_, String>(data_key).await {
+                        if info
+                            .add_storage_upstream(storage_id, provider_id, &host)
+                            .await
+                            .is_none()
+                        {
+                            info!(
+                                "+ Storage {} @ {} (provider: {})",
+                                storage_id, host, provider_id
+                            );
+                        }
+                    }
+                }
+                "expired" => {
+                    info!("- Storage {} (provider: {})", storage_id, provider_id);
+                    info.remove_storage_upstream(storage_id, provider_id).await;
                 }
                 &_ => {}
             }

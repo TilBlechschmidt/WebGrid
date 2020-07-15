@@ -14,6 +14,7 @@ static NOGATEWAY: &[u8] = b"No managers available to handle the request";
 
 lazy_static! {
     static ref REGEX_SESSION_PATH: Regex = Regex::new(r"/session/(?P<sid>[^/]*)").unwrap();
+    static ref REGEX_STORAGE_PATH: Regex = Regex::new(r"/storage/(?P<sid>[^/]*)").unwrap();
 }
 
 #[derive(Clone)]
@@ -85,8 +86,8 @@ impl ProxyJob {
                 debug!("{} {} -> BAD GATEWAY (session request)", req.method(), path);
 
                 Ok(Response::builder()
-                    .status(StatusCode::NOT_FOUND)
-                    .body(NOTFOUND.into())
+                    .status(StatusCode::BAD_GATEWAY)
+                    .body(NOGATEWAY.into())
                     .unwrap())
             }
         }
@@ -111,6 +112,26 @@ impl ProxyJob {
         }
     }
 
+    async fn handle_storage_request(
+        &self,
+        req: Request<Body>,
+        storage_id: &str,
+        info: &RoutingInfo,
+    ) -> Result<Response<Body>> {
+        match info.get_storage_upstream(storage_id).await {
+            Some(upstream) => self.forward(req, upstream).await,
+            None => {
+                let path = req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("");
+                debug!("{} {} -> BAD GATEWAY (storage request)", req.method(), path);
+
+                Ok(Response::builder()
+                    .status(StatusCode::BAD_GATEWAY)
+                    .body(NOGATEWAY.into())
+                    .unwrap())
+            }
+        }
+    }
+
     async fn handle(&self, req: Request<Body>, info: &RoutingInfo) -> Result<Response<Body>> {
         // let req_method = req.method().clone();
         // let req_size = req.body().size_hint().lower();
@@ -126,11 +147,22 @@ impl ProxyJob {
 
         let result = if req.method() == Method::POST && path == "/session" {
             self.handle_manager_request(req, info).await
+        } else if path.starts_with("/storage") {
+            match REGEX_STORAGE_PATH.captures(&path) {
+                Some(caps) => self.handle_storage_request(req, &caps["sid"], info).await,
+                None => {
+                    debug!("{} {} -> NOT FOUND", req.method(), path);
+
+                    Ok(Response::builder()
+                        .status(StatusCode::NOT_FOUND)
+                        .body(NOTFOUND.into())
+                        .unwrap())
+                }
+            }
         } else {
             match REGEX_SESSION_PATH.captures(&path) {
                 Some(caps) => self.handle_session_request(req, &caps["sid"], info).await,
                 None => {
-                    let path = req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("");
                     debug!("{} {} -> NOT FOUND", req.method(), path);
 
                     Ok(Response::builder()

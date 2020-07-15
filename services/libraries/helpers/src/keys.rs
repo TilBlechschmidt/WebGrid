@@ -135,3 +135,13 @@ pub mod session {
         }
     }
 }
+
+pub mod storage {
+    fn storage_prefix(storage_id: &str) -> String {
+        format!("storage:{}", storage_id)
+    }
+
+    pub fn host(storage_id: &str, provider_id: &str) -> String {
+        format!("{}:{}:host", storage_prefix(storage_id), provider_id)
+    }
+}

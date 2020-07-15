@@ -62,7 +62,7 @@ impl Provisioner for DockerProvisioner {
         let env: Vec<String> = vec![
             "REDIS=redis://webgrid-redis/".to_string(),
             format!("ID={}", session_id),
-            format!("STORAGE_DIRECTORY=/host"),
+            format!("STORAGE_DIRECTORY=/storage"),
             "RUST_LOG=trace,tokio=warn,hyper=warn,mio=warn,want=warn".to_string(),
         ];
 
@@ -70,7 +70,7 @@ impl Provisioner for DockerProvisioner {
             auto_remove: Some(true),
             network_mode: Some("webgrid".to_string()),
             shm_size: Some(1024 * 1024 * 1024 * 2),
-            binds: Some(vec!["/tmp/vr:/host".to_string()]),
+            binds: Some(vec!["webgrid:/storage".to_string()]),
             ..Default::default()
         };
 

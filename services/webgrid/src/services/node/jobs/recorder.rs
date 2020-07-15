@@ -2,7 +2,7 @@ use super::super::{recorder::VideoRecorder, Context};
 use anyhow::{bail, Result};
 use async_trait::async_trait;
 use scheduling::{Job, TaskManager};
-use storage::StorageHandler;
+use storage_lib::StorageHandler;
 use tokio::task;
 
 #[derive(Clone)]
