@@ -36,7 +36,7 @@ bollard = { version = "0.7", optional = true }
 
 # Kubernetes
 time = { version = "0.2", optional = true }
-kube = { version = "0.35", default-features = false, features = ["rustls-tls"], optional = true }
+kube = { version = "0.35", optional = true }
 kube-derive = { version = "0.35", optional = true }
 k8s-openapi = { version = "0.8", default-features = false, features = ["v1_17"], optional = true }
 serde_yaml = { version = "0.8", optional = true }
