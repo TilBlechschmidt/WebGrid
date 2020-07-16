@@ -166,7 +166,7 @@ impl ProxyJob {
 
         let result = if req.method() == Method::POST && path == "/session" {
             self.handle_manager_request(req, info).await
-        } else if path.starts_with("/api") {
+        } else if path.starts_with("/api") || path.starts_with("/embed") {
             self.handle_api_request(req, info).await
         } else if path.starts_with("/storage") {
             match REGEX_STORAGE_PATH.captures(&path) {

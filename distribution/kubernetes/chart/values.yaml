@@ -23,6 +23,7 @@ replicaCount:
   manager: 1
   orchestrator: 1
   metrics: 1
+  api: 1
 
 image:
   repository: registry.blechschmidt.de
@@ -47,6 +48,7 @@ resources:
   metrics: {}
   orchestrator: {}
   storage: {}
+  api: {}
   session:
     limits:
       memory: 3000Mi
@@ -62,6 +64,7 @@ nodeSelector:
   orchestrator: {}
   session: {}
   storage: {}
+  api: {}
 
 tolerations:
   redis: []
@@ -71,6 +74,7 @@ tolerations:
   orchestrator: []
   session: []
   storage: []
+  api: []
 
 affinity:
   redis: {}
@@ -80,6 +84,7 @@ affinity:
   orchestrator: {}
   session: {}
   storage: {}
+  api: {}
 
 service:
   type: ClusterIP

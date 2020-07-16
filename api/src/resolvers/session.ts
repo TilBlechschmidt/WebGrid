@@ -13,6 +13,11 @@ export default {
     storage: ({ id }, _, { redis }) => redis.get(`session:${id}:storage`),
     videoURL: async ({ id }, _, { redis }) => {
         const storageID = await redis.get(`session:${id}:storage`)
-        return `/storage/${storageID}/${id}.m3u8`
+
+        if (storageID) {
+            return `/storage/${storageID}/${id}.m3u8`
+        } else {
+            return null
+        }
     }
 }

@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "web-grid.fullname" . }}-api
+  labels:
+    web-grid/component: api
+    {{- include "web-grid.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount.api }}
+  selector:
+    matchLabels:
+      web-grid/component: api
+      {{- include "web-grid.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        web-grid/component: api
+        {{- include "web-grid.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.nodeSelector.api }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity.api }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations.api }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - image: "{{ .Values.image.repository }}/webgrid-api"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          name: {{ .Chart.Name }}-api
+          ports:
+            - name: http
+              containerPort: 4000
+              protocol: TCP
+          env:
+            - name: REDIS
+              value: "{{ include "web-grid.redisURL" . }}"
+            - name: HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          livenessProbe:
+            tcpSocket:
+              port: http
+          resources:
+            {{- toYaml .Values.resources.api | nindent 12 }}
