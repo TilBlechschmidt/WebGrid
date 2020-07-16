@@ -1,10 +1,10 @@
 use super::super::Context;
 use anyhow::Result;
 use async_trait::async_trait;
-use log::info;
+use log::{debug, info};
 use scheduling::{Job, TaskManager};
 use std::{net::SocketAddr, path::PathBuf};
-use warp::Filter;
+use warp::{reply::Reply, Filter};
 
 #[derive(Clone)]
 pub struct ServerJob {
@@ -24,16 +24,34 @@ impl Job for ServerJob {
         // /storage/<storage-id>/<...filepath>
         // localhost:40006/storage/5775e524-7626-497d-9adb-5121ed5ab08f/bbc5dce5-30ff-41cd-877b-45459829c187.m3u8
 
-        let cors = warp::cors().allow_any_origin();
+        let cors = warp::cors()
+            .allow_any_origin()
+            .allow_methods(vec!["OPTIONS", "GET"])
+            .allow_headers(vec!["range"]);
 
         let storage = warp::path(manager.context.storage_id.clone())
             .and(warp::fs::dir(self.storage_directory.clone()))
-            .map(|reply| {
-                warp::reply::with_header(reply, "Content-Type", "application/vnd.apple.mpegURL")
-            })
-            .with(cors);
+            .map(|reply: warp::filters::fs::File| {
+                debug!("SERVE {}", reply.path().display());
+                if let Some(extension) = reply.path().extension() {
+                    if extension == "m3u8" {
+                        warp::reply::with_header(
+                            reply,
+                            "Content-Type",
+                            "application/vnd.apple.mpegURL",
+                        )
+                        .into_response()
+                    } else if extension == "m4s" {
+                        warp::reply::with_header(reply, "Content-Type", "video/mp4").into_response()
+                    } else {
+                        reply.into_response()
+                    }
+                } else {
+                    reply.into_response()
+                }
+            });
 
-        let routes = warp::path("storage").and(storage);
+        let routes = warp::path("storage").and(storage).with(cors);
 
         let source_addr: SocketAddr = ([0, 0, 0, 0], self.port).into();
         let (addr, server) = warp::serve(routes)
