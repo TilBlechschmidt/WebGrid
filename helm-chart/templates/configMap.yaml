@@ -71,6 +71,11 @@ data:
             - name: dshm
               emptyDir:
                 medium: Memory
+            {{- if .Values.recording.enabled }}
+            - name: storage
+              persistentVolumeClaim:
+                claimName: {{ include "web-grid.recordingPVCName" . }}
+            {{- end }}
           containers:
             - name: {{ "{{job_name}}" }}
               image: {{ "{{image_name}}" }}
@@ -91,6 +96,10 @@ data:
               volumeMounts:
                 - mountPath: /dev/shm
                   name: dshm
+                {{- if .Values.recording.enabled }}
+                - name: storage
+                  mountPath: /storage
+                {{- end }}
               resources:
                 {{- toYaml .Values.resources.session | nindent 16 }}
   service.yaml: |

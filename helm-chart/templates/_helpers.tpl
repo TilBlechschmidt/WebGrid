@@ -71,3 +71,14 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Create the name of the persistent volume claim to use
+*/}}
+{{- define "web-grid.recordingPVCName" -}}
+{{- if .Values.recording.createVolumeClaim }}
+{{- default (include "web-grid.fullname" .) .Values.recording.claimName }}
+{{- else }}
+{{- default "default" .Values.recording.claimName }}
+{{- end }}
+{{- end }}

@@ -20,7 +20,7 @@ use jobs::ServerJob;
 /// Serves files located on disk, written by sessions e.g. video recordings
 pub struct Options {
     /// Host under which the storage server is reachable by the proxy
-    #[structopt(long)]
+    #[structopt(long, env)]
     host: String,
 
     /// Port on which the HTTP server will listen
