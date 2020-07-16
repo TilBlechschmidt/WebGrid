@@ -1,6 +1,6 @@
 [workspace]
 members = [
-	"webgrid",
+	"binary",
 	"libraries/helpers",
 	"libraries/resources",
 	"libraries/lifecycle",

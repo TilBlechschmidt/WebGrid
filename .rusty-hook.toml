@@ -1,5 +1,5 @@
 [hooks]
-pre-commit = "cd services && cargo fmt --all && cargo clippy -- -D warnings"
+pre-commit = "cd core && cargo fmt --all && cargo clippy -- -D warnings"
 
 [logging]
 verbose = true

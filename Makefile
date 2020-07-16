@@ -1,12 +1,14 @@
-service-compile:
-	cd services && ./build.sh
+.PHONY: core clean
 
-webgrid: service-compile
-	docker build -f images/webgrid/Dockerfile -t webgrid .
+core:
+	cd core && ./build.sh
 
-node: service-compile
-	docker build -f images/node/Dockerfile -t webgrid-node-firefox --build-arg browser=firefox .
-	docker build -f images/node/Dockerfile -t webgrid-node-chrome --build-arg browser=chrome .
+webgrid: core
+	docker build -f distribution/docker/images/core/Dockerfile -t webgrid .
+
+node: core
+	docker build -f distribution/docker/images/node/Dockerfile -t webgrid-node-firefox --build-arg browser=firefox .
+	docker build -f distribution/docker/images/node/Dockerfile -t webgrid-node-chrome --build-arg browser=chrome .
 
 images: node webgrid
 

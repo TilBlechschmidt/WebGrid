@@ -1,13 +1,10 @@
 {
 	"folders": [
 		{
-			"path": "services"
+			"path": "core"
 		},
 		{
-			"path": "images"
-		},
-		{
-			"path": "helm-chart"
+			"path": "distribution"
 		},
 		{
 			"path": "docs"

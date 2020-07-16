@@ -1,4 +1,4 @@
 .git
-services/target
-services/.cache
+core/target
+core/.cache
 legacy-workarea

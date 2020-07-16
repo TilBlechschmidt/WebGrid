@@ -24,7 +24,7 @@ impl<C: ConnectionLike + AsyncCommands> Logger<C> {
         code: String,
         meta: Option<String>,
     ) -> RedisResult<()> {
-        let key = format!("stream:{}:log", session_id);
+        let key = format!("session:{}:log", session_id);
         let metrics_key = format!("metrics:sessions:log:{:?}", level);
 
         info!("Writing log code {} for {}", code, session_id);
