@@ -2,7 +2,7 @@ use anyhow::Result;
 use helpers::{constants, SharedOptions};
 use lifecycle::Heart;
 use log::info;
-use scheduling::{schedule, JobScheduler};
+use scheduling::{schedule, JobScheduler, StatusServer};
 use std::path::PathBuf;
 use storage_lib::StorageHandler;
 use structopt::StructOpt;
@@ -41,11 +41,12 @@ pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> 
     let context = Context::new(shared_options.redis, storage_id, options.host, options.port);
     let scheduler = JobScheduler::new();
 
+    let status_job = StatusServer::new(&scheduler, shared_options.status_server);
     let server_job = ServerJob::new(options.port, options.storage_directory);
 
     context.spawn_heart_beat(&provider_id, &scheduler).await;
 
-    schedule!(scheduler, context, { server_job });
+    schedule!(scheduler, context, { status_job, server_job });
 
     let death_reason = heart.death().await;
     info!("Heart died: {}", death_reason);
