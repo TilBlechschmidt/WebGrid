@@ -29,7 +29,8 @@ impl VideoRecorder {
         let raw_args = VideoRecorder::generate_arguments(&input, input_framerate, output_str);
         let args: Vec<&str> = raw_args.split(" ").collect();
 
-        let log_file = File::create(log)?;
+        let mut log_file = File::create(log)?;
+        log_file.write(&raw_args.as_bytes())?;
 
         let child = Command::new("ffmpeg")
             .args(&args)
