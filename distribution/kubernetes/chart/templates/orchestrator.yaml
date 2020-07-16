@@ -54,11 +54,11 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
             - name: SLOT_COUNT
-              value: "5"
+              value: "{{ .Values.maxSessionsPerOrchestrator }}"
             - name: IMAGES
               value: "{{ .Values.image.repository }}/webgrid-node-firefox=firefox::68.7.0esr,{{ .Values.image.repository }}/webgrid-node-chrome=chrome::81.0.4044.122"
             - name: RUST_LOG
-              value: trace,warp=warn,hyper=warn # {{ .Values.logLevel }}
+              value: {{ .Values.logLevel }}
             - name: WEBGRID_CONFIG_DIR
               value: "/configs"
             - name: WEBGRID_RESOURCE_PREFIX

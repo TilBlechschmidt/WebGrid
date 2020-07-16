@@ -3,6 +3,7 @@
 # Declare variables to be passed into your templates.
 
 logLevel: debug,hyper=warn,warp=warn
+maxSessionsPerOrchestrator: 5
 
 recording:
   # Whether or not to create PVCs and a storage service
