@@ -1,0 +1,48 @@
+version: "3"
+services:
+  proxy:
+    image: webgrid
+    container_name: webgrid-proxy
+    command: proxy --log debug,hyper=warn
+    ports:
+      - 80:40005
+    depends_on:
+      - redis
+  manager:
+    image: webgrid
+    container_name: webgrid-manager
+    command: manager example-manager webgrid-manager --log debug,hyper=warn
+    depends_on:
+      - redis
+  orchestrator:
+    image: webgrid
+    container_name: webgrid-orchestrator
+    command: orchestrator --slot-count 5 example-orchestrator docker --images "webgrid-node-firefox=firefox::68.7.0esr,webgrid-node-chrome=chrome::81.0.4044.122" --log debug,hyper=warn
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  storage:
+    image: webgrid
+    container_name: webgrid-storage
+    command: storage --log debug,hyper=warn --host webgrid-storage --storage-directory /storage
+    volumes:
+      - webgrid:/storage
+  api:
+    image: webgrid-api
+    container_name: webgrid-api
+    environment:
+      HOST: webgrid-api
+  redis:
+    image: redis:alpine
+    container_name: webgrid-redis
+    command: redis-server --notify-keyspace-events Kgx
+    ports:
+      - 6379:6379
+
+volumes:
+  webgrid:
+    external: true
+
+networks:
+  default:
+    external:
+      name: webgrid
