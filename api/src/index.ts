@@ -61,9 +61,6 @@ program
 
 program.parse(process.argv)
 
-console.log(program)
-console.log(program.redis)
-
 const redis = new Redis(program.redis)
 const apiID = uuidv4()
 
