@@ -78,9 +78,9 @@ impl FileSystemScanner {
         }
 
         // Deconstruct `self` to gain access to the transaction within
-        return Arc::try_unwrap(self.transaction)
+        Arc::try_unwrap(self.transaction)
             .map(|i| i.into_inner())
-            .ok();
+            .ok()
     }
 
     async fn next(&self) -> bool {
