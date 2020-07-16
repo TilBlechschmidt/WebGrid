@@ -1,5 +1,5 @@
 use futures::lock::Mutex;
-use rand::seq::{IteratorRandom, SliceRandom};
+use rand::seq::IteratorRandom;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -11,6 +11,8 @@ pub struct RoutingInfo {
     pub sessions: Arc<Mutex<HashMap<String, String>>>,
     /// Storage ID -> Provider ID -> Host
     pub storages: Arc<Mutex<HashMap<String, HashMap<String, String>>>>,
+    /// API ID -> host
+    pub apis: Arc<Mutex<HashMap<String, String>>>,
 }
 
 impl RoutingInfo {
@@ -19,22 +21,17 @@ impl RoutingInfo {
             managers: Arc::new(Mutex::new(HashMap::new())),
             sessions: Arc::new(Mutex::new(HashMap::new())),
             storages: Arc::new(Mutex::new(HashMap::new())),
+            apis: Arc::new(Mutex::new(HashMap::new())),
         }
-    }
-
-    pub async fn get_manager_upstreams(&self) -> Vec<String> {
-        let managers = self.managers.lock().await;
-        managers.iter().map(|(_, v)| v.clone()).collect()
     }
 
     pub async fn get_manager_upstream(&self) -> Option<String> {
-        let upstreams = self.get_manager_upstreams().await;
+        let managers = self.managers.lock().await;
 
-        if upstreams.is_empty() {
-            return None;
-        }
-
-        upstreams.choose(&mut rand::thread_rng()).cloned()
+        managers
+            .values()
+            .choose(&mut rand::thread_rng())
+            .map(|v| v.clone())
     }
 
     pub async fn get_session_upstream(&self, session_id: &str) -> Option<String> {
@@ -49,6 +46,14 @@ impl RoutingInfo {
             .get(storage_id)
             .map(|providers| providers.values().choose(&mut rand::thread_rng()).cloned())
             .flatten()
+    }
+
+    pub async fn get_api_upstream(&self) -> Option<String> {
+        let apis = self.apis.lock().await;
+
+        apis.values()
+            .choose(&mut rand::thread_rng())
+            .map(|v| v.clone())
     }
 
     // TODO Code duplication in the four methods below
@@ -78,7 +83,7 @@ impl RoutingInfo {
         &self,
         storage_id: &str,
         provider_id: &str,
-        host: &str,
+        addr: &str,
     ) -> Option<String> {
         let mut storages = self.storages.lock().await;
 
@@ -88,10 +93,15 @@ impl RoutingInfo {
 
         // This will always be true due to the statement above! (because we locked it race conditions should be impossible)
         if let Some(storage) = storages.get_mut(storage_id) {
-            storage.insert(provider_id.to_owned(), host.to_owned())
+            storage.insert(provider_id.to_owned(), addr.to_owned())
         } else {
             unreachable!()
         }
+    }
+
+    pub async fn add_api_upstream(&self, api_id: &str, addr: &str) -> Option<String> {
+        let mut apis = self.apis.lock().await;
+        apis.insert(api_id.to_owned(), addr.to_owned())
     }
 
     pub async fn remove_manager_upstream(&self, manager_id: &str) {
@@ -106,5 +116,9 @@ impl RoutingInfo {
         if let Some(storage) = self.storages.lock().await.get_mut(storage_id) {
             storage.remove(provider_id);
         }
+    }
+
+    pub async fn remove_api_upstream(&self, api_id: &str) {
+        self.apis.lock().await.remove(api_id);
     }
 }

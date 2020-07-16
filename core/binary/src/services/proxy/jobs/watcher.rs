@@ -14,6 +14,7 @@ use tokio::task::yield_now;
 const PATTERN_MANAGER: &str = "__keyspace@0__:manager:*:heartbeat";
 const PATTERN_SESSION: &str = "__keyspace@0__:session:*:heartbeat.node";
 const PATTERN_STORAGE: &str = "__keyspace@0__:storage:*:*:host";
+const PATTERN_API: &str = "__keyspace@0__:api:*:host";
 
 lazy_static! {
     static ref REGEX_MANAGER: Regex =
@@ -22,6 +23,7 @@ lazy_static! {
         Regex::new(r"__keyspace@0__:session:(?P<sid>[^:]+):heartbeat\.node").unwrap();
     static ref REGEX_STORAGE: Regex =
         Regex::new(r"__keyspace@0__:storage:(?P<sid>[^:]+):(?P<pid>[^:]+):host").unwrap();
+    static ref REGEX_API: Regex = Regex::new(r"__keyspace@0__:api:(?P<aid>[^:]+):host").unwrap();
 }
 
 #[derive(Error, Debug)]
@@ -63,6 +65,11 @@ impl Job for WatcherJob {
             .psubscribe(PATTERN_STORAGE)
             .await
             .context("unable to subscribe to storage list")?;
+
+        pubsub
+            .psubscribe(PATTERN_API)
+            .await
+            .context("unable to subscribe to api list")?;
 
         manager.ready().await;
 
@@ -129,6 +136,9 @@ impl WatcherJob {
                 .await;
         } else if pattern == Some(PATTERN_STORAGE.to_string()) {
             self.handle_storage_message(channel, &operation, &info, con)
+                .await;
+        } else if pattern == Some(PATTERN_API.to_string()) {
+            self.handle_api_message(channel, &operation, &info, con)
                 .await;
         }
 
@@ -242,6 +252,38 @@ impl WatcherJob {
                 "expired" => {
                     info!("- Storage {} (provider: {})", storage_id, provider_id);
                     info.remove_storage_upstream(storage_id, provider_id).await;
+                }
+                &_ => {}
+            }
+        }
+    }
+
+    async fn handle_api_message(
+        &self,
+        channel: &str,
+        operation: &str,
+        info: &RoutingInfo,
+        con: &mut (impl ConnectionLike + AsyncCommands),
+    ) {
+        if let Some(caps) = REGEX_API.captures(channel) {
+            let api_id = &caps["aid"];
+
+            match operation {
+                // Manager has been added
+                "expire" => {
+                    let data_key = format!("api:{}:host", api_id);
+                    let res = con.get::<_, String>(data_key).await;
+
+                    if let Ok(addr) = res {
+                        if info.add_api_upstream(api_id, &addr).await.is_none() {
+                            info!("+ API {} @ {}", api_id, addr);
+                        }
+                    }
+                }
+                // Manager has died
+                "expired" => {
+                    info!("- API {}", api_id);
+                    info.remove_api_upstream(api_id).await;
                 }
                 &_ => {}
             }

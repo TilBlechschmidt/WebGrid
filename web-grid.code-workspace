@@ -4,6 +4,9 @@
 			"path": "core"
 		},
 		{
+			"path": "api"
+		},
+		{
 			"path": "distribution"
 		},
 		{
@@ -23,7 +26,8 @@
 			"serayuzgur.crates",
 			"matklad.rust-analyzer",
 			"vadimcn.vscode-lldb",
-			"ms-kubernetes-tools.vscode-kubernetes-tools"
+			"ms-kubernetes-tools.vscode-kubernetes-tools",
+			"dbaeumer.vscode-eslint"
 		],
 		// List of extensions recommended by VS Code that should not be recommended for users of this workspace.
 		"unwantedRecommendations": [

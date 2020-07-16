@@ -10,7 +10,7 @@ use scheduling::{Job, TaskManager};
 use std::convert::Infallible;
 
 static NOTFOUND: &[u8] = b"Not Found";
-static NOGATEWAY: &[u8] = b"No managers available to handle the request";
+static NOGATEWAY: &[u8] = b"No upstream available to handle the request";
 
 lazy_static! {
     static ref REGEX_SESSION_PATH: Regex = Regex::new(r"/session/(?P<sid>[^/]*)").unwrap();
@@ -112,6 +112,25 @@ impl ProxyJob {
         }
     }
 
+    async fn handle_api_request(
+        &self,
+        req: Request<Body>,
+        info: &RoutingInfo,
+    ) -> Result<Response<Body>> {
+        match info.get_api_upstream().await {
+            Some(upstream) => self.forward(req, upstream).await,
+            None => {
+                let path = req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("");
+                debug!("{} {} -> BAD GATEWAY (api request)", req.method(), path);
+
+                Ok(Response::builder()
+                    .status(StatusCode::BAD_GATEWAY)
+                    .body(NOGATEWAY.into())
+                    .unwrap())
+            }
+        }
+    }
+
     async fn handle_storage_request(
         &self,
         req: Request<Body>,
@@ -147,6 +166,8 @@ impl ProxyJob {
 
         let result = if req.method() == Method::POST && path == "/session" {
             self.handle_manager_request(req, info).await
+        } else if path.starts_with("/api") {
+            self.handle_api_request(req, info).await
         } else if path.starts_with("/storage") {
             match REGEX_STORAGE_PATH.captures(&path) {
                 Some(caps) => self.handle_storage_request(req, &caps["sid"], info).await,

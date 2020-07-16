@@ -1,0 +1,46 @@
+import { gql } from 'apollo-server'
+
+export default gql`
+scalar Date
+
+type SessionStatusTransitions {
+    queuedAt: Date
+    pendingAt: Date
+    aliveAt: Date
+    terminatedAt: Date
+}
+
+type SessionCapabilities {
+    requested: String
+    actual: String
+}
+
+type SessionUpstream {
+    host: String
+    port: Int
+    driverSessionID: String
+}
+
+type SessionDownstream {
+    host: String
+    userAgent: String
+    lastSeen: Date
+}
+
+type Session {
+    id: String!
+    alive: Boolean
+
+    slot: String
+    orchestrator: String
+
+    status: SessionStatusTransitions
+    capabilities: SessionCapabilities
+
+    upstream: SessionUpstream
+    downstream: SessionDownstream
+
+    storage: String
+    videoURL: String
+}
+`
