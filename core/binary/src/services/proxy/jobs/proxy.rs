@@ -164,7 +164,7 @@ impl ProxyJob {
             .map(|x| x.to_string())
             .unwrap_or_else(|| "".to_string());
 
-        let result = if req.method() == Method::POST && path == "/session" {
+        if req.method() == Method::POST && path == "/session" {
             self.handle_manager_request(req, info).await
         } else if path.starts_with("/api") || path.starts_with("/embed") {
             self.handle_api_request(req, info).await
@@ -192,7 +192,7 @@ impl ProxyJob {
                         .unwrap())
                 }
             }
-        };
+        }
 
         // if let Ok(response) = &result {
         //     let status_code = response.status();
@@ -205,7 +205,5 @@ impl ProxyJob {
         //         .send(MetricsEntry::RequestProcessed(req_method, status_code))
         //         .ok();
         // }
-
-        result
     }
 }

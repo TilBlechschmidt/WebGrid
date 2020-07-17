@@ -12,7 +12,7 @@ mod context;
 mod jobs;
 
 use context::Context;
-use jobs::ServerJob;
+use jobs::{CleanupJob, ServerJob};
 
 #[derive(Debug, StructOpt)]
 /// Content delivery service
@@ -30,11 +30,20 @@ pub struct Options {
     /// Directory to serve
     #[structopt(long, env, parse(from_os_str))]
     storage_directory: PathBuf,
+
+    /// Directory size limit
+    #[structopt(long, env)]
+    size_limit: f64,
+
+    /// Percentage (0-100) of size limit to purge during cleanup routing
+    #[structopt(long, env, default_value = "20")]
+    cleanup_percentage: f64,
 }
 
 pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> {
     let storage_id = StorageHandler::storage_id(options.storage_directory.clone()).await?;
     let provider_id = Uuid::new_v4().to_string();
+    let cleanup_target = options.size_limit * (options.cleanup_percentage / 100.0);
 
     let (mut heart, _) = Heart::new();
 
@@ -42,11 +51,20 @@ pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> 
     let scheduler = JobScheduler::new();
 
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);
-    let server_job = ServerJob::new(options.port, options.storage_directory);
+    let server_job = ServerJob::new(options.port, options.storage_directory.clone());
+    let cleanup_job = CleanupJob::new(
+        options.storage_directory,
+        options.size_limit,
+        cleanup_target,
+    );
 
     context.spawn_heart_beat(&provider_id, &scheduler).await;
 
-    schedule!(scheduler, context, { status_job, server_job });
+    schedule!(scheduler, context, {
+        status_job,
+        server_job,
+        cleanup_job
+    });
 
     let death_reason = heart.death().await;
     info!("Heart died: {}", death_reason);

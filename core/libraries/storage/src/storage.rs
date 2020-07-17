@@ -1,5 +1,5 @@
 use log::{debug, error, warn};
-use sqlx::{pool::PoolConnection, Executor, Sqlite, SqliteConnection, SqlitePool};
+use sqlx::{pool::PoolConnection, Connection, Executor, Sqlite, SqliteConnection, SqlitePool};
 use std::{
     fs,
     io::{Error as IOError, ErrorKind},
@@ -103,7 +103,8 @@ impl StorageHandler {
             .await
             .ok_or_else(|| StorageError::InternalError)?;
 
-        resulting_transaction.commit().await?;
+        let con = resulting_transaction.commit().await?;
+        con.close();
 
         Ok(())
     }
@@ -120,6 +121,7 @@ impl StorageHandler {
         let mut con = self.acquire_connection().await?;
 
         database::insert_file(path_str, metadata.ok(), &mut con).await?;
+        con.close();
 
         Ok(())
     }
@@ -128,20 +130,40 @@ impl StorageHandler {
     ///
     /// Call this if you externally delete a file from the watched directory
     pub async fn remove_file<P: AsRef<Path>>(&self, path: P) -> Result<(), StorageError> {
-        let con = self.acquire_connection().await?;
-        self.remove_file_from_con(path, con).await
+        let mut con = self.acquire_connection().await?;
+        let res = self.remove_file_from_con(path, &mut con).await;
+        con.close();
+        res
     }
 
-    /// Force a cleanup cycle that attempts to delete files until `cleanup_target` bytes have been purged
-    ///
-    /// This ignores the `size_threshold` and runs the cleanup regardless! Usually you want to call `.maybe_cleanup()` instead.
-    pub async fn cleanup(&self) -> Result<usize, StorageError> {
+    /// Runs a cleanup if the used bytes exceed the `size_threshold`
+    pub async fn maybe_cleanup(&self) -> Result<usize, StorageError> {
+        let mut con = self.acquire_connection().await?;
+        let used_bytes: f64 = database::used_bytes(&mut con).await?;
+        con.close();
+
+        debug!("Used bytes: {}", used_bytes);
+
+        if used_bytes < self.size_threshold {
+            // We are below the threshold, nothing to do here!
+            Ok(0)
+        } else {
+            debug!("Above cleanup threshold!");
+            self.cleanup(used_bytes).await
+        }
+    }
+
+    async fn cleanup(&self, used_bytes: f64) -> Result<usize, StorageError> {
         let mut con = self.acquire_connection().await?;
 
         // TODO Pass this as a parameter
         database::setup_views(&mut con, "(ModificationTime / 60 / 60 / 24) + (LastAccessTime / 60 / 60 / 24) + (Size / 1024.0 / 1024.0)").await?;
 
-        let paths = database::files_to_delete(&mut con, self.cleanup_target).await?;
+        // Calculate how many bytes are over the limit and include those in the cleanup target size
+        let bytes_over_limit = used_bytes - self.size_threshold;
+        let cleanup_target = bytes_over_limit + self.cleanup_target;
+
+        let paths = database::files_to_delete(&mut con, cleanup_target).await?;
         let file_count = paths.len();
 
         for path in paths.into_iter() {
@@ -154,6 +176,8 @@ impl StorageHandler {
                 self.remove_file_from_con(&absolute_path, &mut con).await?;
             }
         }
+
+        con.close();
 
         Ok(file_count)
     }

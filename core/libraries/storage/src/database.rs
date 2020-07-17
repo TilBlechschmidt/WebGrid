@@ -1,7 +1,10 @@
 use chrono::{Duration, TimeZone, Utc};
 use sqlx::{
-    cursor::Cursor, error::Error as SQLError, executor::RefExecutor, sqlite::Sqlite, Executor, Row,
-    SqliteConnection,
+    cursor::Cursor,
+    error::Error as SQLError,
+    executor::RefExecutor,
+    sqlite::{Sqlite, SqliteQueryAs},
+    Executor, Row, SqliteConnection,
 };
 use std::path::PathBuf;
 
@@ -65,6 +68,20 @@ pub async fn insert_file<E: Executor<Database = Sqlite>>(
     .await?;
 
     Ok(())
+}
+
+pub async fn used_bytes<'e, E>(executor: E) -> Result<f64, SQLError>
+where
+    E: 'e + Send + RefExecutor<'e, Database = Sqlite>,
+{
+    // let mut cursor = sqlx::query(r#"SELECT SUM(Size) FROM Files"#).fetch(executor);
+    // Ok(cursor.next().await?)
+
+    let row: (f64,) = sqlx::query_as("SELECT SUM(Size) FROM Files")
+        .fetch_one(executor)
+        .await?;
+
+    Ok(row.0)
 }
 
 pub async fn files_to_delete<'e, E>(executor: E, target_size: f64) -> Result<Vec<PathBuf>, SQLError>

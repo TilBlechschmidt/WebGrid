@@ -135,6 +135,11 @@ impl FileSystemScanner {
             .to_str()
             .unwrap_or_default();
 
+        // Skip system files
+        if path_str.contains(".webgrid-storage") || path_str.contains("storage.db") {
+            return;
+        }
+
         let mut con = self.transaction.lock().await;
         crate::database::insert_file(path_str, entry.metadata().await.ok(), &mut (*con))
             .await

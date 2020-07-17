@@ -107,7 +107,7 @@ pub async fn create_session(
             logger.log(log_code, None).await.ok();
             deferred.await;
 
-            return Err(e);
+            Err(e)
         }
     }
 }
