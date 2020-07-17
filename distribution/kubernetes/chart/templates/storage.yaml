@@ -8,7 +8,7 @@ metadata:
     web-grid/component: storage
     {{- include "web-grid.labels" . | nindent 4 }}
 spec:
-  storageClassName: {{ .Values.recording.storageClassName }}
+  storageClassName: {{ .Values.recording.persistentVolumeClaim.storageClassName }}
   accessModes:
     - ReadWriteOnce
   resources:

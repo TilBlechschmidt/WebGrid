@@ -19,6 +19,7 @@ impl Job for RecorderJob {
         let storage = manager.context.options.storage_directory.clone();
         let input = manager.context.options.recording_input.clone();
         let input_framerate = manager.context.options.recording_framerate;
+        let quality_preset = manager.context.options.recording_quality();
 
         // Because we are only inserting files we can safely set the thresholds to 0
         let handler = StorageHandler::new(storage.clone(), 0.0, 0.0).await?;
@@ -33,6 +34,7 @@ impl Job for RecorderJob {
         let recorder = VideoRecorder::record(
             input.clone(),
             input_framerate,
+            quality_preset,
             output_manifest.clone(),
             log.clone(),
         )?;

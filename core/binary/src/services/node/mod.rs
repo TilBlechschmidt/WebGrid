@@ -49,7 +49,6 @@ pub struct Options {
 
     /// Directory in which to store video recordings
     // TODO Make recording optional!
-    // TODO Provide quality presets for recording output
     #[structopt(long, env, parse(from_os_str))]
     storage_directory: PathBuf,
 
@@ -63,9 +62,40 @@ pub struct Options {
     #[structopt(
         long,
         env,
-        default_value = "-rtbufsize 1500M -probesize 100M -framerate 5 -video_size 1920x1080 -f x11grab -i :42 -vf scale=w=1280:h=720:force_original_aspect_ratio=decrease"
+        default_value = "-rtbufsize 1500M -probesize 100M -framerate 5 -video_size 1920x1080 -f x11grab -i :42"
     )]
     recording_input: String,
+
+    /// Constant Rate Factor
+    ///
+    /// The range of the CRF scale is 0–51, where 0 is lossless, 23 is the default, and 51 is worst quality possible.
+    /// A lower value generally leads to higher quality, and a subjectively sane range is 17–28.
+    /// Consider 17 or 18 to be visually lossless or nearly so; it should look the same or nearly the same as the input but it isn't technically lossless.
+    /// The range is exponential, so increasing the CRF value +6 results in roughly half the bitrate / file size, while -6 leads to roughly twice the bitrate.
+    /// Choose the highest CRF value that still provides an acceptable quality. If the output looks good, then try a higher value. If it looks bad, choose a lower value.
+    ///
+    /// For more details, consult the ffmpeg H.264 documentation (section "Constant Rate Factor"):
+    ///
+    /// https://trac.ffmpeg.org/wiki/Encode/H.264
+    #[structopt(long, env, default_value = "46")]
+    crf: u8,
+
+    /// Upper bitrate bound in bytes
+    ///
+    /// The average bitrate is determined by the constant rate factor and content
+    /// however if the bitrate were to exceed this specified maximum bitrate limit, the codec will increase the CRF temporarily.
+    ///
+    /// For more details, consult the ffmpeg H.264 documentation (section "Constrained encoding"):
+    ///
+    /// https://trac.ffmpeg.org/wiki/Encode/H.264
+    #[structopt(long, env, default_value = "450000")]
+    max_bitrate: usize,
+}
+
+impl Options {
+    fn recording_quality(&self) -> recorder::VideoQualityPreset {
+        recorder::VideoQualityPreset::new(self.crf, self.max_bitrate)
+    }
 }
 
 async fn launch_session(

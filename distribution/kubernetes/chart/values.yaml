@@ -9,15 +9,21 @@ recording:
   # Whether or not to create PVCs and a storage service
   enabled: false
   sizeLimit: 50G
-  createVolumeClaim: true
-  # The name of the volume claim to use.
-  # If not set and create is true, a name is generated using the fullname template
-  claimName: ""
-  # A backing PersistentVolume has to exist and implicitly defines
-  # the node-affinity for sessions and storage pods if recording is enabled.
-  #
-  # Note: The storage class needs to support concurrent access by multiple pods! (e.g. a hostPath based PV)
-  storageClassName: local-storage
+  # Consult the ffmpeg documentation on how these parameters work
+  # https://trac.ffmpeg.org/wiki/Encode/H.264
+  quality:
+    crf: 46
+    maxBitrate: 450000
+  persistentVolumeClaim:
+    create: true
+    # The name of the volume claim to use.
+    # If not set and createVolumeClaim is true, a name is generated using the fullname template
+    name: ""
+    # A backing PersistentVolume has to exist and implicitly defines
+    # the node-affinity for sessions and storage pods if recording is enabled.
+    #
+    # Note: The storage class needs to support concurrent access by multiple pods! (e.g. a hostPath based PV)
+    storageClassName: local-storage
 
 replicaCount:
   proxy: 1

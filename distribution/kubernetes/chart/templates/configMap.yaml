@@ -93,6 +93,10 @@ data:
                   value: "{{ include "web-grid.redisURL" . }}"
                 - name: STORAGE_DIRECTORY
                   value: "/storage"
+                - name: CRF
+                  value: "{{ .Values.recording.quality.crf }}"
+                - name MAX_BITRATE
+                  value: "{{ .Values.recording.quality.maxBitrate }}"
               volumeMounts:
                 - mountPath: /dev/shm
                   name: dshm
