@@ -63,6 +63,15 @@ impl PartialEq for JobStatus {
 
 impl Eq for JobStatus {}
 
+impl JobStatus {
+    fn is_gracefully_terminatable(&self) -> bool {
+        match self {
+            &JobStatus::Ready(Some(_)) => true,
+            &_ => false,
+        }
+    }
+}
+
 pub struct JobScheduler {
     pub(crate) status: Arc<Mutex<HashMap<String, JobStatus>>>,
     termination_handles: Arc<Mutex<HashMap<String, AbortHandle>>>,
@@ -253,24 +262,47 @@ impl JobScheduler {
 
     pub async fn terminate_jobs(&self) {
         // 1. Send termination signal to jobs that support graceful shutdown and terminate ones that don't (or ones that aren't running)
-        for (job_name, status) in self.status.lock().await.iter() {
-            if let JobStatus::Ready(Some(graceful_handle)) = status {
-                graceful_handle.broadcast(Some(())).ok();
-            } else if let Some(forceful_handle) =
-                self.termination_handles.lock().await.get(job_name)
-            {
-                forceful_handle.abort();
+        {
+            let status = self.status.lock().await;
+
+            for (job_name, status) in status.iter() {
+                if let JobStatus::Ready(Some(graceful_handle)) = status {
+                    graceful_handle.broadcast(Some(())).ok();
+                } else if let Some(forceful_handle) =
+                    self.termination_handles.lock().await.get(job_name)
+                {
+                    forceful_handle.abort();
+                }
             }
         }
 
-        // 2. Give jobs some time to gracefully terminate (if applicable)
+        // 2. Give alive jobs some time to gracefully terminate (if applicable)
         // TODO Make duration an environment variable or property
         for _ in 0..60000 {
-            if self.termination_handles.lock().await.is_empty() {
-                break;
+            {
+                let termination_handles = self.termination_handles.lock().await;
+                let status = self.status.lock().await;
+
+                // Filter out handles that are associated with non-ready jobs
+                // Reason: If a job is gracefully terminatable but enters a crashed state during graceful termination
+                //          it would block the termination for the grace period. However, it is more reasonable to just ignore it.
+                let graceful_handles: Vec<&String> = termination_handles
+                    .keys()
+                    .filter(|job_name| {
+                        if let Some(job_status) = status.get(*job_name) {
+                            job_status.is_gracefully_terminatable()
+                        } else {
+                            false
+                        }
+                    })
+                    .collect();
+
+                if graceful_handles.is_empty() {
+                    break;
+                }
             }
 
-            delay_for(Duration::from_millis(1)).await;
+            delay_for(Duration::from_millis(10)).await;
         }
 
         // 3. Call termination handle for all remaining jobs
