@@ -110,4 +110,4 @@ Once you have started the grid you can send requests to it using the regular Sel
     ```
 
 !!! attention
-    When you used Kubernetes you may have to forward the grid service to your local computer for the example code to work. For details on accessing your WebGrid within a cluster consult the [Kubernetes](kubernetes.md) docs.
+    When you used Kubernetes you may have to forward the grid service to your local computer for the example code to work. For details on accessing your WebGrid within a cluster consult the [Kubernetes specific](kubernetes/access.md) docs.

@@ -2,7 +2,7 @@
 site_name: WebGrid
 site_description: Decentralized, scalable and robust implementation of a selenium-grid equivalent. Based on the WebDriver specification by the W3C.
 site_author: Til Blechschmidt
-site_url: https://tilblechschmidt.github.io/webgrid/
+site_url: https://webgrid.dev/
 
 # Repository
 repo_name: TilBlechschmidt/WebGrid
