@@ -15,6 +15,7 @@ copyright: Copyright &copy; 2019 - 2020 Til Blechschmidt
 nav:
   - "index.md"
   - "getting-started.md"
+  - "faq.md"
   - "Features":
       - "features/api.md"
       - "features/screen-recording.md"
@@ -26,7 +27,18 @@ nav:
       - "kubernetes/scaling.md"
   - "Contribute":
       - "contribute/index.md"
-      - "contribute/other.md"
+      - "contribute/issues.md"
+      - "contribute/code-contrib.md"
+      - "Code of conduct": "contribute/code-of-conduct.md"
+  - "Architecture":
+      - "architecture/index.md"
+      - "architecture/database.md"
+      - "architecture/structure.md"
+      - "architecture/services.md"
+      - "architecture/error-handling.md"
+      - "architecture/workflows.md"
+  - "Issue Tracker":
+      - "https://github.com/TilBlechschmidt/WebGrid/issues"
 
 # Configuration
 theme:

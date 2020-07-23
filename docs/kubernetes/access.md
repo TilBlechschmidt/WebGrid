@@ -40,3 +40,5 @@ spec:
 !!! note
     You may have to add additional properties to the spec for it to work depending on your cluster setup. Consult your cluster admin (or documentation) for more details.
 
+!!! warning
+    As the Ingress adds another HTTP proxy to the request chain it could pose a bottleneck! If you want to avoid this consider running your tests [inside the cluster](#cluster-internal-access).
