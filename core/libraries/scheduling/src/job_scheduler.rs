@@ -41,8 +41,8 @@ pub(crate) enum JobStatus {
 
 impl fmt::Display for JobStatus {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            &JobStatus::Ready(_) => write!(f, "Ready"),
+        match *self {
+            JobStatus::Ready(_) => write!(f, "Ready"),
             _ => write!(f, "{:?}", self),
         }
     }
@@ -65,13 +65,14 @@ impl Eq for JobStatus {}
 
 impl JobStatus {
     fn is_gracefully_terminatable(&self) -> bool {
-        match self {
-            &JobStatus::Ready(Some(_)) => true,
-            &_ => false,
+        match *self {
+            JobStatus::Ready(Some(_)) => true,
+            _ => false,
         }
     }
 }
 
+#[derive(Default)]
 pub struct JobScheduler {
     pub(crate) status: Arc<Mutex<HashMap<String, JobStatus>>>,
     termination_handles: Arc<Mutex<HashMap<String, AbortHandle>>>,
@@ -79,10 +80,7 @@ pub struct JobScheduler {
 
 impl JobScheduler {
     pub fn new() -> Self {
-        Self {
-            status: Arc::new(Mutex::new(HashMap::new())),
-            termination_handles: Arc::new(Mutex::new(HashMap::new())),
-        }
+        JobScheduler::default()
     }
 
     fn add_dependency_watcher(
@@ -90,6 +88,7 @@ impl JobScheduler {
         abort_handle: AbortHandle,
     ) -> AbortableJoinHandle<()> {
         spawn_abortable(async move {
+            #[allow(clippy::never_loop)]
             while let Some(status) = rx.next().await {
                 match status {
                     ResourceStatus::Dead => {
@@ -108,7 +107,7 @@ impl JobScheduler {
         job_name: String,
     ) -> AbortableJoinHandle<()> {
         spawn_abortable(async move {
-            if let Ok(_) = readiness_rx.await {
+            if readiness_rx.await.is_ok() {
                 // TODO Reset job crash backoff counter to zero after a successful start
                 JobScheduler::change_status(
                     &status_map,
@@ -251,7 +250,7 @@ impl JobScheduler {
                 .await
                 .insert(job_name.clone(), termination_handle);
 
-            if let Err(_) = job_lifecycle.await {
+            if job_lifecycle.await.is_err() {
                 JobScheduler::change_status(&status_map, &job_name, JobStatus::Terminated).await;
             }
 

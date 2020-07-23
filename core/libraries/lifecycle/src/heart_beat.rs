@@ -27,6 +27,12 @@ pub struct HeartBeat<C> {
     phantom: PhantomData<C>,
 }
 
+impl<C> Default for HeartBeat<C> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<C> HeartBeat<C> {
     pub fn new() -> Self {
         HeartBeat::with_value(BeatValue::Timestamp)

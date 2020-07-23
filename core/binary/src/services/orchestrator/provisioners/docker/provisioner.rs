@@ -62,7 +62,7 @@ impl Provisioner for DockerProvisioner {
         let env: Vec<String> = vec![
             "REDIS=redis://webgrid-redis/".to_string(),
             format!("ID={}", session_id),
-            format!("STORAGE_DIRECTORY=/storage"),
+            "STORAGE_DIRECTORY=/storage".to_string(),
             "RUST_LOG=trace,tokio=warn,hyper=warn,mio=warn,want=warn".to_string(),
         ];
 

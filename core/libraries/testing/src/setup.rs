@@ -17,7 +17,7 @@ pub async fn post_test<C: ConnectionLike>(con: &mut C) {
 
 pub async fn load<C: ConnectionLike>(con: &mut C, content: &str) {
     for line in content.trim().lines() {
-        let mut components = line.trim().split(" ").into_iter();
+        let mut components = line.trim().split(' ');
 
         if let Some(command) = components.next() {
             let mut initial_command = redis::cmd(command);

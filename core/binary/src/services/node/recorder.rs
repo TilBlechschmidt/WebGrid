@@ -72,10 +72,10 @@ impl VideoRecorder {
         let output_str = output.to_str().ok_or(RecordingError::InputPathInvalid)?;
         let raw_args =
             VideoRecorder::generate_arguments(&input, input_framerate, quality, output_str);
-        let args: Vec<&str> = raw_args.split(" ").collect();
+        let args: Vec<&str> = raw_args.split(' ').collect();
 
         let mut log_file = File::create(log)?;
-        log_file.write(&raw_args.as_bytes())?;
+        log_file.write_all(&raw_args.as_bytes())?;
 
         let child = Command::new("ffmpeg")
             .args(&args)
@@ -94,7 +94,7 @@ impl VideoRecorder {
                 .stdin
                 .as_mut()
                 .ok_or(RecordingError::StdinInaccessible)?;
-            stdin.write_all("q".as_bytes())?;
+            stdin.write_all(b"q")?;
         }
 
         Ok(self.child.wait()?)

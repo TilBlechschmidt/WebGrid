@@ -395,10 +395,7 @@ impl PubSubResource for MonitoredPubSub {
     ) -> Pin<Box<dyn Stream<Item = Result<Msg, PubSubResourceError>> + Send + 'a>> {
         let mut handle = self.handle.clone();
 
-        let message_stream = self
-            .pubsub
-            .on_message()
-            .map(|msg| Ok::<Msg, PubSubResourceError>(msg));
+        let message_stream = self.pubsub.on_message().map(Ok::<Msg, PubSubResourceError>);
         let error_stream = once(async move {
             handle.resource_died().await;
             Err(PubSubResourceError::StreamClosed)

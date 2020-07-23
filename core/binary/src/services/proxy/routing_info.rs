@@ -28,10 +28,7 @@ impl RoutingInfo {
     pub async fn get_manager_upstream(&self) -> Option<String> {
         let managers = self.managers.lock().await;
 
-        managers
-            .values()
-            .choose(&mut rand::thread_rng())
-            .map(|v| v.clone())
+        managers.values().choose(&mut rand::thread_rng()).cloned()
     }
 
     pub async fn get_session_upstream(&self, session_id: &str) -> Option<String> {
@@ -51,9 +48,7 @@ impl RoutingInfo {
     pub async fn get_api_upstream(&self) -> Option<String> {
         let apis = self.apis.lock().await;
 
-        apis.values()
-            .choose(&mut rand::thread_rng())
-            .map(|v| v.clone())
+        apis.values().choose(&mut rand::thread_rng()).cloned()
     }
 
     // TODO Code duplication in the four methods below

@@ -60,6 +60,12 @@ impl Drop for TestResourceProvider {
     }
 }
 
+impl Default for TestResourceProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Clone)]
 pub struct TestResourceManager {
     redis_url: String,
