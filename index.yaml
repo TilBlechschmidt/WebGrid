@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  webgrid:
+  - apiVersion: v2
+    appVersion: 0.1.0
+    created: "2020-07-27T17:05:09.451523198Z"
+    description: Scalable WebDriver provisioner
+    digest: 4192554a4f0ba5b78d423cbc0f8ff11168d4fcb1fcfec801f0ba689b7a72d993
+    name: webgrid
+    type: application
+    urls:
+    - https://webgrid.dev/charts/webgrid-0.1.0.tgz
+    version: 0.1.0
+generated: "2020-07-27T17:05:09.427856353Z"
