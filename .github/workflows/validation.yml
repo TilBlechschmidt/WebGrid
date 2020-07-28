@@ -1,0 +1,98 @@
+name: 🔎 Code validation
+
+on: [push, pull_request]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: core
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            core/target
+          key: validate-core-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+      - name: Check formatting
+        run: cargo fmt -- --check --files-with-diff
+      - name: Build
+        run: cargo build --verbose --locked
+      - name: Lint code
+        run: cargo clippy --verbose -- -D warnings
+      - name: Document
+        run: |
+          cargo doc --verbose --locked --no-deps --document-private-items && \
+          mkdir -p ../.artifacts/core-documentation && \
+          rsync -a --progress target/doc ../.artifacts/core-documentation
+      - uses: actions/upload-artifact@v2
+        with:
+          name: core-documentation
+          path: .artifacts/core-documentation
+      - name: Install test dependencies
+        run: sudo apt update && sudo apt install redis-server
+      - name: Run tests
+        run: cargo test --verbose
+
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v2-beta
+        with:
+          node-version: "14"
+
+      - run: make build-api
+
+  docs:
+    runs-on: ubuntu-latest
+    needs: core
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: core-documentation
+          path: .artifacts/core-documentation
+
+      - name: Log doc output dir content
+        run: ls -lah .artifacts/core-documentation
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      - name: Install mkdocs theme & plugins
+        run: |
+          pip3 install --no-cache \
+            'mkdocs-git-revision-date-localized-plugin>=0.4' \
+            'mkdocs-material' \
+            'mkdocs-mermaid2-plugin' \
+            'mkdocs-codeinclude-plugin' \
+            'mkdocs-material-extensions' \
+            'mkdocs-simple-hooks' \
+            'git+http://github.com/TilBlechschmidt/mkdocs-helm'
+
+      - name: Build documentation
+        env:
+          HELM_USE_GIT_TAG: false
+        run: |
+          mkdocs --version
+          mkdocs build
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: documentation-site
+          path: site
