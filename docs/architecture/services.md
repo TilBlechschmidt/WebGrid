@@ -32,13 +32,13 @@ One given Orchestrator may not have an unlimited amount of resources at its disp
 
 They are basically just IDs which are generated when the service is created and resemble "Coupons" which the Manager can use to request the creation of a Node. A slot is associated with one session on creation, if available and stays bound until the session is terminated at which point it is returned into the list of available slots for a new session to retrieve.
 
-Since any given service may die while processing requests each slot has a "parent" which is responsible for it. While a Node is running, it has the responsibility for its own slot. If it dies unexpectedly (and thus its heartbeat ceases to exist) the Orchestrator may reclaim its slot, adding it back to the list of available ones. This process is explained in more detail in the [Workflows](./Workflows.md) document.
+Since any given service may die while processing requests each slot has a "parent" which is responsible for it. While a Node is running, it has the responsibility for its own slot. If it dies unexpectedly (and thus its heartbeat ceases to exist) the Orchestrator may reclaim its slot, adding it back to the list of available ones. This process is explained in more detail in the [Workflows](./workflows.md) document.
 
 Here is an image of the slot lifecycle:
 ![](../assets/Slot-lifecycle.jpeg)
 
 ## Manager
-The Manager processes requests from clients to create new sessions by determining which orchestrators match the requested capabilities, requesting a slot and verifying the Node scheduling and startup process. A session leaves the responsibility of the manager as soon as the startup sequence has completed. For more details consult the [Scheduling Workflow](./Workflows.md).
+The Manager processes requests from clients to create new sessions by determining which orchestrators match the requested capabilities, requesting a slot and verifying the Node scheduling and startup process. A session leaves the responsibility of the manager as soon as the startup sequence has completed. For more details consult the [Scheduling Workflow](./workflows.md).
 
 It receives requests through the proxy at `POST /session`
 
