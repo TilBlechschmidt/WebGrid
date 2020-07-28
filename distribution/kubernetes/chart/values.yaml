@@ -33,7 +33,7 @@ replicaCount:
   api: 1
 
 image:
-  repository: registry.blechschmidt.de
+  repository: webgrid
   pullPolicy: Always
 
 serviceAccount:

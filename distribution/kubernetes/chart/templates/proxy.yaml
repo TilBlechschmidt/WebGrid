@@ -30,7 +30,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-        - image: "{{ .Values.image.repository }}/webgrid"
+        - image: "{{ .Values.image.repository }}/core:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: {{ .Chart.Name }}-proxy
           args: ["proxy", "--status-server"]
