@@ -2,4 +2,4 @@ mod database;
 mod scan;
 mod storage;
 
-pub use storage::{StorageError, StorageHandler};
+pub use crate::storage::{StorageError, StorageHandler};
