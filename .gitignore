@@ -1,4 +1,5 @@
 legacy-workarea
+.artifacts
 core/.build
 core/.cache
 docs/__pycache__

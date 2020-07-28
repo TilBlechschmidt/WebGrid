@@ -11,7 +11,7 @@ RUN ./packages.sh
 WORKDIR /scripts
 COPY distribution/docker/images/node/base/scripts .
 
-COPY core/.build/webgrid /usr/local/bin/webgrid
+COPY .artifacts/core-executable/webgrid /usr/local/bin/webgrid
 
 CMD /scripts/entrypoint.sh
 EXPOSE 40003

@@ -1,5 +1,5 @@
 FROM scratch
 
-COPY core/.build/webgrid /usr/local/bin/webgrid
+COPY .artifacts/core-executable/webgrid /usr/local/bin/webgrid
 
 ENTRYPOINT ["webgrid"]
