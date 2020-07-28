@@ -1,0 +1,31 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+	],
+	"settings": {
+		"editor.formatOnSave": true,
+		"files.autoSave": "onFocusChange",
+		"rust.clippy_preference": "on",
+		"rust-analyzer.files.exclude": [
+			".cache/**"
+		],
+		"rust-analyzer.linkedProjects": [
+			"core/Cargo.toml"
+		]
+	},
+	"extensions": {
+		"recommendations": [
+			"serayuzgur.crates",
+			"matklad.rust-analyzer",
+			"vadimcn.vscode-lldb",
+			"ms-kubernetes-tools.vscode-kubernetes-tools",
+			"dbaeumer.vscode-eslint"
+		],
+		// List of extensions recommended by VS Code that should not be recommended for users of this workspace.
+		"unwantedRecommendations": [
+			"rust-lang.rust"
+		]
+	}
+}

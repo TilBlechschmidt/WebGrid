@@ -12,8 +12,6 @@ mkdir -p $BUILD_DIR/cargo-git
 mkdir -p $BUILD_DIR/cargo-registry
 mkdir -p $BUILD_DIR/target
 
-# chmod -R 777 $BUILD_DIR 
-
 echo "Copying project to build cache"
 rsync -a --progress $SOURCE_DIR/* $BUILD_DIR/project --exclude target --exclude .build --exclude .cache
 

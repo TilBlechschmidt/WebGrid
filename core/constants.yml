@@ -5,6 +5,5 @@ ports:
     manager: 0
     metrics: 1
     node: 2
-    orchestrator: 3
     proxy: 4
     storage: 5
