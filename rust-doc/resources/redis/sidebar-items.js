@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["CommandParseMode",""]],"struct":[["HandleRegistration",""],["MonitoredPubSub",""],["RedisResource",""],["SHARED_CONNECTION",""],["SHARED_TASK_RESOURCE_HANDLES",""]],"type":[["SharedMultiplexedConnectionFuture",""],["SharedRedisResource",""],["StandaloneRedisResource",""]]});

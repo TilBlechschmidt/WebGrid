@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["webgrid"] = [{"text":"impl <a class=\"trait\" href=\"https://docs.rs/warp/0.2.4/warp/reject/trait.Reject.html\" title=\"trait warp::reject::Reject\">Reject</a> for <a class=\"enum\" href=\"webgrid/services/manager/structures/enum.RequestError.html\" title=\"enum webgrid::services::manager::structures::RequestError\">RequestError</a>","synthetic":false,"types":["webgrid::services::manager::structures::RequestError"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
