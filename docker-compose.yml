@@ -30,7 +30,7 @@ services:
     image: webgrid/api
     container_name: webgrid-api
     environment:
-      HOST: webgrid/api
+      HOST: webgrid-api
   redis:
     image: redis:alpine
     container_name: webgrid-redis
