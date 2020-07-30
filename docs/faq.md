@@ -40,3 +40,9 @@ I am a computer science student from Germany, currently working at PPI AG and st
 ### Why are there so few issues in the tracker?
 
 The project has been developed internally at first using a private GitLab instance. Later, the decision to go public has been made and everything except past issues has been moved over.
+
+### Where is the latest tag?
+
+We believe that the `:latest` in Docker [is](https://vsupalov.com/docker-latest-tag/) [very](https://medium.com/@mccode/the-misunderstood-docker-tag-latest-af3babfd6375) [evil](https://blog.container-solutions.com/docker-latest-confusion) [and](https://developers.redhat.com/blog/2016/02/24/10-things-to-avoid-in-docker-containers/) [dangerous](https://medium.com/@tariq.m.islam/container-deployments-a-lesson-in-deterministic-ops-a4a467b14a03). Apart from the problem that it is just *yet another tag* and everything else being purely convention, you should make a conscious choice to upgrade your production environment from one version to another.
+
+For this reason we are releasing versions on all distribution platforms following the [SemVer 2.0](https://semver.org) convention so you can know which versions are safe and which might require some more work. Additionally, all Helm charts and Compose files use pinned versions for the Docker images.

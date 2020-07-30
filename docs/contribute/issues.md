@@ -54,3 +54,13 @@ In addition to the states shown above, it may enter one of the following states 
 | ![Review needed](https://img.shields.io/badge/-Review%20needed-yellow)  | A solution has been proposed and needs to be reviewed by a maintainer                  |
 
 For a more detailed description of all possible states, consult the [repositories label page](https://github.com/TilBlechschmidt/WebGrid/labels).
+
+## Pull requests
+
+In addition to the labels of issues, Pull Request may have additional labels which identify the type of version bump.
+
+| Change                                               | Description                                                                   |
+|------------------------------------------------------|:------------------------------------------------------------------------------|
+| ![Major](https://img.shields.io/badge/-Major-ff80ff) | New feature that breaks backwards compatibility and requires a manual upgrade |
+| ![Minor](https://img.shields.io/badge/-Minor-ffb3ff) | Backwards compatible feature addition that can be upgraded automatically      |
+| ![Patch](https://img.shields.io/badge/-Patch-ffc6ff) | Minor changes like backwards compatible bug fixes and documentation changes   |

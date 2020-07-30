@@ -49,10 +49,10 @@ For issues from the `Available` category a solution sketch is already provided w
 
 Once a solution sketch has been outlined you can start working on the code. Make sure to notify the maintainers that you have started work so that the issue can be moved to the corresponding lifecycle stage so no work is done twice.
 
-At this stage you setup your development environment (which may or may not be required depending on the changes as e.g. documentation changes can usually be done online using the GitHub Web Editor) and write code. If you have any questions ask on your issue ticket or submit a Pull Request prefixed with `[WIP]` and comment on it if you need code-level assistance!
+At this stage you setup your development environment (which may or may not be required depending on the changes as e.g. documentation changes can usually be done online using the GitHub Web Editor) and write code. If you have any questions ask on your issue ticket or submit a Draft Pull Request and comment on it if you need code-level assistance!
 
 ### 3. Code review
 
-If you are done with your changes or want to seek feedback from maintainers you push your changes and open a Pull Request. Make sure to add the original issue number to the description so it can be associated later.
+If you are done with your changes or want to seek feedback from maintainers you push your changes and open a Pull Request. Make sure to add the original issue number to the description so it can be associated later. Take special considerations in naming your PR as this message will be published in the Changelog 😉
 
 The PR will be reviewed by other project members and automatic tests are run against your code. If everything is well, the changes will be approved and merged into the main branch. However, it is very common that changes are requested (don't feel bad about it, we provide you feedback to improve your already amazing contribution not to make it look bad) which moves you back to the previous stage of [Implementing changes](#2-implementing-changes).
