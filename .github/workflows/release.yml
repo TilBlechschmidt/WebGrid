@@ -1,9 +1,8 @@
 name: 🚀 Project release
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  release:
+    types: [published]
 
 env:
   CARGO_TERM_COLOR: always
@@ -160,26 +159,12 @@ jobs:
           mkdocs gh-deploy --force
 
   github-release:
-    name: 🐙 Create GitHub Release
+    name: 🐙 Update GitHub Release
     needs: [build-core, build-api]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
-      - name: Check if tag is pre-release
-        run: '[[ ${GITHUB_REF:10} == *"-"* ]] && echo "::set-env name=PRE_RELEASE::true" || echo "::set-env name=PRE_RELEASE::false"'
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          draft: false
-          prerelease: ${{ env.PRE_RELEASE }}
 
       - uses: actions/download-artifact@v2
         with:
@@ -191,12 +176,24 @@ jobs:
           name: api-executable
           path: .artifacts/api-executable
 
+      - name: Build release asset upload url
+        run: |
+          RELEASE_ID=$(jq --raw-output '.release.id' $GITHUB_EVENT_PATH)
+          if [[ -z "${RELEASE_ID}" ]]; then
+            echo "There was no release ID in the GitHub event."
+            exit 1
+          fi
+
+          RELEASE_ASSET_UPLOAD_URL="https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets"
+          echo "$RELEASE_ASSET_UPLOAD_URL"
+          echo "::set-env name=RELEASE_ASSET_UPLOAD_URL::$RELEASE_ASSET_UPLOAD_URL"
+
       - name: Attach Core executable
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ env.RELEASE_ASSET_UPLOAD_URL }}?name=webgrid-core-linux
           asset_path: .artifacts/core-executable/webgrid
           asset_name: webgrid-core-linux
           asset_content_type: application/octet-stream
@@ -206,7 +203,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ env.RELEASE_ASSET_UPLOAD_URL }}?name=webgrid-api.js
           asset_path: .artifacts/api-executable/index.js
           asset_name: webgrid-api.js
           asset_content_type: application/javascript
