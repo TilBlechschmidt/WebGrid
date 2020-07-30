@@ -43,7 +43,7 @@ pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
         shared_options.redis,
         options.id,
     );
-    let scheduler = JobScheduler::new();
+    let scheduler = JobScheduler::default();
 
     context.spawn_heart_beat(&scheduler).await;
 

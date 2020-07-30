@@ -1,15 +1,26 @@
+//! Defaults and database accessors for timeout values
+
 use log::{info, trace};
 use redis::{aio::ConnectionLike, AsyncCommands};
 use std::fmt;
 
-// Various timeouts in seconds
+/// Timeout value accessors in seconds
 #[derive(Debug)]
 pub enum Timeout {
+    /// How long a session creation request may wait for an orchestrator
     Queue,
+    /// Maximum duration a session may take to be scheduled by an orchestrator
     Scheduling,
+    /// How long a session may take to start up
+    ///
+    /// Note that this can include the time it takes for a provisioner like Kubernetes to assign a pod!
+    /// If this timeout is hit it might indicate a scheduling problem in your cluster.
     NodeStartup,
+    /// How long the WebDriver executable may take to become responsive
     DriverStartup,
+    /// Maximum idle duration of a session
     SessionTermination,
+    /// Interval at which orphaned slots are reclaimed
     SlotReclaimInterval,
 }
 
@@ -20,6 +31,7 @@ impl fmt::Display for Timeout {
 }
 
 impl Timeout {
+    /// Default timeout value if nothing is set in the database
     fn default(&self) -> usize {
         match *self {
             // Manager
@@ -34,6 +46,7 @@ impl Timeout {
         }
     }
 
+    /// Retrieve either a value set in the database or initializes it to the default
     pub async fn get<C: ConnectionLike + AsyncCommands>(&self, con: &mut C) -> usize {
         let key = format!("{}", self).to_lowercase();
 

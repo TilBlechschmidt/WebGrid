@@ -1,3 +1,10 @@
+//! Monitored resources for jobs
+//!
+//! This crate provides resources that are monitoring their internal state.
+//! If they become unavailable they report this to a TaskHandle provided by the `scheduling` module.
+//!
+//! Usually this results in the job holding the resource being terminated and restarted.
+
 mod manager;
 mod redis;
 mod traits;
@@ -8,10 +15,10 @@ pub use traits::{
     PubSub, PubSubResource, PubSubResourceError, ResourceManager, ResourceManagerResult,
 };
 
-// TODO Write test for shared resource
-
+/// Shorthand to request a redis resource from a manager
+///
+/// Requires the context to contain an `impl ResourceManager` named `.resource_manager`.
 #[macro_export]
-/// Shorthand to request a redis resource from a manager. Requires the context to contain an `impl ResourceManager` named `.resource_manager`.
 macro_rules! with_redis_resource {
     ($manager:expr) => {
         $manager
@@ -23,8 +30,10 @@ macro_rules! with_redis_resource {
     };
 }
 
+/// Shorthand to request a shared redis resource from a manager
+///
+/// Requires the context to contain an `impl ResourceManager` named `.resource_manager`.
 #[macro_export]
-/// Shorthand to request a shared redis resource from a manager. Requires the context to contain an `impl ResourceManager` named `.resource_manager`.
 macro_rules! with_shared_redis_resource {
     ($manager:expr) => {
         $manager

@@ -1,12 +1,9 @@
 use anyhow::Result;
 use structopt::StructOpt;
 
-mod libraries;
-mod services;
-
 #[cfg(feature = "orchestrator")]
-use crate::services::orchestrator::{provisioners, Provisioner};
-use crate::services::*;
+use webgrid::services::orchestrator::{provisioners, Provisioner};
+use webgrid::services::*;
 
 #[derive(Debug, StructOpt)]
 #[structopt(about = "Decentralized, scalable and robust selenium-grid equivalent.")]

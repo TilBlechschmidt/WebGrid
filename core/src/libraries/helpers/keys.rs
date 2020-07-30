@@ -1,3 +1,10 @@
+//! Redis database keys
+//!
+//! This module contains a list of functions to generate keys for accessing values in the Redis database.
+//! In the future this will be extracted to the constants file.
+//!
+//! The keys are stored in submodules organised by components.
+
 macro_rules! static_keys {
     ($($name:ident = $value:expr;)+) => {
         lazy_static::lazy_static! {

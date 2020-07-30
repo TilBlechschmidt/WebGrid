@@ -5,12 +5,16 @@ use super::{
 use crate::libraries::scheduling::TaskResourceHandle;
 use async_trait::async_trait;
 
+/// Production resource manager
+///
+/// Uses real redis database server
 #[derive(Clone)]
 pub struct DefaultResourceManager {
     redis_url: String,
 }
 
 impl DefaultResourceManager {
+    /// Creates a new resource manager that connects to the redis server at the given url
     pub fn new(redis_url: String) -> Self {
         Self { redis_url }
     }

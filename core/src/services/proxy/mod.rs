@@ -1,3 +1,5 @@
+//! Unified grid entrypoint provider
+
 use super::SharedOptions;
 use crate::libraries::helpers::constants;
 use crate::libraries::lifecycle::Heart;
@@ -27,7 +29,7 @@ pub async fn run(shared_options: SharedOptions, options: Options) {
     let (mut heart, _) = Heart::new();
 
     let context = Context::new(shared_options.redis);
-    let scheduler = JobScheduler::new();
+    let scheduler = JobScheduler::default();
 
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);
     let watcher_job = WatcherJob::new();

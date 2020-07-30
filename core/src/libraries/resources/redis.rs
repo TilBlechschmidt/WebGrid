@@ -26,14 +26,15 @@ use tokio::time::{delay_for, timeout};
 type SharedMultiplexedConnectionFuture = Shared<BoxFuture<'static, MultiplexedConnection>>;
 
 lazy_static! {
-    // static ref SHARED_CONNECTION: ArcSwapOption<SharedMultiplexedConnectionFuture> =
-    //     ArcSwapOption::from(None);
-    static ref SHARED_CONNECTION: Mutex<Option<Arc<SharedMultiplexedConnectionFuture>>> = Mutex::new(None);
+    static ref SHARED_CONNECTION: Mutex<Option<Arc<SharedMultiplexedConnectionFuture>>> =
+        Mutex::new(None);
     static ref SHARED_TASK_RESOURCE_HANDLES: Mutex<HashSet<TaskResourceHandle>> =
         Mutex::new(HashSet::new());
 }
 
+/// Individual redis resource created on-demand
 pub type StandaloneRedisResource = RedisResource<Connection>;
+/// Multiplexed redis resource shared between jobs
 pub type SharedRedisResource = RedisResource<MultiplexedConnection>;
 
 #[derive(Clone)]
@@ -69,6 +70,7 @@ impl Drop for HandleRegistration {
     }
 }
 
+/// Redis connection that monitors for connection errors
 pub struct RedisResource<C: ConnectionLike> {
     con: C,
     handle: HandleRegistration,
@@ -76,6 +78,7 @@ pub struct RedisResource<C: ConnectionLike> {
 }
 
 impl RedisResource<MultiplexedConnection> {
+    /// Retrieves a shared redis instance or instantiates it if it doesn't exist
     pub async fn shared(handle: TaskResourceHandle, url: &str) -> RedisResult<Self> {
         let client = Client::open(url)?;
 
@@ -150,6 +153,7 @@ impl RedisResource<MultiplexedConnection> {
 }
 
 impl RedisResource<Connection> {
+    /// Creates a new standalone redis connection
     pub async fn new(handle: TaskResourceHandle, url: &str) -> RedisResult<Self> {
         let client = Client::open(url)?;
         let con = RedisResource::connect_standalone(client).await;
@@ -197,10 +201,12 @@ impl RedisResource<Connection> {
 }
 
 impl<C: ConnectionLike> RedisResource<C> {
+    /// Enables request logging
     pub fn set_logging(&mut self, enabled: bool) {
         self.logging_enabled = enabled;
     }
 
+    /// Set the redis database index
     pub async fn select(&mut self, db: usize) -> RedisResult<()> {
         Ok(redis::cmd("SELECT")
             .arg(db)
@@ -299,7 +305,7 @@ enum CommandParseMode {
     Argument,
 }
 
-/// Handle a command result.
+/// Handle a redis command result.
 macro_rules! notify_if_disconnected {
     ($self:expr, $result:expr) => {
         if let Err(ref e) = $result {

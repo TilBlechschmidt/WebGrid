@@ -16,6 +16,7 @@ use tokio::sync::watch::{
     channel as watchChannel, Receiver as WatchReceiver, Sender as WatchSender,
 };
 
+/// Whether or not a resource is available
 #[derive(Debug)]
 pub enum ResourceStatus {
     Dead,
@@ -24,6 +25,9 @@ pub enum ResourceStatus {
 type TaskID = usize;
 pub type ResourceStatusSender = Sender<ResourceStatus>;
 
+/// Manager for tasks and jobs
+///
+/// Provides context, handles resource availability changes and graceful termination
 #[derive(Clone)]
 pub struct TaskManager<Context> {
     task_id: TaskID,
@@ -34,6 +38,7 @@ pub struct TaskManager<Context> {
 }
 
 impl<Context> TaskManager<Context> {
+    /// Create a new task manager for the given task and context
     pub fn new(
         task_id: TaskID,
         context: Context,
@@ -58,6 +63,7 @@ impl<Context> TaskManager<Context> {
         (manager, dependency_rx, readiness_rx, termination_tx)
     }
 
+    /// Create a new resource handle to notify about resource state
     pub fn create_resource_handle(&self) -> TaskResourceHandle {
         TaskResourceHandle {
             task_id: self.task_id,
@@ -65,11 +71,13 @@ impl<Context> TaskManager<Context> {
         }
     }
 
+    /// Future that completes when the job should gracefully shutdown
     pub fn termination_signal(&self) -> impl futures::Future<Output = ()> {
         let mut rx = self.termination_rx.clone();
         async move { while let Some(None) = rx.recv().await {} }
     }
 
+    /// Check if the job should enter graceful shutdown
     pub fn termination_signal_triggered(&self) -> bool {
         *self.termination_rx.borrow() == Some(())
     }
@@ -83,6 +91,9 @@ impl<Context> TaskManager<Context> {
     }
 }
 
+/// Notification handle for a resource
+///
+/// Used to update the task manager about the status of a resource
 #[derive(Clone)]
 pub struct TaskResourceHandle {
     task_id: TaskID,
@@ -90,6 +101,7 @@ pub struct TaskResourceHandle {
 }
 
 impl TaskResourceHandle {
+    #[cfg(test)]
     pub fn stub() -> Self {
         let (dependency_tx, _) = channel(0);
         Self {
@@ -98,6 +110,7 @@ impl TaskResourceHandle {
         }
     }
 
+    /// Notifies the task manager that a resource dependency has become unavailable
     pub async fn resource_died(&mut self) {
         // We can safely ignore this error. Most of the time the receiver is dropped right after reading the message, thus triggering a false error.
         self.dependency_tx.send(ResourceStatus::Dead).await.ok();

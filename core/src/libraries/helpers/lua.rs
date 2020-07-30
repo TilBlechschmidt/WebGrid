@@ -1,10 +1,18 @@
+//! Lua functions used for Redis interaction
+
 // TODO Figure out if there is a reasonable way to use crate::keys
 
+/// Lua script to clean up a session object in the redis database
+///
+/// Returns the associated slot, moves it to the terminated state and removed the heartbeat.
+/// The following variables have to be defined for the script to work:
+/// - sessionID
+/// - orchestrator
+/// - currentTime
+///
+/// These variables are being defined by the script:
+/// - slot
 pub fn terminate_session() -> String {
-    // Variables that have to be defined:
-    // sessionID, orchestrator, currentTime
-    // Variables that are being defined:
-    // slot
     r"
     local slot = redis.call('get', 'session:' .. sessionID .. ':slot')
     redis.call('DEL', 'session:' .. sessionID .. ':slot')
@@ -16,6 +24,7 @@ pub fn terminate_session() -> String {
     .to_string()
 }
 
+/// Lua script to extract the orchestrator from a session
 pub fn fetch_orchestrator_from_session() -> String {
     // Variables that have to be defined:
     // sessionID

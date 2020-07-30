@@ -118,6 +118,7 @@ During the lifecycle of a session each component generates status codes for trac
 | Warn  |                |                                                     |
 |       | `CLEFT`        | client left before scheduling completed             |
 | Fail  |                |                                                     |
+|       | `INVALIDCAP`   | invalid capabilities requested                      |
 |       | `QUNAVAILABLE` | no orchestrator can satisfy the capabilities        |
 |       | `QTIMEOUT`     | timed out waiting in queue                          |
 |       | `OTIMEOUT`     | timed out waiting for orchestrator to schedule node |

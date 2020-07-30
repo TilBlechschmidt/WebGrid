@@ -1,7 +1,10 @@
+//! Structures for logging to database
+
 use log::info;
 use redis::{aio::ConnectionLike, cmd, AsyncCommands, RedisResult};
 use std::fmt;
 
+/// Database logging facility
 pub struct Logger<C: ConnectionLike> {
     con: C,
     component: String,
@@ -9,6 +12,8 @@ pub struct Logger<C: ConnectionLike> {
 
 // Initializer
 impl<C: ConnectionLike> Logger<C> {
+    /// Creates a new database logger for the specified component
+    // TODO This field should be called service instead of component
     pub fn new(con: C, component: String) -> Logger<C> {
         Logger { con, component }
     }
@@ -16,6 +21,7 @@ impl<C: ConnectionLike> Logger<C> {
 
 // Logging functions
 impl<C: ConnectionLike + AsyncCommands> Logger<C> {
+    /// Write a raw log message to the database
     #[rustfmt::skip]
     async fn log_raw(
         &mut self,
@@ -40,6 +46,7 @@ impl<C: ConnectionLike + AsyncCommands> Logger<C> {
             .await
     }
 
+    /// Write a log message to the database
     pub async fn log(
         &mut self,
         session_id: &str,
@@ -51,12 +58,14 @@ impl<C: ConnectionLike + AsyncCommands> Logger<C> {
     }
 }
 
+/// Wrapper around logger that stores the session_id
 pub struct SessionLogger<C: ConnectionLike + AsyncCommands> {
     logger: Logger<C>,
     session_id: String,
 }
 
 impl<C: ConnectionLike + AsyncCommands> SessionLogger<C> {
+    /// Creates a new database logger for the specified component and session
     pub fn new(con: C, component: String, session_id: String) -> SessionLogger<C> {
         SessionLogger {
             logger: Logger::new(con, component),
@@ -64,6 +73,7 @@ impl<C: ConnectionLike + AsyncCommands> SessionLogger<C> {
         }
     }
 
+    /// Write a log message to the database
     pub async fn log(&mut self, code: LogCode, meta: Option<String>) -> RedisResult<()> {
         self.logger
             .log_raw(&self.session_id, code.level(), code.to_string(), meta)
@@ -71,6 +81,10 @@ impl<C: ConnectionLike + AsyncCommands> SessionLogger<C> {
     }
 }
 
+/// Message criticality
+/// - **INFO** used for status reports
+/// - **WARN** used for recoverable errors
+/// - **FAIL** used for unrecoverable errors
 #[derive(Debug)]
 pub enum LogLevel {
     INFO,
@@ -84,9 +98,8 @@ impl fmt::Display for LogLevel {
     }
 }
 
+/// Log event types
 #[derive(Debug)]
-// TODO Remove this in the future
-#[allow(dead_code)]
 pub enum LogCode {
     // Generic
     // -- Fail
@@ -94,42 +107,65 @@ pub enum LogCode {
 
     // Node
     // -- Info
+    /// node has become active
     BOOT,
+    /// driver in startup
     DSTART,
+    /// driver has become responsive
     DALIVE,
+    /// local session created
     LSINIT,
+    /// session closed by downstream client
     CLOSED,
+    /// node enters shutdown
     HALT,
     // -- Fail
+    /// driver has not become responsive
     DTIMEOUT,
+    /// driver process reported an error
     DFAILURE,
+    /// session has been inactive too long
     STIMEOUT,
+    /// node terminates due to fault condition
     TERM,
 
     // Orchestrator
     // -- Info
+    /// node is being scheduled for startup
     SCHED,
     // -- Fail
+    /// creation/startup failure
     STARTFAIL,
 
     // Manager
     // -- Info
+    /// session has been queued at orchestrators
     QUEUED,
+    /// node slot has been allocated
     NALLOC,
+    /// awaiting node startup
     PENDING,
+    /// node has become responsive, client served
     NALIVE,
     // -- Warn
+    /// client left before scheduling completed
     CLEFT,
     // -- Fail
+    /// invalid capabilities requested
     INVALIDCAP,
+    /// no orchestrator can satisfy the capabilities
     QUNAVAILABLE,
+    /// timed out waiting in queue
     QTIMEOUT,
+    /// timed out waiting for orchestrator to schedule node
     OTIMEOUT,
+    /// timed out waiting for node to become responsive
     NTIMEOUT,
     // Proxy
 }
 
 impl LogCode {
+    /// Log level for a given event type
     pub fn level(&self) -> LogLevel {
         match self {
             // Generic

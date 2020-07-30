@@ -1,3 +1,5 @@
+//! Structures to keep the process alive
+
 use futures::{
     channel::mpsc::{channel, Receiver, Sender},
     lock::Mutex,
@@ -18,10 +20,14 @@ use tokio::signal::{
 };
 use tokio::time::delay_for;
 
+/// Reason why the heart stopped beating
 #[derive(Debug, Clone)]
 pub enum DeathReason {
+    /// Internal kill signal has been sent
     Killed(String),
+    /// Predetermined lifetime has been exceeded
     LifetimeExceeded,
+    /// SIGINT or other process-external cause
     Terminated,
 }
 
@@ -35,43 +41,37 @@ impl fmt::Display for DeathReason {
     }
 }
 
+/// Action to a hearth
 #[derive(Debug)]
 pub enum HeartInteraction {
+    /// Kill it for the given reason
     Kill(String),
+    /// Reset its lifetime to the original value
     Rejuvenate,
 }
 
+/// Lifecycle management struct that can be used to keep the application alive
 pub struct Heart {
+    /// Receiver for interactions sent by heart stone
     rx: Receiver<HeartInteraction>,
+    /// Point in time when the lifetime was last reset
     lifetime_start: Arc<Mutex<Instant>>,
+    /// Maximum lifetime duration
     lifetime: Option<Duration>,
 }
 
 impl Heart {
+    /// Creates a new heart and linked stone with no lifetime limit
     pub fn new() -> (Self, HeartStone) {
         Heart::internal_new(None)
     }
 
+    /// Creates a new heart and linked stone with a lifetime
     pub fn with_lifetime(lifetime: Duration) -> (Self, HeartStone) {
         Heart::internal_new(Some(lifetime))
     }
 
-    fn internal_new(lifetime: Option<Duration>) -> (Self, HeartStone) {
-        if let Some(lifetime) = lifetime {
-            info!("Lifetime set to {} seconds", lifetime.as_secs());
-        }
-
-        let (tx, rx) = channel(2);
-        let heart = Self {
-            rx,
-            lifetime_start: Arc::new(Mutex::new(Instant::now())),
-            lifetime,
-        };
-        let stone = HeartStone::new(tx);
-
-        (heart, stone)
-    }
-
+    /// Future that waits until the heart dies for the returned reason
     pub async fn death(&mut self) -> DeathReason {
         let mut age_future = match self.lifetime {
             Some(lifetime) => Heart::lifetime_watch(lifetime, self.lifetime_start.clone()).boxed(),
@@ -97,6 +97,22 @@ impl Heart {
                 () = Heart::termination_signal().fuse() => return DeathReason::Terminated,
             };
         }
+    }
+
+    fn internal_new(lifetime: Option<Duration>) -> (Self, HeartStone) {
+        if let Some(lifetime) = lifetime {
+            info!("Lifetime set to {} seconds", lifetime.as_secs());
+        }
+
+        let (tx, rx) = channel(2);
+        let heart = Self {
+            rx,
+            lifetime_start: Arc::new(Mutex::new(Instant::now())),
+            lifetime,
+        };
+        let stone = HeartStone::new(tx);
+
+        (heart, stone)
     }
 
     async fn termination_signal() {
@@ -125,6 +141,7 @@ impl Heart {
     }
 }
 
+/// Remote controller for the heart
 #[derive(Clone)]
 pub struct HeartStone {
     remote: Sender<HeartInteraction>,
@@ -135,10 +152,12 @@ impl HeartStone {
         Self { remote }
     }
 
+    /// Kill the associated heart
     pub async fn kill(&mut self, reason: String) {
         self.send(HeartInteraction::Kill(reason)).await;
     }
 
+    /// Reset the lifetime of the associated heart
     pub async fn reset_lifetime(&mut self) {
         self.send(HeartInteraction::Rejuvenate).await;
     }

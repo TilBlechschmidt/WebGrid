@@ -10,6 +10,7 @@ use uuid::Uuid;
 
 use super::{database, scan};
 
+/// Filesystem accessor
 #[derive(Clone)]
 pub struct StorageHandler {
     /// Root directory to watch
@@ -26,6 +27,7 @@ pub struct StorageHandler {
     cleanup_target: f64,
 }
 
+/// Errors thrown during filesystem access
 #[derive(Debug, Error)]
 pub enum StorageError {
     #[error("Unable to access storage database")]

@@ -1,3 +1,5 @@
+//! Session provider and driver manager
+
 use super::SharedOptions;
 use crate::libraries::helpers::constants;
 use crate::libraries::scheduling::{JobScheduler, StatusServer};
@@ -105,7 +107,7 @@ async fn launch_session(
     options: Options,
     context: &Context,
 ) -> Result<()> {
-    let scheduler = JobScheduler::new();
+    let scheduler = JobScheduler::default();
 
     // TODO Handle error and go straight to cleanup jobs + make a serial-task-execution macro
     let (mut heart, heart_stone) =

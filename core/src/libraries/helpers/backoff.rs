@@ -1,5 +1,11 @@
+//! Exponential backoff implementations
+
 use std::{iter::Iterator, time::Duration};
 
+/// Exponential backoff iterator
+///
+/// This struct implements the iterator trait and returns monotonically increasing values until a specified limit of iterations, specified by the `retries` field, is reached.
+/// Each element in the Iterator is the previous element multiplied by the `multiplier` property.
 pub struct Backoff {
     retries: u32,
     limit: u32,
@@ -7,8 +13,8 @@ pub struct Backoff {
     current: Duration,
 }
 
-impl Backoff {
-    pub fn default() -> Self {
+impl Default for Backoff {
+    fn default() -> Self {
         Self {
             retries: 0,
             limit: 13,

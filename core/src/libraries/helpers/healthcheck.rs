@@ -1,9 +1,14 @@
+//! HTTP healthcheck related functions
+//!
+//! Functions that are used to check if a HTTP endpoint is reachable
+
 use hyper::{body, Client, Uri};
 use log::{debug, trace};
 use std::time::Duration;
 use tokio::time::delay_for;
 use tokio::time::timeout;
 
+/// Sends HTTP requests to the specified URL until either a 200 OK response is received or the timeout is reached
 pub async fn wait_for(url: &str, timeout_duration: Duration) -> Result<String, ()> {
     let client = Client::new();
 

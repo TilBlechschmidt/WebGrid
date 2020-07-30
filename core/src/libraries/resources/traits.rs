@@ -5,19 +5,24 @@ use futures::Stream;
 use redis::{aio::ConnectionLike, Msg, RedisError, RedisResult};
 use thiserror::Error;
 
+/// PubSub listening errors
 pub enum PubSubResourceError {
     StreamClosed,
 }
 
+/// Resource access errors
 #[derive(Error, Debug)]
 pub enum ResourceManagerError {
     #[error("failed to connect to redis")]
     Redis(#[from] RedisError),
 }
 
-pub type ResourceManagerResult<T> = Result<T, ResourceManagerError>;
+/// Boxed PubSubResource shorthand
 pub type PubSub = Box<dyn PubSubResource + Send>;
+/// Result shorthand
+pub type ResourceManagerResult<T> = Result<T, ResourceManagerError>;
 
+/// Manager that provides access to a set of resources
 #[async_trait]
 pub trait ResourceManager {
     type Redis: ConnectionLike + Into<PubSub> + Send;
@@ -30,6 +35,7 @@ pub trait ResourceManager {
     ) -> ResourceManagerResult<Self::SharedRedis>;
 }
 
+/// Redis PubSub channel resource
 #[async_trait]
 pub trait PubSubResource {
     async fn psubscribe(&mut self, pchannel: &str) -> RedisResult<()>;

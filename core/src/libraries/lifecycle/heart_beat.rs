@@ -1,3 +1,5 @@
+//! Structures for database heartbeats
+
 use crate::libraries::resources::ResourceManager;
 use crate::libraries::scheduling::{Job, TaskManager};
 use anyhow::{Context, Result};
@@ -9,20 +11,29 @@ use redis::AsyncCommands;
 use std::{collections::HashMap, marker::PhantomData, sync::Arc, time::Duration};
 use tokio::time::delay_for;
 
+/// State change of a heartbeat
 enum BeatChange {
+    /// Addition of a heartbeat by key and expiration time
     Add(String, usize),
+    /// Removal of a heartbeat key
     Expire(String),
 }
 
+/// Content of a heartbeat
 pub enum BeatValue {
     Timestamp,
     Constant(String),
 }
 
+/// Job which keeps heartbeats in the database up-to-date
+///
+/// This handler has to be executed by a job scheduler to operate.
 #[derive(Clone)]
 pub struct HeartBeat<C> {
     value: Arc<BeatValue>,
+    /// Pending changes
     changes: Arc<Mutex<Vec<BeatChange>>>,
+    /// Currently active beats, their interval and expiration in seconds
     beats: Arc<Mutex<HashMap<String, (usize, usize)>>>,
     phantom: PhantomData<C>,
 }
@@ -34,10 +45,12 @@ impl<C> Default for HeartBeat<C> {
 }
 
 impl<C> HeartBeat<C> {
+    /// Creates a new handler with timestamp based heartbeats
     pub fn new() -> Self {
         HeartBeat::with_value(BeatValue::Timestamp)
     }
 
+    /// Creates a new handler with a custom value type
     pub fn with_value(value: BeatValue) -> Self {
         Self {
             value: Arc::new(value),
@@ -47,6 +60,7 @@ impl<C> HeartBeat<C> {
         }
     }
 
+    /// Add a new beat with a specified interval and expiration time
     pub async fn add_beat(&self, key: &str, interval_secs: usize, expiration_secs: usize) {
         debug!("Added heartbeat {}", key);
 
@@ -61,6 +75,7 @@ impl<C> HeartBeat<C> {
             .push(BeatChange::Add(key.to_owned(), expiration_secs));
     }
 
+    /// Remove a heartbeat
     pub async fn stop_beat(&self, key: &str) {
         debug!("Removed heartbeat {}", key);
 

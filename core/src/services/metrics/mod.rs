@@ -1,3 +1,5 @@
+//! Prometheus metric provider
+
 use super::SharedOptions;
 use crate::libraries::helpers::constants::PORT_METRICS;
 use crate::libraries::lifecycle::Heart;
@@ -16,7 +18,7 @@ pub struct Options {}
 struct DummyContext {}
 
 pub async fn run(shared_options: SharedOptions, _options: Options) {
-    let scheduler = JobScheduler::new();
+    let scheduler = JobScheduler::default();
     let (mut heart, _) = Heart::new();
     let context = DummyContext {};
 

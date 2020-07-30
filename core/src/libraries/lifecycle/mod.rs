@@ -1,3 +1,5 @@
+//! Service lifecycle functions
+
 mod heart;
 mod heart_beat;
 pub mod logging;

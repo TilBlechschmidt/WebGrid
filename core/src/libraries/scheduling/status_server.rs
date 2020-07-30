@@ -35,6 +35,9 @@ struct StatusResponse<'a> {
     jobs: HashMap<String, String>,
 }
 
+/// HTTP healthcheck server
+///
+/// Makes the job status list available as an HTTP endpoint. Commonly used for Kubernetes or Docker health probes.
 #[derive(Clone)]
 pub struct StatusServer<C> {
     status: Arc<Mutex<HashMap<String, JobStatus>>>,
@@ -43,6 +46,9 @@ pub struct StatusServer<C> {
 }
 
 impl<C> StatusServer<C> {
+    /// Creates a new server for the given scheduler and port configuration
+    ///
+    /// If the config is `None` the server is disabled. If it is Some(None), the default port is used. Otherwise the provided port is used.
     pub fn new(scheduler: &JobScheduler, config: Option<Option<u16>>) -> Self {
         Self {
             status: scheduler.status.clone(),

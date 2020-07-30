@@ -1,3 +1,5 @@
+//! Provisioner for new session nodes
+
 use structopt::StructOpt;
 
 mod core;

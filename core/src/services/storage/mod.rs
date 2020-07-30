@@ -1,3 +1,5 @@
+//! Content delivery service
+
 use super::SharedOptions;
 use crate::libraries::helpers::constants;
 use crate::libraries::lifecycle::Heart;
@@ -50,7 +52,7 @@ pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> 
     let (mut heart, _) = Heart::new();
 
     let context = Context::new(shared_options.redis, storage_id, options.host, options.port);
-    let scheduler = JobScheduler::new();
+    let scheduler = JobScheduler::default();
 
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);
     let server_job = ServerJob::new(options.port, options.storage_directory.clone());

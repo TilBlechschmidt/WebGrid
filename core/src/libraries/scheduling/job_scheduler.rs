@@ -23,8 +23,9 @@ use super::task_manager::{ResourceStatus, TaskManager};
 
 static TASK_ID_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
+/// State in which a job currently resides
 #[derive(Debug)]
-pub(crate) enum JobStatus {
+pub enum JobStatus {
     /// Job has started and is ready to fulfill contracts. Contains graceful termination handle if supported.
     Ready(Option<WatchSender<Option<()>>>),
     /// Job has never started and is in the process of getting ready
@@ -72,6 +73,7 @@ impl JobStatus {
     }
 }
 
+/// Job and task lifecycle handler
 #[derive(Default)]
 pub struct JobScheduler {
     pub(crate) status: Arc<Mutex<HashMap<String, JobStatus>>>,
@@ -79,10 +81,6 @@ pub struct JobScheduler {
 }
 
 impl JobScheduler {
-    pub fn new() -> Self {
-        JobScheduler::default()
-    }
-
     fn add_dependency_watcher(
         mut rx: Receiver<ResourceStatus>,
         abort_handle: AbortHandle,
@@ -128,6 +126,9 @@ impl JobScheduler {
         status_map.lock().await.insert(job_name.to_owned(), status);
     }
 
+    /// Run a new task with the given context on the default scheduler
+    ///
+    /// This method makes the given future abortable and provides access to dependencies and terminates it if required dependencies become unavailable.
     pub fn spawn_task<T, F: 'static + Send, O: 'static + Send, Context>(
         task: &T,
         ctx: Context,
@@ -232,6 +233,9 @@ impl JobScheduler {
         }
     }
 
+    /// Manage a new job
+    ///
+    /// This method respawns the job if it crashes, provides access to dependencies, keeps track of its lifecycle and restarts it if dependencies become unavailable.
     pub fn spawn_job<J: 'static + Job + Send>(&self, job: J, ctx: J::Context)
     where
         J::Context: Send + Clone,
@@ -259,6 +263,7 @@ impl JobScheduler {
         });
     }
 
+    /// Gracefully terminates all managed jobs that support it
     pub async fn terminate_jobs(&self) {
         // 1. Send termination signal to jobs that support graceful shutdown and terminate ones that don't (or ones that aren't running)
         {
@@ -312,6 +317,7 @@ impl JobScheduler {
     }
 }
 
+/// Schedule jobs on a given scheduler with some context
 #[macro_export]
 macro_rules! schedule {
     ($scheduler:expr, $context:expr, { $($job:ident$(,)? )+ }) => {

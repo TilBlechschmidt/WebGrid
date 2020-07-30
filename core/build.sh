@@ -23,7 +23,7 @@ docker run --rm \
 	-v "$BUILD_DIR/target":/home/rust/src/target \
 	-e CARGO_TERM_COLOR=always \
 	webgrid/rust-musl-builder \
-	bash -c "cargo build --release --workspace --locked && cargo doc --release --workspace --locked --no-deps --document-private-items && rm /home/rust/src/target/x86_64-unknown-linux-musl/doc/.lock"
+	bash -c "cargo build --release --locked && cargo doc --release --locked --no-deps && rm /home/rust/src/target/x86_64-unknown-linux-musl/doc/.lock"
 
 # TODO: Strip debug symbols from binary
 
