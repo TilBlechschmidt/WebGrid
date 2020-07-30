@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["registration",""],["session_handler",""]]});

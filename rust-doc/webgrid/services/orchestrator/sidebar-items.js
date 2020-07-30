@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Provisioner",""]],"mod":[["core",""],["provisioners",""]],"struct":[["Options",""]]});
+initSidebarItems({"enum":[["Provisioner",""]],"mod":[["provisioners",""]],"struct":[["Options",""]]});

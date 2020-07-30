@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["subjobs",""]],"struct":[["RegistrationJob",""]]});

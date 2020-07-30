@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["LogCode","Log event types"],["LogLevel","Message criticality - INFO used for status reports - WARN used for recoverable errors - FAIL used for unrecoverable errors"]],"struct":[["Logger","Database logging facility"],["SessionLogger","Wrapper around logger that stores the session_id"]]});

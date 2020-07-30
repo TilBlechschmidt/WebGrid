@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["delete_all_files",""],["delete_file",""],["files_to_delete",""],["insert_file",""],["parse_score_formula",""],["setup_tables",""],["setup_views",""],["used_bytes",""]]});

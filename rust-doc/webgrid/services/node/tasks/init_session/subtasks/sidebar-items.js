@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["call_on_create_script",""],["create_local_session",""],["resize_window",""]]});

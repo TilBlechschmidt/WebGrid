@@ -219,6 +219,11 @@
     Why are there so few issues in the tracker?
   </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#where-is-the-latest-tag">
+    Where is the latest tag?
+  </a>
+</li>
 </ul>
 </nav>
 </li>
@@ -327,6 +332,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../contribute/code-contrib/" title="Code contributions">
       Code contributions
+    </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../contribute/release/" title="Release workflow">
+      Release workflow
     </a>
 </li>
 <li class="md-nav__item">
@@ -466,6 +476,11 @@
     Why are there so few issues in the tracker?
   </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#where-is-the-latest-tag">
+    Where is the latest tag?
+  </a>
+</li>
 </ul>
 </nav>
 </li>
@@ -502,11 +517,14 @@
 <p>I am a computer science student from Germany, currently working at PPI AG and studying Applied Computer Science at the <a href="https://nordakademie.de">Nordakademie</a> in my last semester.</p>
 <h3 id="why-are-there-so-few-issues-in-the-tracker">Why are there so few issues in the tracker?<a class="headerlink" href="#why-are-there-so-few-issues-in-the-tracker" title="Permanent link">¶</a></h3>
 <p>The project has been developed internally at first using a private GitLab instance. Later, the decision to go public has been made and everything except past issues has been moved over.</p>
+<h3 id="where-is-the-latest-tag">Where is the latest tag?<a class="headerlink" href="#where-is-the-latest-tag" title="Permanent link">¶</a></h3>
+<p>We believe that the <code>:latest</code> in Docker <a href="https://vsupalov.com/docker-latest-tag/">is</a> <a href="https://medium.com/@mccode/the-misunderstood-docker-tag-latest-af3babfd6375">very</a> <a href="https://blog.container-solutions.com/docker-latest-confusion">evil</a> <a href="https://developers.redhat.com/blog/2016/02/24/10-things-to-avoid-in-docker-containers/">and</a> <a href="https://medium.com/@tariq.m.islam/container-deployments-a-lesson-in-deterministic-ops-a4a467b14a03">dangerous</a>. Apart from the problem that it is just <em>yet another tag</em> and everything else being purely convention, you should make a conscious choice to upgrade your production environment from one version to another.</p>
+<p>For this reason we are releasing versions on all distribution platforms following the <a href="https://semver.org">SemVer 2.0</a> convention so you can know which versions are safe and which might require some more work. Additionally, all Helm charts and Compose files use pinned versions for the Docker images.</p>
 <hr/>
 <div class="md-source-date">
 <small>
     
-      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 23, 2020</span>
+      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 30, 2020</span>
 </small>
 </div>
 </article>

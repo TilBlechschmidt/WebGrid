@@ -3,7 +3,7 @@ entries:
   webgrid:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2020-07-30T11:39:17.59918827Z"
+    created: "2020-07-30T17:36:33.384761199Z"
     description: Scalable WebDriver provisioner
     digest: 4192554a4f0ba5b78d423cbc0f8ff11168d4fcb1fcfec801f0ba689b7a72d993
     name: webgrid
@@ -13,7 +13,7 @@ entries:
     version: 0.1.0
   - apiVersion: v2
     appVersion: v0.0.1
-    created: "2020-07-30T11:39:17.60088447Z"
+    created: "2020-07-30T17:36:33.418285355Z"
     description: Scalable WebDriver provisioner
     digest: 74d9cf52ca46e7aa4f71bad75e48623f69e97c0a96bc36bf0d4abb8a94b17a13
     home: https://webgrid.dev/
@@ -29,9 +29,9 @@ entries:
     version: v0.0.1
   - apiVersion: v2
     appVersion: v0.0.1-alpha
-    created: "2020-07-30T11:39:17.60002587Z"
+    created: "2020-07-30T17:36:33.417378045Z"
     description: Scalable WebDriver provisioner
-    digest: 8fd83a4f35c530a51fb05da975c6bd0b3027dac2ac848cd40772a06d0a7ff222
+    digest: 71ae656ad4009999710deb21848bb8128962083e4ed339759dfa0d18a0471656
     home: https://webgrid.dev/
     maintainers:
     - email: til@blechschmidt.dev
@@ -43,4 +43,4 @@ entries:
     urls:
     - https://webgrid.dev/charts/webgrid-v0.0.1-alpha.tgz
     version: v0.0.1-alpha
-generated: "2020-07-30T11:39:17.598173571Z"
+generated: "2020-07-30T17:36:33.361161444Z"

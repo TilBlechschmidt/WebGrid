@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["ResourceStatus",""]],"struct":[["TaskManager",""],["TaskResourceHandle",""]],"type":[["ResourceStatusSender",""],["TaskID",""]]});

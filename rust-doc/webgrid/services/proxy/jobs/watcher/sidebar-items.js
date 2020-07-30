@@ -1,1 +1,0 @@
-initSidebarItems({"constant":[["PATTERN_API",""],["PATTERN_MANAGER",""],["PATTERN_SESSION",""],["PATTERN_STORAGE",""]],"enum":[["WatcherJobError",""]],"struct":[["REGEX_API",""],["REGEX_MANAGER",""],["REGEX_SESSION",""],["REGEX_STORAGE",""],["WatcherJob",""]]});

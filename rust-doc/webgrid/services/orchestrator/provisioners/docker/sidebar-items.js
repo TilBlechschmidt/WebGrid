@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["run",""]],"mod":[["provisioner",""]],"struct":[["Options","Docker container based session provisioner"]]});
+initSidebarItems({"fn":[["run",""]],"struct":[["Options","Docker container based session provisioner"]]});

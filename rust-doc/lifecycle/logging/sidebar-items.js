@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["LogCode",""],["LogLevel",""]],"struct":[["Logger",""],["SessionLogger",""]]});

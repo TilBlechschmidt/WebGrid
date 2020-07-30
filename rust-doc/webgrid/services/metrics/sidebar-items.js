@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["run",""]],"struct":[["DummyContext",""],["Options","Prometheus metric provider"]]});
+initSidebarItems({"fn":[["run",""]],"struct":[["Options","Prometheus metric provider"]]});

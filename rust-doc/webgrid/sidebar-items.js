@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Command",""]],"fn":[["main",""]],"mod":[["services",""]],"struct":[["MainOptions",""]]});
+initSidebarItems({"macro":[["schedule","Schedule jobs on a given scheduler with some context"],["with_redis_resource","Shorthand to request a redis resource from a manager"],["with_shared_redis_resource","Shorthand to request a shared redis resource from a manager"]],"mod":[["libraries","Shared modules used by every service"],["services","Individual micro-services for the grid"]]});

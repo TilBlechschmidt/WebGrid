@@ -1,1 +1,0 @@
-initSidebarItems({"macro":[["schedule",""]],"mod":[["job",""],["job_scheduler",""],["status_server",""],["task_manager",""]],"struct":[["JobScheduler",""],["StatusServer",""],["TaskManager",""],["TaskResourceHandle",""]],"trait":[["Job",""]]});

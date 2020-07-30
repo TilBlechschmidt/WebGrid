@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["run",""]],"mod":[["provisioner",""]],"struct":[["Options","Kubernetes job based session provisioner"]]});
+initSidebarItems({"fn":[["run",""]],"struct":[["Options","Kubernetes job based session provisioner"]]});

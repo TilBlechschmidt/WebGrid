@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["CapabilityError",""],["CapabilityPageLoadStrategy",""],["CapabilityUnhandledPromptBehavior",""]],"struct":[["Capabilities",""],["CapabilitiesProxy",""],["CapabilitiesRequest",""],["CapabilityTimeouts",""]],"trait":[["OptionXorExt",""]]});
