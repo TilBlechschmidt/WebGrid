@@ -91,7 +91,7 @@ helm install example webgrid/webgrid
 kubectl port-forward service/example-webgrid 8080:80
 ```
 
-Your grid is now available at the [`localhost:8080`](http://localhost:8080/) service. Use any standard Kubernetes method to access it! 
+Your grid is now available at the [`localhost:8080`](http://localhost:8080/) service.
 
 If you are deploying to a RBAC enabled cluster you might have to tweak some settings. Take a look at the [documentation](https://webgrid.dev/kubernetes/configuration/) on how to use your own ServiceAccount and PersistentVolumeClaims.
 

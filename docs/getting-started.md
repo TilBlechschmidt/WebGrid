@@ -26,9 +26,6 @@ docker-compose up
 
 Continue [reading below](#using-the-grid) on how to send requests to your grid.
 
-!!! todo
-    The compose file refers locally built images. Replace them with hub.docker.com ones once the repository goes public!
-
 ## Kubernetes
 
 WebGrid provides a [Helm](https://helm.sh) chart to get started as quickly as possible. Below is a guide on how to add the chart repository and install the chart.
@@ -49,7 +46,7 @@ Once you have started the grid you can send requests to it using the regular Sel
 === "Java"
     ```java
     FirefoxOptions firefoxOptions = new FirefoxOptions();
-    WebDriver driver = new RemoteWebDriver(new URL("http://localhost"), firefoxOptions);
+    WebDriver driver = new RemoteWebDriver(new URL("http://localhost:8080"), firefoxOptions);
     driver.get("http://www.google.com");
     driver.quit();
     ```
@@ -60,7 +57,7 @@ Once you have started the grid you can send requests to it using the regular Sel
 
     firefox_options = webdriver.FirefoxOptions()
     driver = webdriver.Remote(
-        command_executor='http://localhost',
+        command_executor='http://localhost:8080',
         options=firefox_options
     )
     driver.get("http://www.google.com")
@@ -70,7 +67,7 @@ Once you have started the grid you can send requests to it using the regular Sel
 === "C#"
     ```csharp
     FirefoxOptions firefoxOptions = new FirefoxOptions();
-    IWebDriver driver = new RemoteWebDriver(new Uri("http://localhost"), firefoxOptions);
+    IWebDriver driver = new RemoteWebDriver(new Uri("http://localhost:8080"), firefoxOptions);
     driver.Navigate().GoToUrl("http://www.google.com");
     driver.Quit();
     ```
@@ -79,7 +76,7 @@ Once you have started the grid you can send requests to it using the regular Sel
     ```ruby
     require 'selenium-webdriver'
 
-    driver = Selenium::WebDriver.for :remote, url: "http://localhost", desired_capabilities: :firefox
+    driver = Selenium::WebDriver.for :remote, url: "http://localhost:8080", desired_capabilities: :firefox
     driver.get "http://www.google.com"
     driver.close
     ```
@@ -90,7 +87,7 @@ Once you have started the grid you can send requests to it using the regular Sel
     var capabilities = Capabilities.firefox();
     (async function helloSelenium() {
         let driver = new Builder()
-            .usingServer("http://localhost")   
+            .usingServer("http://localhost:8080")   
             .withCapabilities(capabilities)
             .build();
         try {
@@ -104,7 +101,7 @@ Once you have started the grid you can send requests to it using the regular Sel
 === "Kotlin"
     ```kotlin
     firefoxOptions = FirefoxOptions()
-    driver: WebDriver = new RemoteWebDriver(new URL("http://localhost"), firefoxOptions)
+    driver: WebDriver = new RemoteWebDriver(new URL("http://localhost:8080"), firefoxOptions)
     driver.get("http://www.google.com")
     driver.quit()
     ```
