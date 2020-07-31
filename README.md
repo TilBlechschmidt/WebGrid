@@ -1,10 +1,28 @@
-# WebGrid
+<h1 align="center">WebGrid</h1>
+
+<!-- Logo & Summary -->
 <p align="center">
   <img width="75%" src="https://placekitten.com/882/250" alt="Banner">
 </p>
+
+<!-- Navigation -->
 <p align="center">
-  <b>Scalable, fast, resilient WebDriver network.</b>
+  <b>
+  <a href="#install">
+    Install
+  </a>
+  <span> | </span>
+  <a href="#usage">
+    Usage
+  </a>
+  <span> | </span>
+  <a href="https://webgrid.dev">
+    Docs
+  </a>
+  </b>
 </p>
+
+<!-- Badges -->
 <p align="center">
   <a href="https://github.com/TilBlechschmidt/WebGrid/blob/main/CODE_OF_CONDUCT.md">
     <img src="https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg" alt="Contributor Covenant">
@@ -21,28 +39,95 @@
   <a href="https://github.com/TilBlechschmidt/WebGrid/commits/main">
     <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/TilBlechschmidt/WebGrid">
   </a>
+
+  <br/>
+  <sub>You have an idea for a logo? <a href="https://github.com/TilBlechschmidt/WebGrid/issues/1">Submit it here!</a></sub>
 </p>
 
-## About
-WebGrid is a combination of services that provide a WebDriver API for use with Selenium Clients. It has the capability to dynamically scale as demand changes and can support an unlimited number of Browsers in one network[^Upper limit has not yet been tested/reached ;)]! Its components have been designed to be highly resilient and allow fast recovery from any errors or outages, ensuring stability of your automation tasks.
+---
 
-At its core WebGrid is a stateful multiplexing proxy that starts Browsers on demand, however it has been split into independent and fully scalable components which allows to increase the scale if any bottlenecks are encountered (including the ingress proxy)!
+<!-- Bullet points -->
+* **Cluster ready.** Designed with concurrency, on-demand scalability and cluster operation in mind
+* **Debuggable.** Provides browser screen recordings and extensive logs
+* **Resilient.** Built with automatic error recovery at its core
+* **[W3C Specification](https://www.w3.org/TR/webdriver1/) compilant.** Fully compatible with existing Selenium clients
 
-## Use cases
-WebGrid is aiming to provide a scalable alternative to the popular Selenium Grid. This has been made possible by the standardisation of the [WebDriver protocol](https://w3c.github.io/webdriver/) by the W3C which is the foundation of Selenium. It contains remote control methods for browsers and has been adopted by all major vendors. Additionally it incorporates support for a stateful intermediate proxy to distribute load between multiple machines.
+---
 
-Thanks to its independent components WebGrid is perfect for anybody that has an existing cluster infrastructure and wants to run a dynamically scalable browser automation network on it for e.g. UI tests.
+## Install
 
-## Requirements
-The grid requires an infrastructure to provision new Browser hosts. This can range from a single PC with its existing operating system and browser or a local Docker all the way to a multi-site K8s cluster.
+Below are quick-start tutorials to get you started. For a more detailed guide visit the dedicated [Getting Started guide](https://webgrid.dev/getting-started/)!
 
-Since the project is currently undergoing active development you have to clone the repository to make use of it. The current setup only supports local Docker as a provisioner which will change in the future. To build all the required images and start a fully operational grid you can execute the following commands:
+### 🐳 Docker
+
+To run a basic grid in Docker you can use Docker Compose. Below is a bare-bones example of getting all required components up and running!
 
 ```bash
-make images
-make run
+# Create prerequisites
+docker volume create webgrid
+docker network create webgrid
+
+# Download compose file
+curl -fsSLO https://webgrid.dev/docker-compose.yml
+
+# Launch the grid
+docker-compose up
 ```
 
-You can then send requests to `http://localhost/`. Screen recordings are currently stored in `/tmp/vr` named by the session identifiers.
+You can now point your Selenium client to [`localhost:8080`](http://localhost/) and browse the API at [`/api`](http://localhost/api).
 
-For more details on how the systems work, take a look at the documentation directory.
+### ☸️ Kube
+
+For deployment to Kubernetes a Helm repository is available. The default values provide a good starting point for basic cluster setups like [K3s](https://k3s.io) or [microk8s](https://microk8s.io).
+
+```bash
+# Add the repository
+helm repo add webgrid https://webgrid.dev/
+
+# Install the chart
+helm install example webgrid/webgrid
+
+# Make it accessible locally for evaluation
+kubectl port-forward service/example-webgrid 8080:80
+```
+
+Your grid is now available at the [`localhost:8080`](http://localhost:8080/) service. Use any standard Kubernetes method to access it! 
+
+If you are deploying to a RBAC enabled cluster you might have to tweak some settings. Take a look at the [documentation](https://webgrid.dev/kubernetes/configuration/) on how to use your own ServiceAccount and PersistentVolumeClaims.
+
+## Usage
+
+Once you have your grid up and running there is a couple of things you can do!
+
+### 🚀 Launch browser instances
+
+Point your selenium client to [`http://localhost:8080`](http://localhost:8080) to create a new browser container/pod and interact with it! You can use all features supported by Selenium.
+
+### 🔍 Browse the API
+
+The grid provides a GraphQL API at [`/api`](http://localhost:8080/api) with a Playground for you to explore. It exposes all available metadata about sessions, grid health and advanced features like video recordings.
+
+### 📺 Watch your browsers
+
+You can take a **live** look at what your browsers are doing by taking the [Session ID](https://webgrid.dev/features/screen-recording/#session-id) of a instance and visiting `localhost:8080/embed/<session-id>`. You can also embed the videos in your existing tools! Head over to the <a href="(https://webgrid.dev/features/screen-recording/#embedding">embedding documentation</a> to learn how.
+
+
+<sub>
+  <b>Note:</b>
+  <br/>
+  Video recordings are disabled by default in K8s as every cluster has specific requirements for file storage. The <a href="https://webgrid.dev/kubernetes/storage/">storage documentation</a> explains how to enable it.
+</sub>
+
+## Developing
+
+If you want to build the project locally you can use the [Makefile](https://github.com/TilBlechschmidt/WebGrid/blob/main/Makefile). To create Docker images for every component and run them locally run these commands:
+
+```bash
+# Build docker images
+make
+
+# Start components in docker
+make install
+```
+
+To start individual components outside of Docker or setup the development environment, see the [development environment documentation](https://webgrid.dev/contribute/dev-environment/).
