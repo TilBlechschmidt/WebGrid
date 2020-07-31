@@ -35,7 +35,7 @@ While you can use any editor of your choice the recommended one is VSCode. This 
 
 ### Documentation
 
-If you want to build the documentation locally you have to install some tools. Make sure you have a recent version of [Python 3](https://www.python.org/downloads/) installed before running the commands below.
+If you want to build the documentation locally you have to install additional tools. Make sure you have a recent version of [Python 3](https://www.python.org/downloads/) installed before running the commands below.
 
 ```bash
 pip3 install 'mkdocs-git-revision-date-localized-plugin>=0.4' \
@@ -88,7 +88,7 @@ If you want to test the whole grid in Docker you can use docker-compose together
 
 ### Building the images locally
 
-To build the images using the local code run use one of the following commands:
+To build the images using the local code use one of the following commands:
 
 ```bash
 # Build all images

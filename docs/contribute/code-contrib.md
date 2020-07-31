@@ -11,7 +11,7 @@ You can also take a look at the list of [Accepted tasks](https://github.com/TilB
 
 It can be a daunting task to get into a new project, we encountered it ourselves more than we'd like to admit. For this reason a comprehensive guide to the project structure, local developer setup and other topics is available in the [Architecture tab](../architecture/index.md).
 
-We strive to make the onboarding experience as simple and straightforward as possible so if you have any questions or ideas for improving it [please open a ticket](https://github.com/TilBlechschmidt/WebGrid/issues/new)!
+We strive to make the onboarding experience as simple and straightforward as possible so if you have any questions or ideas for improving it [please open a ticket](https://github.com/TilBlechschmidt/WebGrid/issues/new/choose)!
 
 ## Conventions
 
@@ -33,7 +33,7 @@ All commit messages should be prefixed with a GitHub Emoji that describes in one
 
 #### PGP signing
 
-Every commit message should be PGP signed. This can be achieved by either editing files directly on GitHub or [setting up commit signing locally](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work) (make sure to upload your public key to GitHub if you sign locally).
+Every commit must be PGP signed. This can be achieved by either editing files directly on GitHub or [setting up commit signing locally](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work) (make sure to upload your public key to GitHub if you sign locally).
 
 ## Workflow
 
@@ -47,12 +47,14 @@ For issues from the `Available` category a solution sketch is already provided w
 
 ### 2. Implementing changes
 
-Once a solution sketch has been outlined you can start working on the code. Make sure to notify the maintainers that you have started work so that the issue can be moved to the corresponding lifecycle stage so no work is done twice.
+Once a solution sketch has been outlined you can start working on the code. Make sure to notify the maintainers so that the issue can be moved to the corresponding lifecycle stage preventing duplicate work.
 
-At this stage you setup your development environment (which may or may not be required depending on the changes as e.g. documentation changes can usually be done online using the GitHub Web Editor) and write code. If you have any questions ask on your issue ticket or submit a Draft Pull Request and comment on it if you need code-level assistance!
+At this stage you [setup your development environment](./dev-environment.md) (which may or may not be required depending on the changes as e.g. documentation changes can usually be done online using the GitHub Web Editor) and write code. If you have any questions ask on your issue ticket or submit a Draft Pull Request and comment on it if you need code-level assistance!
 
 ### 3. Code review
 
-If you are done with your changes or want to seek feedback from maintainers you push your changes and open a Pull Request. Make sure to add the original issue number to the description so it can be associated later. Take special considerations in naming your PR as this message will be published in the Changelog 😉
+If you are done with your changes or want to seek feedback from maintainers you push your changes and open a Pull Request. Make sure to add the original issue number to the description so it can be associated later. Take special considerations in naming your PR as it will be published in the Changelog 😉
 
-The PR will be reviewed by other project members and automatic tests are run against your code. If everything is well, the changes will be approved and merged into the main branch. However, it is very common that changes are requested (don't feel bad about it, we provide you feedback to improve your already amazing contribution not to make it look bad) which moves you back to the previous stage of [Implementing changes](#2-implementing-changes).
+The PR will be reviewed by other project members and automatic tests are run against your code. If everything is well, the changes will be approved and merged into the main branch. However, it is very common that changes are requested — don't feel bad about it, we provide you feedback to improve your already amazing contribution. That brings you back to the previous stage of [Implementing changes](#2-implementing-changes).
+
+Once your changes have been approved, they are merged into the `main` branch and published during the next [release cycle](./release.md)!

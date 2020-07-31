@@ -14,7 +14,7 @@ If your Selenium clients (e.g. test suites) are running inside your cluster you 
 In case you have a local client and want to use the grid you can temporarily forward a local port to the Service in the cluster. Below is an example that would expose the grid at `http://localhost:3030`.
 
 ```
-kubectl port-forward service/example-web-grid 3030:80
+kubectl port-forward service/example-webgrid 3030:80
 ```
 
 ## Ingress object
@@ -33,12 +33,12 @@ spec:
         paths:
           - path: /
             backend:
-              serviceName: example-web-grid
+              serviceName: example-webgrid
               servicePort: http
 ```
 
 !!! note
-    You may have to add additional properties to the spec for it to work depending on your cluster setup. Consult your cluster admin (or documentation) for more details.
+    You may have to add additional properties to the spec for it to work depending on your cluster setup. Consult with your cluster admin (or documentation) for more details.
 
 !!! warning
     As the Ingress adds another HTTP proxy to the request chain it could pose a bottleneck! If you want to avoid this consider running your tests [inside the cluster](#cluster-internal-access).

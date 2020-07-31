@@ -12,7 +12,7 @@ In order to view or embed a video you need to retrieve its unique session identi
 === "Java"
     ```java
     FirefoxOptions firefoxOptions = new FirefoxOptions();
-    WebDriver driver = new RemoteWebDriver(new URL("http://localhost"), firefoxOptions);
+    WebDriver driver = new RemoteWebDriver(new URL("http://localhost:8080"), firefoxOptions);
     driver.get("http://dcuk.com");
 
     SessionId session = ((FirefoxDriver) driver).getSessionId();
@@ -28,7 +28,7 @@ In order to view or embed a video you need to retrieve its unique session identi
 
     firefox_options = webdriver.FirefoxOptions()
     driver = webdriver.Remote(
-        command_executor='http://localhost',
+        command_executor='http://localhost:8080',
         options=firefox_options
     )
     driver.get("http://www.google.com")

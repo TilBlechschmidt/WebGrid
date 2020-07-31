@@ -16,7 +16,7 @@ Resources have associated structures called Providers. A provider is responsible
 Resources may have service-specific initialization jobs that are executed once they become available. These can be set on the corresponding resource provider upon creation.
 
 ## Contract
-Contracts atomically define behavior through a set of given input resource states and expected outputs. Contracts use placeholders for actual values much like class definitions. The list of contracts for this application can be found in the [contracts directory](./contracts).
+Contracts atomically define behavior through a set of given input resource states and expected outputs. Contracts use placeholders for actual values much like class definitions.
 
 ### Request
 A specific instance of a contract with bound values is called a request.

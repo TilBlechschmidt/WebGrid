@@ -7,6 +7,7 @@ site_url: https://webgrid.dev/
 # Repository
 repo_name: TilBlechschmidt/WebGrid
 repo_url: https://github.com/TilBlechschmidt/WebGrid
+edit_uri: edit/main/docs/
 
 # Copyright
 copyright: Copyright &copy; 2019 - 2020 Til Blechschmidt
@@ -63,6 +64,10 @@ extra:
       link: https://github.com/TilBlechschmidt
     - icon: fontawesome/brands/twitter
       link: https://twitter.com/themegatb
+    - icon: fontawesome/brands/docker
+      link: https://hub.docker.com/repositories/webgrid
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/yYaPcNM
 
 # Plugins
 plugins:

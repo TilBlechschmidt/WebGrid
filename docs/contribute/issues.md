@@ -11,7 +11,7 @@ Creating an issue is the easiest way to contribute to the project! All issues ar
 
 ## Reporting
 
-If you have a question, encountered a bug or want to suggest a feature **please don't hesitate to [open a ticket](https://github.com/TilBlechschmidt/WebGrid/issues/new)** — Community feedback helps the project grow and adapt in the best possible way!
+If you have a question, encountered a bug or want to suggest a feature **please don't hesitate to [open a ticket](https://github.com/TilBlechschmidt/WebGrid/issues/new/choose)** — Community feedback helps the project grow and adapt in the best possible way!
 
 !!! important "Preventing duplicates"
     Make sure to browse the [issue backlog](https://github.com/TilBlechschmidt/WebGrid/issues?q=is%3Aopen) and [previously closed issues](https://github.com/TilBlechschmidt/WebGrid/issues?q=is%3Aclosed+) as well as the [FAQ](../faq.md) to see if somebody else already covered your topic! This helps us focus on implementing your ideas and helping you with issues instead of housekeeping duplicates.
@@ -57,7 +57,7 @@ For a more detailed description of all possible states, consult the [repositorie
 
 ## Pull requests
 
-In addition to the labels of issues, Pull Request may have additional labels which identify the type of version bump.
+In addition to the labels of issues, Pull Request may have additional labels which identify the type of version bump required.
 
 | Change                                               | Description                                                                   |
 |------------------------------------------------------|:------------------------------------------------------------------------------|
