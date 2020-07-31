@@ -450,10 +450,6 @@ curl -fsSLO https://webgrid.dev/docker-compose.yml
 docker-compose up
 </code></pre></div>
 <p>Continue <a href="#using-the-grid">reading below</a> on how to send requests to your grid.</p>
-<div class="admonition todo">
-<p class="admonition-title">Todo</p>
-<p>The compose file refers locally built images. Replace them with hub.docker.com ones once the repository goes public!</p>
-</div>
 <h2 id="kubernetes">Kubernetes<a class="headerlink" href="#kubernetes" title="Permanent link">¶</a></h2>
 <p>WebGrid provides a <a href="https://helm.sh">Helm</a> chart to get started as quickly as possible. Below is a guide on how to add the chart repository and install the chart.
 You can change the name of the release in the second command or add other options like the target namespace — for more details consult the Helm documentation.</p>
@@ -467,7 +463,7 @@ helm install example webgrid/webgrid
 <p>Once you have started the grid you can send requests to it using the regular Selenium client libraries <a href="https://www.selenium.dev/documentation/en/">available here</a>.</p>
 <div class="tabbed-set" data-tabs="1:6"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio"><label for="__tabbed_1_1">Java</label><div class="tabbed-content">
 <div class="highlight"><pre><span></span><code><span class="n">FirefoxOptions</span> <span class="n">firefoxOptions</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FirefoxOptions</span><span class="p">();</span>
-<span class="n">WebDriver</span> <span class="n">driver</span> <span class="o">=</span> <span class="k">new</span> <span class="n">RemoteWebDriver</span><span class="p">(</span><span class="k">new</span> <span class="n">URL</span><span class="p">(</span><span class="s">"http://localhost"</span><span class="p">),</span> <span class="n">firefoxOptions</span><span class="p">);</span>
+<span class="n">WebDriver</span> <span class="n">driver</span> <span class="o">=</span> <span class="k">new</span> <span class="n">RemoteWebDriver</span><span class="p">(</span><span class="k">new</span> <span class="n">URL</span><span class="p">(</span><span class="s">"http://localhost:8080"</span><span class="p">),</span> <span class="n">firefoxOptions</span><span class="p">);</span>
 <span class="n">driver</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="s">"http://www.google.com"</span><span class="p">);</span>
 <span class="n">driver</span><span class="p">.</span><span class="na">quit</span><span class="p">();</span>
 </code></pre></div>
@@ -477,7 +473,7 @@ helm install example webgrid/webgrid
 
 <span class="n">firefox_options</span> <span class="o">=</span> <span class="n">webdriver</span><span class="o">.</span><span class="n">FirefoxOptions</span><span class="p">()</span>
 <span class="n">driver</span> <span class="o">=</span> <span class="n">webdriver</span><span class="o">.</span><span class="n">Remote</span><span class="p">(</span>
-    <span class="n">command_executor</span><span class="o">=</span><span class="s1">'http://localhost'</span><span class="p">,</span>
+    <span class="n">command_executor</span><span class="o">=</span><span class="s1">'http://localhost:8080'</span><span class="p">,</span>
     <span class="n">options</span><span class="o">=</span><span class="n">firefox_options</span>
 <span class="p">)</span>
 <span class="n">driver</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"http://www.google.com"</span><span class="p">)</span>
@@ -486,7 +482,7 @@ helm install example webgrid/webgrid
 </div>
 <input id="__tabbed_1_3" name="__tabbed_1" type="radio"><label for="__tabbed_1_3">C#</label><div class="tabbed-content">
 <div class="highlight"><pre><span></span><code><span class="n">FirefoxOptions</span> <span class="n">firefoxOptions</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FirefoxOptions</span><span class="p">();</span>
-<span class="n">IWebDriver</span> <span class="n">driver</span> <span class="p">=</span> <span class="k">new</span> <span class="n">RemoteWebDriver</span><span class="p">(</span><span class="k">new</span> <span class="n">Uri</span><span class="p">(</span><span class="s">"http://localhost"</span><span class="p">),</span> <span class="n">firefoxOptions</span><span class="p">);</span>
+<span class="n">IWebDriver</span> <span class="n">driver</span> <span class="p">=</span> <span class="k">new</span> <span class="n">RemoteWebDriver</span><span class="p">(</span><span class="k">new</span> <span class="n">Uri</span><span class="p">(</span><span class="s">"http://localhost:8080"</span><span class="p">),</span> <span class="n">firefoxOptions</span><span class="p">);</span>
 <span class="n">driver</span><span class="p">.</span><span class="n">Navigate</span><span class="p">().</span><span class="n">GoToUrl</span><span class="p">(</span><span class="s">"http://www.google.com"</span><span class="p">);</span>
 <span class="n">driver</span><span class="p">.</span><span class="n">Quit</span><span class="p">();</span>
 </code></pre></div>
@@ -494,7 +490,7 @@ helm install example webgrid/webgrid
 <input id="__tabbed_1_4" name="__tabbed_1" type="radio"><label for="__tabbed_1_4">Ruby</label><div class="tabbed-content">
 <div class="highlight"><pre><span></span><code><span class="nb">require</span> <span class="s1">'selenium-webdriver'</span>
 
-<span class="n">driver</span> <span class="o">=</span> <span class="no">Selenium</span><span class="o">::</span><span class="no">WebDriver</span><span class="o">.</span><span class="n">for</span> <span class="ss">:remote</span><span class="p">,</span> <span class="ss">url</span><span class="p">:</span> <span class="s2">"http://localhost"</span><span class="p">,</span> <span class="ss">desired_capabilities</span><span class="p">:</span> <span class="ss">:firefox</span>
+<span class="n">driver</span> <span class="o">=</span> <span class="no">Selenium</span><span class="o">::</span><span class="no">WebDriver</span><span class="o">.</span><span class="n">for</span> <span class="ss">:remote</span><span class="p">,</span> <span class="ss">url</span><span class="p">:</span> <span class="s2">"http://localhost:8080"</span><span class="p">,</span> <span class="ss">desired_capabilities</span><span class="p">:</span> <span class="ss">:firefox</span>
 <span class="n">driver</span><span class="o">.</span><span class="n">get</span> <span class="s2">"http://www.google.com"</span>
 <span class="n">driver</span><span class="o">.</span><span class="n">close</span>
 </code></pre></div>
@@ -504,7 +500,7 @@ helm install example webgrid/webgrid
 <span class="kd">var</span> <span class="nx">capabilities</span> <span class="o">=</span> <span class="nx">Capabilities</span><span class="p">.</span><span class="nx">firefox</span><span class="p">();</span>
 <span class="p">(</span><span class="nx">async</span> <span class="kd">function</span> <span class="nx">helloSelenium</span><span class="p">()</span> <span class="p">{</span>
     <span class="kd">let</span> <span class="nx">driver</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Builder</span><span class="p">()</span>
-        <span class="p">.</span><span class="nx">usingServer</span><span class="p">(</span><span class="s2">"http://localhost"</span><span class="p">)</span>   
+        <span class="p">.</span><span class="nx">usingServer</span><span class="p">(</span><span class="s2">"http://localhost:8080"</span><span class="p">)</span>   
         <span class="p">.</span><span class="nx">withCapabilities</span><span class="p">(</span><span class="nx">capabilities</span><span class="p">)</span>
         <span class="p">.</span><span class="nx">build</span><span class="p">();</span>
     <span class="k">try</span> <span class="p">{</span>
@@ -517,7 +513,7 @@ helm install example webgrid/webgrid
 </div>
 <input id="__tabbed_1_6" name="__tabbed_1" type="radio"><label for="__tabbed_1_6">Kotlin</label><div class="tabbed-content">
 <div class="highlight"><pre><span></span><code><span class="n">firefoxOptions</span> <span class="p">=</span> <span class="n">FirefoxOptions</span><span class="p">()</span>
-<span class="n">driver</span><span class="p">:</span> <span class="n">WebDriver</span> <span class="p">=</span> <span class="n">new</span> <span class="n">RemoteWebDriver</span><span class="p">(</span><span class="n">new</span> <span class="n">URL</span><span class="p">(</span><span class="s">"http://localhost"</span><span class="p">),</span> <span class="n">firefoxOptions</span><span class="p">)</span>
+<span class="n">driver</span><span class="p">:</span> <span class="n">WebDriver</span> <span class="p">=</span> <span class="n">new</span> <span class="n">RemoteWebDriver</span><span class="p">(</span><span class="n">new</span> <span class="n">URL</span><span class="p">(</span><span class="s">"http://localhost:8080"</span><span class="p">),</span> <span class="n">firefoxOptions</span><span class="p">)</span>
 <span class="n">driver</span><span class="p">.</span><span class="k">get</span><span class="p">(</span><span class="s">"http://www.google.com"</span><span class="p">)</span>
 <span class="n">driver</span><span class="p">.</span><span class="n">quit</span><span class="p">()</span>
 </code></pre></div>
@@ -531,7 +527,7 @@ helm install example webgrid/webgrid
 <div class="md-source-date">
 <small>
     
-      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 22, 2020</span>
+      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 31, 2020</span>
 </small>
 </div>
 </article>

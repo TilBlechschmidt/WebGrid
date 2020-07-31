@@ -24,7 +24,7 @@
 <input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
 <label class="md-overlay" for="__drawer"></label>
 <div data-md-component="skip">
-<a class="md-skip" href="#home">
+<a class="md-skip" href="#install">
           Skip to content
         </a>
 </div>
@@ -152,9 +152,73 @@
 <ul class="md-nav__list" data-md-scrollfix="">
 <li class="md-nav__item md-nav__item--active">
 <input class="md-nav__toggle md-toggle" data-md-toggle="toc" id="__toc" type="checkbox"/>
+<label class="md-nav__link md-nav__link--active" for="__toc">
+        Home
+        <span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"></path></svg>
+</span>
+</label>
 <a class="md-nav__link md-nav__link--active" href="." title="Home">
       Home
     </a>
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#install">
+    Install
+  </a>
+<nav aria-label="Install" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#docker">
+    🐳 Docker
+  </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#kube">
+    ☸️ Kube
+  </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#usage">
+    Usage
+  </a>
+<nav aria-label="Usage" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#launch-browser-instances">
+    🚀 Launch browser instances
+  </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#browse-the-api">
+    🔍 Browse the API
+  </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#watch-your-browsers">
+    📺 Watch your browsers
+  </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#developing">
+    Developing
+  </a>
+</li>
+</ul>
+</nav>
 </li>
 <li class="md-nav__item">
 <a class="md-nav__link" href="getting-started/" title="Getting started">
@@ -370,6 +434,62 @@
 <div class="md-sidebar__scrollwrap">
 <div class="md-sidebar__inner">
 <nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"></path></svg>
+</span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#install">
+    Install
+  </a>
+<nav aria-label="Install" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#docker">
+    🐳 Docker
+  </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#kube">
+    ☸️ Kube
+  </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#usage">
+    Usage
+  </a>
+<nav aria-label="Usage" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#launch-browser-instances">
+    🚀 Launch browser instances
+  </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#browse-the-api">
+    🔍 Browse the API
+  </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#watch-your-browsers">
+    📺 Watch your browsers
+  </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#developing">
+    Developing
+  </a>
+</li>
+</ul>
 </nav>
 </div>
 </div>
@@ -379,13 +499,108 @@
 <a class="md-content__button md-icon" href="https://github.com/TilBlechschmidt/WebGrid/edit/master/docs/index.md" title="Edit this page">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"></path></svg>
 </a>
-<h1 id="home">Home<a class="headerlink" href="#home" title="Permanent link">¶</a></h1>
-<p>Here shall be a tag line and a link to GitHub plus a link to the <a href="getting-started/">Getting started</a></p>
+<h1 align="center">WebGrid</h1>
+<!-- Logo & Summary -->
+<p align="center">
+<img alt="Banner" src="https://placekitten.com/882/250" width="75%"/>
+</p>
+<!-- Navigation -->
+<p align="center">
+<b>
+<a href="#install">
+    Install
+  </a>
+<span> | </span>
+<a href="#usage">
+    Usage
+  </a>
+<span> | </span>
+<a href="https://webgrid.dev">
+    Docs
+  </a>
+</b>
+</p>
+<!-- Badges -->
+<p align="center">
+<a href="https://github.com/TilBlechschmidt/WebGrid/blob/main/CODE_OF_CONDUCT.md">
+<img alt="Contributor Covenant" src="https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg"/>
+</a>
+<a href="https://github.com/TilBlechschmidt/WebGrid/blob/main/LICENSE.md">
+<img alt="GitHub" src="https://img.shields.io/github/license/TilBlechschmidt/WebGrid"/>
+</a>
+<br/>
+<a href="">
+<img alt="Maintenance" src="https://img.shields.io/maintenance/yes/2020"/>
+</a>
+<a href="https://github.com/TilBlechschmidt/WebGrid/commits/main">
+<img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/TilBlechschmidt/WebGrid"/>
+</a>
+<br>
+<sub>You have an idea for a logo? <a href="https://github.com/TilBlechschmidt/WebGrid/issues/1">Submit it here!</a></sub>
+</br></p>
+<hr/>
+<!-- Bullet points -->
+<ul>
+<li><strong>Cluster ready.</strong> Designed with concurrency, on-demand scalability and cluster operation in mind</li>
+<li><strong>Debuggable.</strong> Provides browser screen recordings and extensive logs</li>
+<li><strong>Resilient.</strong> Built with automatic error recovery at its core</li>
+<li><strong><a href="https://www.w3.org/TR/webdriver1/">W3C Specification</a> compilant.</strong> Fully compatible with existing Selenium clients</li>
+</ul>
+<hr/>
+<h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">¶</a></h2>
+<p>Below are quick-start tutorials to get you started. For a more detailed guide visit the dedicated <a href="https://webgrid.dev/getting-started/">Getting Started guide</a>!</p>
+<h3 id="docker">🐳 Docker<a class="headerlink" href="#docker" title="Permanent link">¶</a></h3>
+<p>To run a basic grid in Docker you can use Docker Compose. Below is a bare-bones example of getting all required components up and running!</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create prerequisites</span>
+docker volume create webgrid
+docker network create webgrid
+
+<span class="c1"># Download compose file</span>
+curl -fsSLO https://webgrid.dev/docker-compose.yml
+
+<span class="c1"># Launch the grid</span>
+docker-compose up
+</code></pre></div>
+<p>You can now point your Selenium client to <a href="http://localhost/"><code>localhost:8080</code></a> and browse the API at <a href="http://localhost/api"><code>/api</code></a>.</p>
+<h3 id="kube">☸️ Kube<a class="headerlink" href="#kube" title="Permanent link">¶</a></h3>
+<p>For deployment to Kubernetes a Helm repository is available. The default values provide a good starting point for basic cluster setups like <a href="https://k3s.io">K3s</a> or <a href="https://microk8s.io">microk8s</a>.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Add the repository</span>
+helm repo add webgrid https://webgrid.dev/
+
+<span class="c1"># Install the chart</span>
+helm install example webgrid/webgrid
+
+<span class="c1"># Make it accessible locally for evaluation</span>
+kubectl port-forward service/example-webgrid <span class="m">8080</span>:80
+</code></pre></div>
+<p>Your grid is now available at the <a href="http://localhost:8080/"><code>localhost:8080</code></a> service.</p>
+<p>If you are deploying to a RBAC enabled cluster you might have to tweak some settings. Take a look at the <a href="https://webgrid.dev/kubernetes/configuration/">documentation</a> on how to use your own ServiceAccount and PersistentVolumeClaims.</p>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">¶</a></h2>
+<p>Once you have your grid up and running there is a couple of things you can do!</p>
+<h3 id="launch-browser-instances">🚀 Launch browser instances<a class="headerlink" href="#launch-browser-instances" title="Permanent link">¶</a></h3>
+<p>Point your selenium client to <a href="http://localhost:8080"><code>http://localhost:8080</code></a> to create a new browser container/pod and interact with it! You can use all features supported by Selenium.</p>
+<h3 id="browse-the-api">🔍 Browse the API<a class="headerlink" href="#browse-the-api" title="Permanent link">¶</a></h3>
+<p>The grid provides a GraphQL API at <a href="http://localhost:8080/api"><code>/api</code></a> with a Playground for you to explore. It exposes all available metadata about sessions, grid health and advanced features like video recordings.</p>
+<h3 id="watch-your-browsers">📺 Watch your browsers<a class="headerlink" href="#watch-your-browsers" title="Permanent link">¶</a></h3>
+<p>You can take a <strong>live</strong> look at what your browsers are doing by taking the <a href="https://webgrid.dev/features/screen-recording/#session-id">Session ID</a> of a instance and visiting <code>localhost:8080/embed/&lt;session-id&gt;</code>. You can also embed the videos in your existing tools! Head over to the <a href="(https://webgrid.dev/features/screen-recording/#embedding">embedding documentation</a> to learn how.</p>
+<div class="admonition warning">
+<p class="admonition-title">Screen recordings in clusters</p>
+<p>Video recordings are disabled by default in K8s as every cluster has specific requirements for file storage. The <a href="https://webgrid.dev/kubernetes/storage/">storage documentation</a> explains how to enable it.</p>
+</div>
+<h2 id="developing">Developing<a class="headerlink" href="#developing" title="Permanent link">¶</a></h2>
+<p>If you want to build the project locally you can use the <a href="https://github.com/TilBlechschmidt/WebGrid/blob/main/Makefile">Makefile</a>. To create Docker images for every component and run them locally run these commands:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Build docker images</span>
+make
+
+<span class="c1"># Start components in docker</span>
+make install
+</code></pre></div>
+<p>To start individual components outside of Docker or setup the development environment, see the <a href="https://webgrid.dev/contribute/dev-environment/">development environment documentation</a>.</p>
 <hr/>
 <div class="md-source-date">
 <small>
     
-      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 6, 2020</span>
+      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 31, 2020</span>
 </small>
 </div>
 </article>
