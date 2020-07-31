@@ -56,7 +56,7 @@
 
 ## Install
 
-Below are quick-start tutorials to get you started. For a more detailed guide visit the dedicated [Getting Started guide](https://webgrid.dev/getting-started/)!
+Below are quick-start tutorials to get you started. For a more detailed introduction visit the dedicated [Getting Started guide](https://webgrid.dev/getting-started/)!
 
 ### 🐳 Docker
 
@@ -68,7 +68,7 @@ docker volume create webgrid
 docker network create webgrid
 
 # Download compose file
-curl -fsSLO https://webgrid.dev/docker-compose.yml
+curl -fsSLO webgrid.dev/docker-compose.yml
 
 # Launch the grid
 docker-compose up
@@ -91,7 +91,7 @@ helm install example webgrid/webgrid
 kubectl port-forward service/example-webgrid 8080:80
 ```
 
-Your grid is now available at the [`localhost:8080`](http://localhost:8080/) service.
+Your grid is now available at [`localhost:8080`](http://localhost:8080/).
 
 If you are deploying to a RBAC enabled cluster you might have to tweak some settings. Take a look at the [documentation](https://webgrid.dev/kubernetes/configuration/) on how to use your own ServiceAccount and PersistentVolumeClaims.
 
@@ -109,7 +109,7 @@ The grid provides a GraphQL API at [`/api`](http://localhost:8080/api) with a Pl
 
 ### 📺 Watch your browsers
 
-You can take a **live** look at what your browsers are doing by taking the [Session ID](https://webgrid.dev/features/screen-recording/#session-id) of a instance and visiting `localhost:8080/embed/<session-id>`. You can also embed the videos in your existing tools! Head over to the <a href="(https://webgrid.dev/features/screen-recording/#embedding">embedding documentation</a> to learn how.
+You can take a **live** look at what your browsers are doing by taking the [Session ID](https://webgrid.dev/features/screen-recording/#session-id) of a instance and visiting `localhost:8080/embed/<session-id>`. You can also embed the videos in your existing tools! Head over to the <a href="https://webgrid.dev/features/screen-recording/#embedding">embedding documentation</a> to learn how.
 
 
 <sub>
