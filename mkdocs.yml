@@ -29,6 +29,7 @@ nav:
       - "contribute/index.md"
       - "contribute/issues.md"
       - "contribute/code-contrib.md"
+      - "contribute/dev-environment.md"
       - "contribute/release.md"
       - "Code of conduct": "contribute/code-of-conduct.md"
   - "Architecture":
