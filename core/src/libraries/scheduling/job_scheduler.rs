@@ -66,10 +66,7 @@ impl Eq for JobStatus {}
 
 impl JobStatus {
     fn is_gracefully_terminatable(&self) -> bool {
-        match *self {
-            JobStatus::Ready(Some(_)) => true,
-            _ => false,
-        }
+        matches!(*self, JobStatus::Ready(Some(_)))
     }
 }
 
