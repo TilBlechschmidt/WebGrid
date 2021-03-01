@@ -14,6 +14,9 @@ To change the number of concurrent sessions allowed merge and apply the followin
 maxSessionsPerOrchestrator: 5
 ```
 
+!!! note
+    Make sure that your K8s service account has a sufficient quota available to create the required number of pods for the sessions.
+
 ## Traffic congestion
 
 Another common bottleneck, which is especially common with regular Selenium Grids, is the proxy server. Due to protocol constraints all traffic has to be routed through an intermediate instance, which inherently creates a choke point. This can be remedied by the microservice architecture of WebGrid.
