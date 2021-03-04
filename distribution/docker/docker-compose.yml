@@ -17,13 +17,13 @@ services:
   orchestrator:
     image: webgrid/core:latest
     container_name: webgrid-orchestrator
-    command: orchestrator --slot-count 5 example-orchestrator docker --images "webgrid-node-firefox:latest=firefox::68.7.0esr,webgrid-node-chrome:latest=chrome::81.0.4044.122" --log debug,hyper=warn
+    command: orchestrator --slot-count 5 example-orchestrator docker --images "webgrid/node-firefox:latest=firefox::68.7.0esr,webgrid/node-chrome:latest=chrome::81.0.4044.122" --log debug,hyper=warn
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   storage:
     image: webgrid/core:latest
     container_name: webgrid-storage
-    command: storage --log debug,hyper=warn --host webgrid-storage --storage-directory /storage
+    command: storage --log debug,hyper=warn --host webgrid-storage --storage-directory /storage --size-limit 10
     volumes:
       - webgrid:/storage
   api:

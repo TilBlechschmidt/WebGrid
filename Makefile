@@ -31,5 +31,5 @@ install: bundle
 	-docker volume create webgrid
 	docker-compose -f distribution/docker/docker-compose.yml up -d
 
-uninstall: bundle
+uninstall:
 	docker-compose -f distribution/docker/docker-compose.yml down
