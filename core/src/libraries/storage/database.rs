@@ -1,33 +1,36 @@
 use chrono::{Duration, TimeZone, Utc};
-use sqlx::{
-    cursor::Cursor,
-    error::Error as SQLError,
-    executor::RefExecutor,
-    sqlite::{Sqlite, SqliteQueryAs},
-    Executor, Row, SqliteConnection,
-};
+use futures::StreamExt;
+use sqlx::{error::Error as SQLError, sqlite::Sqlite, Executor, Row, SqliteConnection};
 use std::path::PathBuf;
 
-pub async fn delete_all_files<E: Executor<Database = Sqlite>>(
-    con: &mut E,
-) -> Result<u64, SQLError> {
-    sqlx::query!("DELETE FROM Files").execute(con).await
-}
-
-pub async fn delete_file<E: Executor<Database = Sqlite>>(
-    con: &mut E,
-    path: &str,
-) -> Result<u64, SQLError> {
-    sqlx::query!("DELETE FROM Files WHERE Path LIKE ?", path)
+pub async fn delete_all_files<'e, E>(con: E) -> Result<u64, SQLError>
+where
+    E: Executor<'e, Database = Sqlite>,
+{
+    Ok(sqlx::query!("DELETE FROM Files")
         .execute(con)
-        .await
+        .await?
+        .rows_affected())
 }
 
-pub async fn insert_file<E: Executor<Database = Sqlite>>(
+pub async fn delete_file<'e, E>(con: E, path: &str) -> Result<u64, SQLError>
+where
+    E: Executor<'e, Database = Sqlite>,
+{
+    Ok(sqlx::query!("DELETE FROM Files WHERE Path LIKE ?", path)
+        .execute(con)
+        .await?
+        .rows_affected())
+}
+
+pub async fn insert_file<'e, E>(
     path: &str,
     metadata: Option<std::fs::Metadata>,
-    con: &mut E,
-) -> Result<(), SQLError> {
+    con: E,
+) -> Result<(), SQLError>
+where
+    E: Executor<'e, Database = Sqlite>,
+{
     let mut size: f64 = 0.0;
     let mut last_modified = Utc::now();
     let mut last_access = Utc::now();
@@ -54,6 +57,9 @@ pub async fn insert_file<E: Executor<Database = Sqlite>>(
         }
     }
 
+    let last_modified_string = last_modified.to_rfc3339();
+    let last_access_string = last_access.to_rfc3339();
+
     sqlx::query!(
         r#"
             INSERT OR REPLACE INTO Files ( Path, Size, ModificationTime, LastAccessTime )
@@ -61,8 +67,8 @@ pub async fn insert_file<E: Executor<Database = Sqlite>>(
         "#,
         path,
         size,
-        last_modified.to_rfc3339(),
-        last_access.to_rfc3339()
+        last_modified_string,
+        last_access_string
     )
     .execute(con)
     .await?;
@@ -72,7 +78,7 @@ pub async fn insert_file<E: Executor<Database = Sqlite>>(
 
 pub async fn used_bytes<'e, E>(executor: E) -> Result<f64, SQLError>
 where
-    E: 'e + Send + RefExecutor<'e, Database = Sqlite>,
+    E: 'e + Send + Executor<'e, Database = Sqlite>,
 {
     // let mut cursor = sqlx::query(r#"SELECT SUM(Size) FROM Files"#).fetch(executor);
     // Ok(cursor.next().await?)
@@ -86,12 +92,13 @@ where
 
 pub async fn files_to_delete<'e, E>(executor: E, target_size: f64) -> Result<Vec<PathBuf>, SQLError>
 where
-    E: RefExecutor<'e, Database = Sqlite>,
+    E: Executor<'e, Database = Sqlite>,
 {
     let mut cursor = sqlx::query("SELECT Path, CumulativeSize FROM Eviction").fetch(executor);
     let mut paths = Vec::new();
 
-    while let Some(row) = cursor.next().await? {
+    while let Some(r) = cursor.next().await {
+        let row = r?;
         let path: String = row.get("Path");
         let cumulative_size: f64 = row.get("CumulativeSize");
 
@@ -105,16 +112,16 @@ where
     Ok(paths)
 }
 
-pub async fn setup_tables(mut con: &mut SqliteConnection) -> Result<(), SQLError> {
+pub async fn setup_tables(con: &mut SqliteConnection) -> Result<(), SQLError> {
     // Create tables
     sqlx::query_file!("src/libraries/storage/sql/schema.sql")
-        .execute(&mut con)
+        .execute(con)
         .await?;
 
     Ok(())
 }
 
-pub async fn setup_views(mut con: &mut SqliteConnection, formula: &str) -> Result<(), SQLError> {
+pub async fn setup_views(con: &mut SqliteConnection, formula: &str) -> Result<(), SQLError> {
     // Create views
     // Ignore files that have been modified in the last 5 minutes
     let views = format!(
@@ -122,7 +129,7 @@ pub async fn setup_views(mut con: &mut SqliteConnection, formula: &str) -> Resul
         score_formula = parse_score_formula(formula),
         seconds_since_modification_threshold = 300
     );
-    sqlx::query(&views).execute(&mut con).await?;
+    sqlx::query(&views).execute(con).await?;
 
     Ok(())
 }

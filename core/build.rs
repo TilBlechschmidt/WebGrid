@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use sqlx::{Connect, Connection, SqliteConnection};
+use sqlx::{Connection, SqliteConnection};
 use std::collections::HashMap;
 use std::env;
 use std::fs::{read_to_string, remove_file, File};
@@ -36,9 +36,10 @@ async fn generate_typecheck_database() {
     // Get a path to the schema file
     let schema_file_path = in_dir.join("src/libraries/storage/sql/schema.sql");
 
-    // Create a database
+    // Create a database (for some reason we have to create an empty file to make SQLite happy 🤷‍♂️)
+    File::create(&database_path).unwrap();
     let database_url = format!("sqlite:{}", database_path.display());
-    let mut con = SqliteConnection::connect(database_url).await.unwrap();
+    let mut con = SqliteConnection::connect(&database_url).await.unwrap();
 
     // Import the schema
     let schema = read_to_string(schema_file_path).unwrap();

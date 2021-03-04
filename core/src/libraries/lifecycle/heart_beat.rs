@@ -9,7 +9,7 @@ use futures::lock::Mutex;
 use log::debug;
 use redis::AsyncCommands;
 use std::{collections::HashMap, marker::PhantomData, sync::Arc, time::Duration};
-use tokio::time::delay_for;
+use tokio::time::sleep;
 
 /// State change of a heartbeat
 enum BeatChange {
@@ -165,7 +165,7 @@ impl<C: Send + Sync + ResourceManager> Job for HeartBeat<C> {
             }
 
             // Wait for the specified interval
-            delay_for(Duration::from_secs(interval as u64)).await;
+            sleep(Duration::from_secs(interval as u64)).await;
             passed_time += interval;
         }
     }

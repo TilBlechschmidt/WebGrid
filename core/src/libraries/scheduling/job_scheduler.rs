@@ -16,7 +16,7 @@ use std::{
     },
     time::Duration,
 };
-use tokio::{sync::watch::Sender as WatchSender, task, task::JoinHandle, time::delay_for};
+use tokio::{sync::watch::Sender as WatchSender, task, task::JoinHandle, time::sleep};
 
 use super::job::Job;
 use super::task_manager::{ResourceStatus, TaskManager};
@@ -209,7 +209,7 @@ impl JobScheduler {
 
                         if let Some(sleep_duration) = backoff.next() {
                             debug!("{} backing off for {:?}", &job_name, sleep_duration);
-                            delay_for(sleep_duration).await;
+                            sleep(sleep_duration).await;
                         } else {
                             error!("{} exceeded its retry limit!", &job_name);
                             JobScheduler::change_status(
@@ -268,7 +268,7 @@ impl JobScheduler {
 
             for (job_name, status) in status.iter() {
                 if let JobStatus::Ready(Some(graceful_handle)) = status {
-                    graceful_handle.broadcast(Some(())).ok();
+                    graceful_handle.send(Some(())).ok();
                 } else if let Some(forceful_handle) =
                     self.termination_handles.lock().await.get(job_name)
                 {
@@ -303,7 +303,7 @@ impl JobScheduler {
                 }
             }
 
-            delay_for(Duration::from_millis(10)).await;
+            sleep(Duration::from_millis(10)).await;
         }
 
         // 3. Call termination handle for all remaining jobs

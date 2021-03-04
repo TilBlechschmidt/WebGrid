@@ -74,7 +74,9 @@ impl<Context> TaskManager<Context> {
     /// Future that completes when the job should gracefully shutdown
     pub fn termination_signal(&self) -> impl futures::Future<Output = ()> {
         let mut rx = self.termination_rx.clone();
-        async move { while let Some(None) = rx.recv().await {} }
+        async move {
+            rx.changed().await.ok();
+        }
     }
 
     /// Check if the job should enter graceful shutdown

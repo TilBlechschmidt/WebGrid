@@ -21,7 +21,7 @@ use std::{
 };
 use tokio::task;
 use tokio::task::yield_now;
-use tokio::time::{delay_for, timeout};
+use tokio::time::{sleep, timeout};
 
 type SharedMultiplexedConnectionFuture = Shared<BoxFuture<'static, MultiplexedConnection>>;
 
@@ -147,7 +147,7 @@ impl RedisResource<MultiplexedConnection> {
                 }
             }
 
-            delay_for(retry_interval).await;
+            sleep(retry_interval).await;
         }
     }
 }
@@ -195,7 +195,7 @@ impl RedisResource<Connection> {
                 }
             }
 
-            delay_for(retry_interval).await;
+            sleep(retry_interval).await;
         }
     }
 }

@@ -1,5 +1,5 @@
 use log::{debug, error, warn};
-use sqlx::{pool::PoolConnection, Connection, Executor, Sqlite, SqliteConnection, SqlitePool};
+use sqlx::{pool::PoolConnection, Executor, Sqlite, SqlitePool};
 use std::{
     fs,
     io::{Error as IOError, ErrorKind},
@@ -45,6 +45,7 @@ impl StorageHandler {
     /// as a storage a new identifier will be created and written to disk.
     pub async fn storage_id(directory: PathBuf) -> Result<String, StorageError> {
         let id_path = directory.join(".webgrid-storage");
+        debug!("Attempting to read storage ID from {}", id_path.display());
 
         // Attempt to read existing identifier
         match fs::read_to_string(&id_path) {
@@ -63,7 +64,7 @@ impl StorageHandler {
 
                 // If we get any other error (e.g. PermissionDenied) bail
                 _ => {
-                    warn!("Unable to access storage identifier file.");
+                    warn!("Unable to access storage identifier file: {:?}", e);
                     Err(StorageError::IOError(e))
                 }
             },
@@ -79,7 +80,7 @@ impl StorageHandler {
         cleanup_target: f64,
     ) -> Result<Self, StorageError> {
         let database_path = directory.join("storage.db");
-        let pool = SqlitePool::new(&format!("sqlite://{}", database_path.display())).await?;
+        let pool = SqlitePool::connect(&format!("sqlite://{}", database_path.display())).await?;
         let mut con = pool.acquire().await?;
         database::setup_tables(&mut con).await?;
 
@@ -97,7 +98,6 @@ impl StorageHandler {
     pub async fn scan_fs(&self) -> Result<(), StorageError> {
         let root = self.directory.clone();
         let transaction = self.pool.begin().await?;
-
         let scanner = scan::FileSystemScanner::new(transaction, root);
 
         let resulting_transaction = scanner
@@ -105,8 +105,7 @@ impl StorageHandler {
             .await
             .ok_or_else(|| StorageError::InternalError)?;
 
-        let con = resulting_transaction.commit().await?;
-        con.close();
+        resulting_transaction.commit().await?;
 
         Ok(())
     }
@@ -123,7 +122,6 @@ impl StorageHandler {
         let mut con = self.acquire_connection().await?;
 
         database::insert_file(path_str, metadata.ok(), &mut con).await?;
-        con.close();
 
         Ok(())
     }
@@ -135,7 +133,6 @@ impl StorageHandler {
     pub async fn remove_file<P: AsRef<Path>>(&self, path: P) -> Result<(), StorageError> {
         let mut con = self.acquire_connection().await?;
         let res = self.remove_file_from_con(path, &mut con).await;
-        con.close();
         res
     }
 
@@ -143,7 +140,6 @@ impl StorageHandler {
     pub async fn maybe_cleanup(&self) -> Result<usize, StorageError> {
         let mut con = self.acquire_connection().await?;
         let used_bytes: f64 = database::used_bytes(&mut con).await?;
-        con.close();
 
         debug!("Used bytes: {}", used_bytes);
 
@@ -180,20 +176,21 @@ impl StorageHandler {
             }
         }
 
-        con.close();
-
         Ok(file_count)
     }
 
-    async fn remove_file_from_con<P: AsRef<Path>, E: Executor<Database = Sqlite>>(
+    async fn remove_file_from_con<'e, P: AsRef<Path>, E>(
         &self,
         path: P,
-        mut con: E,
-    ) -> Result<(), StorageError> {
+        con: E,
+    ) -> Result<(), StorageError>
+    where
+        E: Executor<'e, Database = Sqlite>,
+    {
         let relative_path = self.relative_path(path)?;
         let path_str = relative_path.to_str().unwrap_or_default();
 
-        database::delete_file(&mut con, path_str).await?;
+        database::delete_file(con, path_str).await?;
 
         Ok(())
     }
@@ -205,7 +202,7 @@ impl StorageHandler {
             .to_path_buf())
     }
 
-    async fn acquire_connection(&self) -> Result<PoolConnection<SqliteConnection>, StorageError> {
+    async fn acquire_connection(&self) -> Result<PoolConnection<Sqlite>, StorageError> {
         let mut con = self.pool.acquire().await?;
         database::setup_tables(&mut con).await?;
         Ok(con)
