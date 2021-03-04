@@ -5,7 +5,7 @@ use crate::libraries::helpers::constants;
 use crate::libraries::scheduling::{JobScheduler, StatusServer};
 use crate::schedule;
 use anyhow::Result;
-use log::info;
+use log::{info, warn};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -52,9 +52,10 @@ pub struct Options {
     on_session_create: Option<String>,
 
     /// Directory in which to store video recordings
-    // TODO Make recording optional!
+    ///
+    /// Omitting this option will disable video recording!
     #[structopt(long, env, parse(from_os_str))]
-    storage_directory: PathBuf,
+    storage_directory: Option<PathBuf>,
 
     /// Framerate of the video input defined by --recording-input
     ///
@@ -141,7 +142,9 @@ async fn launch_session(
 pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> {
     let context = Context::new(shared_options.redis.clone(), options.clone());
 
-    launch_session(shared_options, options, &context).await.ok();
+    if let Err(e) = launch_session(shared_options, options, &context).await {
+        warn!("Encountered error while launching session: {:?}", e);
+    }
 
     JobScheduler::spawn_task(&terminate, context.clone()).await???;
     JobScheduler::spawn_task(&stop_driver, context).await???;

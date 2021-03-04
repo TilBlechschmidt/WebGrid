@@ -3,6 +3,7 @@ use crate::libraries::scheduling::{Job, TaskManager};
 use crate::libraries::storage::StorageHandler;
 use anyhow::{bail, Result};
 use async_trait::async_trait;
+use log::warn;
 use tokio::task;
 
 #[derive(Clone)]
@@ -16,7 +17,12 @@ impl Job for RecorderJob {
     const SUPPORTS_GRACEFUL_TERMINATION: bool = true;
 
     async fn execute(&self, manager: TaskManager<Self::Context>) -> Result<()> {
-        let storage = manager.context.options.storage_directory.clone();
+        if manager.context.options.storage_directory.is_none() {
+            warn!("No storage directory provided. Video recording has been disabled.");
+            return Ok(());
+        }
+
+        let storage = manager.context.options.storage_directory.clone().unwrap();
         let input = manager.context.options.recording_input.clone();
         let input_framerate = manager.context.options.recording_framerate;
         let quality_preset = manager.context.options.recording_quality();

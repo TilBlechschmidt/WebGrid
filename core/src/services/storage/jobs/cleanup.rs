@@ -5,7 +5,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use log::{debug, info, warn};
 use std::{path::PathBuf, time::Duration};
-use tokio::time::delay_for;
+use tokio::time::sleep;
 
 #[derive(Clone)]
 pub struct CleanupJob {
@@ -48,7 +48,7 @@ impl Job for CleanupJob {
                 info!("Cleaned up {} files", file_count);
             }
 
-            delay_for(Duration::from_secs(60 * 5)).await;
+            sleep(Duration::from_secs(60 * 5)).await;
             iteration_counter += 1;
         }
     }

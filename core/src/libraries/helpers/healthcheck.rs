@@ -5,7 +5,7 @@
 use hyper::{body, Client, Uri};
 use log::{debug, trace};
 use std::time::Duration;
-use tokio::time::delay_for;
+use tokio::time::sleep;
 use tokio::time::timeout;
 
 /// Sends HTTP requests to the specified URL until either a 200 OK response is received or the timeout is reached
@@ -47,7 +47,7 @@ pub async fn wait_for(url: &str, timeout_duration: Duration) -> Result<String, (
             return Err(());
         }
 
-        delay_for(check_interval).await;
+        sleep(check_interval).await;
         remaining_duration -= check_interval;
     }
 }

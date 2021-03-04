@@ -77,8 +77,9 @@ impl K8sProvisioner {
 
         let params = DeleteParams {
             dry_run: false,
-            grace_period_seconds: None,
+            grace_period_seconds: Some(0),
             propagation_policy: Some(PropagationPolicy::Foreground),
+            preconditions: None,
         };
 
         match api.delete(&name, &params).await {

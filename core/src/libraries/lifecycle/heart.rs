@@ -18,7 +18,7 @@ use tokio::signal::{
     ctrl_c,
     unix::{signal, SignalKind},
 };
-use tokio::time::delay_for;
+use tokio::time::sleep;
 
 /// Reason why the heart stopped beating
 #[derive(Debug, Clone)]
@@ -123,8 +123,8 @@ impl Heart {
         pin_mut!(sigterm, ctrl_c);
 
         select! {
-            (_) = sigterm => (),
-            (_) = ctrl_c => (),
+            _ = sigterm => (),
+            _ = ctrl_c => (),
         };
     }
 
@@ -136,7 +136,7 @@ impl Heart {
                 break;
             }
 
-            delay_for(lifetime - elapsed_time).await;
+            sleep(lifetime - elapsed_time).await;
         }
     }
 }
@@ -174,7 +174,7 @@ mod tests {
     use super::*;
     use futures::poll;
     use tokio::task::{spawn, yield_now};
-    use tokio::time::delay_for as sleep;
+    use tokio::time::sleep;
 
     #[tokio::test]
     async fn lives_without_lifetime() {

@@ -1,4 +1,4 @@
-use sqlx::{pool::PoolConnection, sqlite::SqliteConnection, Transaction};
+use sqlx::{Sqlite, Transaction};
 use std::{collections::VecDeque, path::PathBuf, sync::Arc};
 use tokio::{
     fs::{read_dir, DirEntry, ReadDir},
@@ -8,14 +8,14 @@ use tokio::{
 #[derive(Clone)]
 pub struct FileSystemScanner {
     root: PathBuf,
-    transaction: Arc<Mutex<Transaction<PoolConnection<SqliteConnection>>>>,
+    transaction: Arc<Mutex<Transaction<'static, Sqlite>>>,
     stack: Arc<Mutex<VecDeque<PathBuf>>>,
     semaphore: Arc<Semaphore>,
     notify: Arc<Notify>,
 }
 
 impl FileSystemScanner {
-    pub fn new(transaction: Transaction<PoolConnection<SqliteConnection>>, root: PathBuf) -> Self {
+    pub fn new(transaction: Transaction<'static, Sqlite>, root: PathBuf) -> Self {
         Self {
             root,
             transaction: Arc::new(Mutex::new(transaction)),
@@ -25,14 +25,12 @@ impl FileSystemScanner {
         }
     }
 
-    pub async fn scan(self) -> Option<Transaction<PoolConnection<SqliteConnection>>> {
+    pub async fn scan(self) -> Option<Transaction<'static, Sqlite>> {
         // Clear previous indices
         {
             let mut con = self.transaction.lock().await;
             // TODO Get rid of unwrap!
-            super::database::delete_all_files(&mut (*con))
-                .await
-                .unwrap();
+            super::database::delete_all_files(&mut *con).await.unwrap();
         }
 
         // Push the initial directory
@@ -56,7 +54,7 @@ impl FileSystemScanner {
 
                     // Bail if all processes are idle
                     if scanner.semaphore.available_permits() == concurrency {
-                        finish_notify.notify();
+                        finish_notify.notify_one();
                         return;
                     }
                 }
@@ -69,7 +67,7 @@ impl FileSystemScanner {
 
         // Release the scanner tasks from their notify wait
         for _ in 1..concurrency {
-            self.notify.notify();
+            self.notify.notify_one();
         }
 
         // Wait for all children to exit
@@ -118,7 +116,7 @@ impl FileSystemScanner {
             Ok(file_type) => {
                 if file_type.is_dir() {
                     self.stack.lock().await.push_back(entry.path());
-                    self.notify.notify();
+                    self.notify.notify_one();
                 } else {
                     self.insert_file(entry).await;
                 }
@@ -141,7 +139,7 @@ impl FileSystemScanner {
         }
 
         let mut con = self.transaction.lock().await;
-        super::database::insert_file(path_str, entry.metadata().await.ok(), &mut (*con))
+        super::database::insert_file(path_str, entry.metadata().await.ok(), &mut *con)
             .await
             .unwrap();
     }

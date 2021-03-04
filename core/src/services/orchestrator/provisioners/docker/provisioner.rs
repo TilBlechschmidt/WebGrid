@@ -100,10 +100,10 @@ impl Provisioner for DockerProvisioner {
     async fn terminate_node(&self, session_id: &str) {
         let name = format!("webgrid-node-{}", session_id);
         debug!("Killing docker container {}", name);
-        // TODO Remove unwrap
+        // TODO Handle potential errors.
         self.docker
             .kill_container(&name, None::<KillContainerOptions<String>>)
             .await
-            .unwrap();
+            .ok();
     }
 }
