@@ -91,11 +91,13 @@ data:
                   value: {{ "{{session_id}}" }}
                 - name: REDIS
                   value: "{{ include "web-grid.redisURL" . }}"
+                {{- if .Values.recording.enabled }}
                 - name: STORAGE_DIRECTORY
                   value: "/storage"
+                {{- end }}
                 - name: CRF
                   value: "{{ .Values.recording.quality.crf }}"
-                - name MAX_BITRATE
+                - name: MAX_BITRATE
                   value: "{{ .Values.recording.quality.maxBitrate }}"
               volumeMounts:
                 - mountPath: /dev/shm
