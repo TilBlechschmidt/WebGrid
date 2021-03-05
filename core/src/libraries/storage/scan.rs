@@ -102,11 +102,8 @@ impl FileSystemScanner {
     }
 
     async fn process_stream(&self, mut stream: ReadDir) {
-        while let Ok(entry) = stream.next_entry().await {
-            match entry {
-                None => break,
-                Some(entry) => self.process_entry(entry).await,
-            }
+        while let Ok(Some(entry)) = stream.next_entry().await {
+            self.process_entry(entry).await
         }
     }
 

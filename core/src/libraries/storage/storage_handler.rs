@@ -100,10 +100,7 @@ impl StorageHandler {
         let transaction = self.pool.begin().await?;
         let scanner = scan::FileSystemScanner::new(transaction, root);
 
-        let resulting_transaction = scanner
-            .scan()
-            .await
-            .ok_or_else(|| StorageError::InternalError)?;
+        let resulting_transaction = scanner.scan().await.ok_or(StorageError::InternalError)?;
 
         resulting_transaction.commit().await?;
 
