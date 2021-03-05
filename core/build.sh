@@ -15,8 +15,14 @@ mkdir -p $BUILD_DIR/target
 echo "Copying project to build cache"
 rsync -a --progress $SOURCE_DIR/* $BUILD_DIR/project --exclude target --exclude .build --exclude .cache
 
+# Workaround for some bug (?) in cargo doc
+touch $BUILD_DIR/target/x86_64-unknown-linux-musl/doc/.lock
+
 echo "Running build in webgrid/rust-musl-builder container"
-docker run --rm \
+# This image is built from two branches in the TilBlechschmidt/rust-musl-builder repository:
+#	custom/webgrid-amd64 for GitHub Actions and x86_64 machines
+# 	custom/webgrid-aarch64 for ARM machines like the M1 MacBook
+docker run --rm --name core-build \
 	-v "$BUILD_DIR/project":/home/rust/src \
 	-v "$BUILD_DIR/cargo-git":/home/rust/.cargo/git \
 	-v "$BUILD_DIR/cargo-registry":/home/rust/.cargo/registry \
