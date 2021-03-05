@@ -12,14 +12,14 @@ build-core:
 	cd core && ./build.sh
 
 bundle-api: build-api
-	docker build -f distribution/docker/images/api/Dockerfile -t webgrid/api:latest .
+	docker build --platform linux/amd64 -f distribution/docker/images/api/Dockerfile -t webgrid/api:latest .
 
 bundle-core: build-core
-	docker build -f distribution/docker/images/core/Dockerfile -t webgrid/core:latest .
+	docker build --platform linux/amd64 -f distribution/docker/images/core/Dockerfile -t webgrid/core:latest .
 
 bundle-node: build-core
-	docker build -f distribution/docker/images/node/Dockerfile -t webgrid/node-firefox:latest --build-arg browser=firefox .
-	docker build -f distribution/docker/images/node/Dockerfile -t webgrid/node-chrome:latest --build-arg browser=chrome .
+	docker build --platform linux/amd64 -f distribution/docker/images/node/Dockerfile -t webgrid/node-firefox:latest --build-arg browser=firefox .
+	docker build --platform linux/amd64 -f distribution/docker/images/node/Dockerfile -t webgrid/node-chrome:latest --build-arg browser=chrome .
 
 clean:
 	rm -rf .artifacts
