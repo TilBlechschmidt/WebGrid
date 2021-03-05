@@ -51,14 +51,14 @@ impl fmt::Display for JobStatus {
 
 impl PartialEq for JobStatus {
     fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (&JobStatus::Startup, &JobStatus::Startup) => true,
-            (&JobStatus::Restarting, &JobStatus::Restarting) => true,
-            (&JobStatus::CrashLoopBackOff, &JobStatus::CrashLoopBackOff) => true,
-            (&JobStatus::Terminated, &JobStatus::Terminated) => true,
-            (&JobStatus::Ready(_), &JobStatus::Ready(_)) => true,
-            _ => false,
-        }
+        matches!(
+            (self, other),
+            (&JobStatus::Startup, &JobStatus::Startup)
+                | (&JobStatus::Restarting, &JobStatus::Restarting)
+                | (&JobStatus::CrashLoopBackOff, &JobStatus::CrashLoopBackOff)
+                | (&JobStatus::Terminated, &JobStatus::Terminated)
+                | (&JobStatus::Ready(_), &JobStatus::Ready(_))
+        )
     }
 }
 

@@ -123,8 +123,8 @@ impl Heart {
         pin_mut!(sigterm, ctrl_c);
 
         select! {
-            _ = sigterm => (),
-            _ = ctrl_c => (),
+            _ = sigterm => {},
+            _ = ctrl_c => {},
         };
     }
 
