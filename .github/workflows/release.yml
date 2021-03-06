@@ -65,7 +65,7 @@ jobs:
           path: .artifacts/api-executable
 
       - name: Build and push webgrid/api Docker image
-        uses: docker/build-push-action@v1
+        uses: docker/build-push-action@v2
         with:
           dockerfile: distribution/docker/images/api/Dockerfile
           username: webgrid
@@ -87,7 +87,7 @@ jobs:
           path: .artifacts/core-executable
 
       - name: Build and push webgrid/core Docker image
-        uses: docker/build-push-action@v1
+        uses: docker/build-push-action@v2
         with:
           dockerfile: distribution/docker/images/core/Dockerfile
           username: webgrid
@@ -112,7 +112,7 @@ jobs:
           path: .artifacts/core-executable
 
       - name: Build and push webgrid/node-${{ matrix.browser }} Docker image
-        uses: docker/build-push-action@v1
+        uses: docker/build-push-action@v2
         with:
           dockerfile: distribution/docker/images/node/Dockerfile
           build_args: browser=${{ matrix.browser }}
@@ -186,7 +186,7 @@ jobs:
 
           RELEASE_ASSET_UPLOAD_URL="https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets"
           echo "$RELEASE_ASSET_UPLOAD_URL"
-          echo "::set-env name=RELEASE_ASSET_UPLOAD_URL::$RELEASE_ASSET_UPLOAD_URL"
+          echo "RELEASE_ASSET_UPLOAD_URL=$RELEASE_ASSET_UPLOAD_URL" >> $GITHUB_ENV
 
       - name: Attach Core executable
         uses: actions/upload-release-asset@v1
