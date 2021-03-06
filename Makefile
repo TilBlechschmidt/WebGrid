@@ -2,6 +2,8 @@
 
 bundle: bundle-api bundle-core bundle-node
 build: build-api build-core
+build-debug: build-api build-core-debug
+all: build bundle
 
 build-api:
 	cd api && yarn install && yarn build
@@ -9,6 +11,9 @@ build-api:
 	mv api/dist/index.js .artifacts/api-executable
 
 build-core:
+	cd core && ./build.sh --release
+
+build-core-debug:
 	cd core && ./build.sh
 
 bundle-api: build-api
@@ -26,7 +31,7 @@ clean:
 	rm -rf core/.cache core/target
 	rm -rf api/dist api/node_modules api/src/generated.ts
 
-install: bundle
+install:
 	-docker network create webgrid
 	-docker volume create webgrid
 	docker-compose -f distribution/docker/docker-compose.yml up -d

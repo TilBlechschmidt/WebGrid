@@ -5,6 +5,16 @@ TARGET_DIR=$(pwd)/../.artifacts
 
 set -e
 
+if [[ $1 = "--release" ]];
+then
+	echo "Building in release configuration"
+	RELEASE_FLAG="--release"
+	BUILD_OUTPUT_DIR="release"
+else
+	echo "Building in debug configuration"
+	BUILD_OUTPUT_DIR="debug"
+fi
+
 echo "Creating cache directories in $BUILD_DIR"
 mkdir -p $BUILD_DIR
 mkdir -p $BUILD_DIR/project
@@ -29,7 +39,7 @@ docker run --rm --name core-build \
 	-v "$BUILD_DIR/target":/home/rust/src/target \
 	-e CARGO_TERM_COLOR=always \
 	webgrid/rust-musl-builder \
-	bash -c "cargo build --release --locked && cargo doc --release --locked --no-deps && rm /home/rust/src/target/x86_64-unknown-linux-musl/doc/.lock"
+	bash -c "cargo build ${RELEASE_FLAG} --locked && cargo doc ${RELEASE_FLAG} --locked --no-deps && rm /home/rust/src/target/x86_64-unknown-linux-musl/doc/.lock"
 
 # TODO: Strip debug symbols from binary
 
@@ -40,4 +50,4 @@ mkdir -p $TARGET_DIR/core-executable
 echo "Copying documentation to output"
 rsync -a --progress $BUILD_DIR/target/x86_64-unknown-linux-musl/doc $TARGET_DIR/core-documentation
 echo "Copying executable to output"
-rsync -av --progress $BUILD_DIR/target/x86_64-unknown-linux-musl/release/webgrid $TARGET_DIR/core-executable
+rsync -av --progress $BUILD_DIR/target/x86_64-unknown-linux-musl/$BUILD_OUTPUT_DIR/webgrid $TARGET_DIR/core-executable
