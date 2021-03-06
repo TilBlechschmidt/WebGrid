@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["webgrid"] = [{"text":"impl&lt;C:&nbsp;ConnectionLike + <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/marker/trait.Send.html\" title=\"trait core::marker::Send\">Send</a>&gt; ConnectionLike for <a class=\"struct\" href=\"webgrid/libraries/resources/struct.RedisResource.html\" title=\"struct webgrid::libraries::resources::RedisResource\">RedisResource</a>&lt;C&gt;","synthetic":false,"types":["webgrid::libraries::resources::redis::RedisResource"]}];
+implementors["webgrid"] = [{"text":"impl&lt;C:&nbsp;ConnectionLike + Send&gt; ConnectionLike for RedisResource&lt;C&gt;","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

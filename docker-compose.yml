@@ -2,6 +2,7 @@ version: "3"
 services:
   proxy:
     image: webgrid/core:v0.0.1
+    platform: linux/amd64
     container_name: webgrid-proxy
     command: proxy --log debug,hyper=warn
     ports:
@@ -10,24 +11,28 @@ services:
       - redis
   manager:
     image: webgrid/core:v0.0.1
+    platform: linux/amd64
     container_name: webgrid-manager
     command: manager example-manager webgrid-manager --log debug,hyper=warn
     depends_on:
       - redis
   orchestrator:
     image: webgrid/core:v0.0.1
+    platform: linux/amd64
     container_name: webgrid-orchestrator
-    command: orchestrator --slot-count 5 example-orchestrator docker --images "webgrid-node-firefox:v0.0.1=firefox::68.7.0esr,webgrid-node-chrome:v0.0.1=chrome::81.0.4044.122" --log debug,hyper=warn
+    command: orchestrator --slot-count 5 example-orchestrator docker --images "webgrid/node-firefox:v0.0.1=firefox::68.7.0esr,webgrid/node-chrome:v0.0.1=chrome::81.0.4044.122" --log debug,hyper=warn
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   storage:
     image: webgrid/core:v0.0.1
+    platform: linux/amd64
     container_name: webgrid-storage
-    command: storage --log debug,hyper=warn --host webgrid-storage --storage-directory /storage
+    command: storage --log debug,hyper=warn --host webgrid-storage --storage-directory /storage --size-limit 10
     volumes:
       - webgrid:/storage
   api:
     image: webgrid/api:v0.0.1
+    platform: linux/amd64
     container_name: webgrid-api
     environment:
       HOST: webgrid-api

@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["webgrid"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/std/error/trait.Error.html\" title=\"trait std::error::Error\">Error</a> for <a class=\"enum\" href=\"webgrid/libraries/storage/enum.StorageError.html\" title=\"enum webgrid::libraries::storage::StorageError\">StorageError</a>","synthetic":false,"types":["webgrid::libraries::storage::storage_handler::StorageError"]}];
+implementors["webgrid"] = [{"text":"impl Error for StorageError","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
