@@ -22,7 +22,7 @@ def copy_docker_compose(site_dir):
     git_ref = os.getenv('GITHUB_REF')
     if git_ref is not None and git_ref.startswith('refs/tags/'):
         version = git_ref[10:]
-        filedata = filedata.replace(':latest', ':v0.0.1')
+        filedata = filedata.replace(':latest', ':' + version)
         print("Overwriting docker-compose version with git tag '" + version + "'")
 
     # Write the file out again
