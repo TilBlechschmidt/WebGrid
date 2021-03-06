@@ -51,7 +51,7 @@ spec:
           persistentVolumeClaim:
             claimName: {{ include "web-grid.recordingPVCName" . }}
       containers:
-        - image: "{{ .Values.image.repository }}/core:{{ .Chart.AppVersion }}"
+        - image: "{{ .Values.image.repository }}/core:{{ include "web-grid.imageTag" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: {{ .Chart.Name }}-storage
           args: ["storage", "--status-server"]

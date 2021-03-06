@@ -34,6 +34,8 @@ replicaCount:
 
 image:
   repository: webgrid
+  # Defaults to Chart.AppVersion if not set
+  tag: ""
   pullPolicy: Always
 
 serviceAccount:

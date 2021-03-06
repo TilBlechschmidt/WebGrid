@@ -30,7 +30,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-        - image: "{{ .Values.image.repository }}/api:{{ .Chart.AppVersion }}"
+        - image: "{{ .Values.image.repository }}/api:{{ include "web-grid.imageTag" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: {{ .Chart.Name }}-api
           ports:

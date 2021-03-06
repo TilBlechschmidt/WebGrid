@@ -35,7 +35,7 @@ spec:
           configMap:
             name: {{ include "web-grid.fullname" . }}-orchestrator
       containers:
-        - image: "{{ .Values.image.repository }}/core:{{ .Chart.AppVersion }}"
+        - image: "{{ .Values.image.repository }}/core:{{ include "web-grid.imageTag" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: {{ .Chart.Name }}-orchestrator
           args: ["orchestrator", "kubernetes", "--status-server"]
@@ -56,7 +56,7 @@ spec:
             - name: SLOT_COUNT
               value: "{{ .Values.maxSessionsPerOrchestrator }}"
             - name: IMAGES
-              value: "{{ .Values.image.repository }}/node-firefox:{{ .Chart.AppVersion }}=firefox::68.7.0esr,{{ .Values.image.repository }}/node-chrome:{{ .Chart.AppVersion }}=chrome::81.0.4044.122"
+              value: "{{ .Values.image.repository }}/node-firefox:{{ include "web-grid.imageTag" . }}=firefox::68.7.0esr,{{ .Values.image.repository }}/node-chrome:{{ include "web-grid.imageTag" . }}=chrome::81.0.4044.122"
             - name: RUST_LOG
               value: {{ .Values.logLevel }}
             - name: WEBGRID_CONFIG_DIR

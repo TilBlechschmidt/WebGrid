@@ -82,3 +82,10 @@ Create the name of the persistent volume claim to use
 {{- default "default" .Values.recording.persistentVolumeClaim.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Allow customization of the image tag used
+*/}}
+{{- define "web-grid.imageTag" -}}
+{{- default .Chart.AppVersion .Values.image.tag }}
+{{- end }}
