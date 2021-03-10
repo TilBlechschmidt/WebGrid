@@ -216,7 +216,7 @@ jobs:
           sleep 5
           stern --color always test-webgrid* &
           kubectl get pods
-          sleep 80
+          sleep 120
           kubectl get pods
           kubectl get services
 
