@@ -15,7 +15,7 @@ In order to view or embed a video you need to retrieve its unique session identi
     WebDriver driver = new RemoteWebDriver(new URL("http://localhost:8080"), firefoxOptions);
     driver.get("http://dcuk.com");
 
-    SessionId session = ((FirefoxDriver) driver).getSessionId();
+    SessionId session = ((RemoteWebDriver) driver).getSessionId();
     System.out.println("Session id: " + session.toString());
 
     System.in.read();
