@@ -5,6 +5,11 @@ build: api core
 build-debug: api core-debug
 all: build bundle
 
+builder:
+	# The source image is manually built from the TilBlechschmidt/rust-musl-builder repository
+	docker build --platform linux/arm64 --build-arg TAG=arm64 -f distribution/docker/images/builder/Dockerfile -t webgrid/rust-musl-builder:arm64-root .
+	docker build --platform linux/amd64 --build-arg TAG=amd64 -f distribution/docker/images/builder/Dockerfile -t webgrid/rust-musl-builder:amd64-root .
+
 api:
 	cd api && yarn install && yarn build
 	mkdir -p .artifacts/api-executable
