@@ -6,6 +6,17 @@ xwit
 # Screen recording
 ffmpeg
 
+# Fonts
+libfontconfig1
+libfreetype6
+xfonts-cyrillic
+xfonts-scalable
+fonts-liberation
+fonts-ipafont-gothic
+fonts-wqy-zenhei
+fonts-tlwg-loma-otf
+ttf-ubuntu-font-family
+
 # Other stuff
 wget
 gettext-base
