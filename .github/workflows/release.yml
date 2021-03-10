@@ -20,7 +20,7 @@ jobs:
           key: build-core-${{ runner.os }}-lockfile=${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build
-        run: make build-core
+        run: make core
 
       - name: Change cache permission
         run: sudo chmod -R 777 core/.cache
@@ -45,7 +45,7 @@ jobs:
         with:
           node-version: "14"
 
-      - run: make build-api
+      - run: make api
 
       - uses: actions/upload-artifact@v2
         with:

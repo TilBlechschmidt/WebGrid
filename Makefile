@@ -1,28 +1,28 @@
-.PHONY: build-core build-api clean
+.PHONY: core api clean
 
 bundle: bundle-api bundle-core bundle-node
-build: build-api build-core
-build-debug: build-api build-core-debug
+build: api core
+build-debug: api core-debug
 all: build bundle
 
-build-api:
+api:
 	cd api && yarn install && yarn build
 	mkdir -p .artifacts/api-executable
 	mv api/dist/index.js .artifacts/api-executable
 
-build-core:
+core:
 	cd core && ./build.sh --release
 
-build-core-debug:
+core-debug:
 	cd core && ./build.sh
 
-bundle-api: build-api
+bundle-api: api
 	docker build --platform linux/amd64 -f distribution/docker/images/api/Dockerfile -t webgrid/api:latest .
 
-bundle-core: build-core
+bundle-core: core
 	docker build --platform linux/amd64 -f distribution/docker/images/core/Dockerfile -t webgrid/core:latest .
 
-bundle-node: build-core
+bundle-node: core
 	docker build --platform linux/amd64 -f distribution/docker/images/node/Dockerfile -t webgrid/node-firefox:latest --build-arg browser=firefox .
 	docker build --platform linux/amd64 -f distribution/docker/images/node/Dockerfile -t webgrid/node-chrome:latest --build-arg browser=chrome .
 

@@ -52,7 +52,7 @@ jobs:
         with:
           node-version: "14"
 
-      - run: make build-api
+      - run: make api
 
   docs:
     runs-on: ubuntu-latest
