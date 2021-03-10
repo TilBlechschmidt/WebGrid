@@ -50,6 +50,10 @@ spec:
         - name: storage
           persistentVolumeClaim:
             claimName: {{ include "web-grid.recordingPVCName" . }}
+      {{- if .Values.image.pullSecret }}
+      imagePullSecrets:
+      - name: {{ .Values.image.pullSecret }}
+      {{- end }}
       containers:
         - image: "{{ .Values.image.repository }}/core:{{ include "web-grid.imageTag" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}

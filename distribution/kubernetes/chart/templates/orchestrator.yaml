@@ -34,6 +34,10 @@ spec:
         - name: orchestrator-config
           configMap:
             name: {{ include "web-grid.fullname" . }}-orchestrator
+      {{- if .Values.image.pullSecret }}
+      imagePullSecrets:
+      - name: {{ .Values.image.pullSecret }}
+      {{- end }}
       containers:
         - image: "{{ .Values.image.repository }}/core:{{ include "web-grid.imageTag" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}

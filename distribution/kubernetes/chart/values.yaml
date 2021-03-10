@@ -37,6 +37,7 @@ image:
   # Defaults to Chart.AppVersion if not set
   tag: ""
   pullPolicy: Always
+  pullSecret: ""
 
 serviceAccount:
   # Specifies whether a service account with RBAC should be created
