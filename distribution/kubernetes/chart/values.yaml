@@ -8,7 +8,8 @@ maxSessionsPerOrchestrator: 5
 recording:
   # Whether or not to create PVCs and a storage service
   enabled: false
-  sizeLimit: 50G
+  # Size in GB
+  sizeLimit: 50
   # Consult the ffmpeg documentation on how these parameters work
   # https://trac.ffmpeg.org/wiki/Encode/H.264
   quality:

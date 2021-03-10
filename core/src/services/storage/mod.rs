@@ -35,7 +35,7 @@ pub struct Options {
     #[structopt(long, env, parse(from_os_str))]
     storage_directory: PathBuf,
 
-    /// Directory size limit
+    /// Directory size limit in GB
     #[structopt(long, env)]
     size_limit: f64,
 
@@ -47,7 +47,8 @@ pub struct Options {
 pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> {
     let storage_id = StorageHandler::storage_id(options.storage_directory.clone()).await?;
     let provider_id = Uuid::new_v4().to_string();
-    let cleanup_target = options.size_limit * (options.cleanup_percentage / 100.0);
+    let size_limit = options.size_limit * 1_000_000_000.0;
+    let cleanup_target = size_limit * (options.cleanup_percentage / 100.0);
 
     let (mut heart, _) = Heart::new();
 
@@ -56,11 +57,7 @@ pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> 
 
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);
     let server_job = ServerJob::new(options.port, options.storage_directory.clone());
-    let cleanup_job = CleanupJob::new(
-        options.storage_directory,
-        options.size_limit,
-        cleanup_target,
-    );
+    let cleanup_job = CleanupJob::new(options.storage_directory, size_limit, cleanup_target);
 
     context.spawn_heart_beat(&provider_id, &scheduler).await;
 

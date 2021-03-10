@@ -13,7 +13,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: {{ .Values.recording.sizeLimit }}
+      storage: "{{ .Values.recording.sizeLimit }}G"
 ---
 {{- end}}
 apiVersion: apps/v1
@@ -58,7 +58,7 @@ spec:
         - image: "{{ .Values.image.repository }}/core:{{ include "web-grid.imageTag" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: {{ .Chart.Name }}-storage
-          args: ["storage", "--status-server"]
+          args: ["storage", "--status-server", "--size-limit", "{{ .Values.recording.sizeLimit }}"]
           volumeMounts:
             - name: storage
               mountPath: /storage

@@ -8,7 +8,7 @@ recording:
 ```
 
 ??? tip "Limiting the storage size"
-    By default the grid uses at most 50GB of storage for each volume and deletes old videos to keep the occupancy below that. You may change this value by adding the `recording.sizeLimit` value with a Kubernetes compatible string like `50G`. For more details, refer the [configuration defaults](./configuration.md#value-reference).
+    By default the grid uses at most 50GB of storage for each volume and deletes old videos to keep the occupancy below that. You may change this value by adding the `recording.sizeLimit` value with an integer like `50` (representing GB). For more details, refer the [configuration defaults](./configuration.md#value-reference).
 
 ## Persistent Volume
 
