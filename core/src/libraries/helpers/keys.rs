@@ -76,26 +76,19 @@ pub mod orchestrator {
 }
 
 pub mod manager {
-    static_keys! {
-        LIST = "managers".to_string();
-    }
-
-    pub fn manager_prefix(manager_id: &str) -> String {
+    fn manager_prefix(manager_id: &str) -> String {
         format!("manager:{}", manager_id)
     }
 
-    pub fn metadata(manager_id: &str) -> String {
-        manager_prefix(manager_id)
-    }
-
-    pub fn heartbeat(manager_id: &str) -> String {
-        format!("{}:heartbeat", manager_prefix(manager_id))
+    pub fn host(manager_id: &str) -> String {
+        format!("{}:host", manager_prefix(manager_id))
     }
 }
 
 pub mod session {
     static_keys! {
         LIST_ACTIVE = "sessions.active".to_string();
+        LIST_TERMINATED = "sessions.terminated".to_string();
     }
 
     fn session_prefix(session_id: &str) -> String {

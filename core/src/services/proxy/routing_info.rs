@@ -52,15 +52,9 @@ impl RoutingInfo {
     }
 
     // TODO Code duplication in the four methods below
-    pub async fn add_manager_upstream(
-        &self,
-        manager_id: String,
-        host: &str,
-        port: &str,
-    ) -> Option<String> {
-        let addr = format!("{}:{}", host, port);
+    pub async fn add_manager_upstream(&self, manager_id: String, addr: &str) -> Option<String> {
         let mut managers = self.managers.lock().await;
-        managers.insert(manager_id, addr)
+        managers.insert(manager_id, addr.to_owned())
     }
 
     pub async fn add_session_upstream(

@@ -1,7 +1,7 @@
-use crate::libraries::helpers::keys;
 use crate::libraries::lifecycle::HeartBeat;
 use crate::libraries::resources::DefaultResourceManager;
 use crate::libraries::scheduling::JobScheduler;
+use crate::libraries::{helpers::keys, lifecycle::BeatValue};
 use std::ops::Deref;
 
 #[derive(Clone)]
@@ -11,16 +11,16 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(redis_url: String) -> Self {
+    pub fn new(redis_url: String, host: String) -> Self {
         Self {
             resource_manager: DefaultResourceManager::new(redis_url),
-            heart_beat: HeartBeat::new(),
+            heart_beat: HeartBeat::with_value(BeatValue::Constant(host)),
         }
     }
 
     pub async fn spawn_heart_beat(&self, id: &str, scheduler: &JobScheduler) {
         self.heart_beat
-            .add_beat(&keys::manager::heartbeat(id), 60, 120)
+            .add_beat(&keys::manager::host(id), 60, 120)
             .await;
         scheduler.spawn_job(self.heart_beat.clone(), self.resource_manager.clone());
     }

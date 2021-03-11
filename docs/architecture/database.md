@@ -5,7 +5,6 @@ All metadata is stored in a key-value in-memory database called [Redis](https://
 ## Root lists
 ```javascript
 `orchestrators` = Set<string>       // uuids
-`managers` = Set<string>            // uuids
 `sessions.active` = Set<string>     // uuids
 `sessions.terminated` = Set<string> // uuids
 ```
@@ -22,17 +21,22 @@ All metadata is stored in a key-value in-memory database called [Redis](https://
 }
 ```
 
+## Manager
+```javascript
+`manager:${ID}:host` = number EX 120s			// (host + port)
+```
+
 ## Storage
 ```javascript
 // SID = storage ID
 // PID = randomly generated ephemeral provider ID
-`storage:${SID}:${PID}:host` = string EX 60s    // `${host}:${port}`
+`storage:${SID}:${PID}:host` = string EX 60s	// (host + port)
 ```
 
 ## API
 ```javascript
 // AID = randomly generated ephemeral server ID
-`api:${AID}:host` = string EX 60s (host + port)
+`api:${AID}:host` = string EX 60s				// (host + port)
 ```
 
 ## Sessions
@@ -151,16 +155,6 @@ During the lifecycle of a session each component generates status codes for trac
 *Browsers are represented by a string containing the `browserName` and `browserVersion` separated by `::`. For example `chrome::81.0.4044.113` or `firefox::74.0.1`.
 
 [Reliable queue documentation](https://redis.io/commands/rpoplpush#pattern-reliable-queue)
-
-## Manager
-```javascript
-`manager:${ID}:heartbeat` = number EX 120
-
-`manager:${ID}` = Hashes {
-	host = string
-	port = number
-}
-```
 
 ## Metrics
 

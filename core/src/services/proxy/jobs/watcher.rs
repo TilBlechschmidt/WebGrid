@@ -12,14 +12,14 @@ use regex::Regex;
 use thiserror::Error;
 use tokio::task::yield_now;
 
-const PATTERN_MANAGER: &str = "__keyspace@0__:manager:*:heartbeat";
 const PATTERN_SESSION: &str = "__keyspace@0__:session:*:heartbeat.node";
+const PATTERN_MANAGER: &str = "__keyspace@0__:manager:*:host";
 const PATTERN_STORAGE: &str = "__keyspace@0__:storage:*:*:host";
 const PATTERN_API: &str = "__keyspace@0__:api:*:host";
 
 lazy_static! {
     static ref REGEX_MANAGER: Regex =
-        Regex::new(r"__keyspace@0__:manager:(?P<mid>[^:]+):heartbeat").unwrap();
+        Regex::new(r"__keyspace@0__:manager:(?P<mid>[^:]+):host").unwrap();
     static ref REGEX_SESSION: Regex =
         Regex::new(r"__keyspace@0__:session:(?P<sid>[^:]+):heartbeat\.node").unwrap();
     static ref REGEX_STORAGE: Regex =
@@ -159,18 +159,15 @@ impl WatcherJob {
             match operation {
                 // Manager has been added
                 "expire" => {
-                    let data_key = format!("manager:{}", manager_id);
-                    let res = con
-                        .hget::<_, _, (String, String)>(data_key, &["host", "port"])
-                        .await;
+                    let data_key = format!("manager:{}:host", manager_id);
 
-                    if let Ok((host, port)) = res {
+                    if let Ok(addr) = con.get::<_, String>(data_key).await {
                         if info
-                            .add_manager_upstream(manager_id.to_string(), &host, &port)
+                            .add_manager_upstream(manager_id.to_string(), &addr)
                             .await
                             .is_none()
                         {
-                            info!("+ Manager {} @ {}:{}", manager_id, host, port);
+                            info!("+ Manager {} @ {}", manager_id, addr);
                         }
                     }
                 }

@@ -14,7 +14,7 @@ mod structures;
 mod tasks;
 
 use context::Context;
-use jobs::{RegistrationJob, SessionHandlerJob};
+use jobs::SessionHandlerJob;
 pub use structures::*;
 
 #[derive(Debug, StructOpt)]
@@ -38,19 +38,18 @@ pub struct Options {
 pub async fn run(shared_options: SharedOptions, options: Options) {
     let (mut heart, _) = Heart::new();
 
-    let context = Context::new(shared_options.redis);
+    let host = format!("{}:{}", options.host, options.port);
+    let context = Context::new(shared_options.redis, host);
     let scheduler = JobScheduler::default();
 
     context.spawn_heart_beat(&options.id, &scheduler).await;
 
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);
     let session_handler_job = SessionHandlerJob::new(options.port);
-    let registration_job = RegistrationJob::new(options.id, options.host, options.port);
 
     schedule!(scheduler, context, {
         status_job,
         session_handler_job
-        registration_job
     });
 
     let death_reason = heart.death().await;
