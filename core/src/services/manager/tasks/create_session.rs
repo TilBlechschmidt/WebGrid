@@ -125,6 +125,24 @@ mod subtasks {
         let session_id = Uuid::new_v4().to_hyphenated().to_string();
         let now = Utc::now().to_rfc3339();
 
+        // Parse the capabilities to get the name/build metadata
+        let requested_capabilities: CapabilitiesRequest =
+            serde_json::from_str(&context.capabilities)
+                .map_err(RequestError::InvalidCapabilities)?;
+
+        let capability_sets = requested_capabilities.into_sets();
+        let first_capability_set = capability_sets.first();
+
+        let mut metadata = Vec::new();
+
+        if let Some(Some(name)) = first_capability_set.map(|c| c.name.clone()) {
+            metadata.push(("name", name));
+        }
+
+        if let Some(Some(build)) = first_capability_set.map(|c| c.build.clone()) {
+            metadata.push(("build", build))
+        }
+
         pipe()
             .atomic()
             .hset(keys::session::status(&session_id), "queuedAt", &now)
@@ -145,6 +163,12 @@ mod subtasks {
             .query_async(con)
             .map_err(RequestError::RedisError)
             .await?;
+
+        if !metadata.is_empty() {
+            con.hset_multiple::<_, _, _, ()>(keys::session::metadata(&session_id), &metadata)
+                .map_err(RequestError::RedisError)
+                .await?;
+        }
 
         Ok(session_id)
     }

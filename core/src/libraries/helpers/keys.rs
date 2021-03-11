@@ -110,6 +110,10 @@ pub mod session {
         format!("{}:capabilities", session_prefix(session_id))
     }
 
+    pub fn metadata(session_id: &str) -> String {
+        format!("{}:metadata", session_prefix(session_id))
+    }
+
     pub fn upstream(session_id: &str) -> String {
         format!("{}:upstream", session_prefix(session_id))
     }

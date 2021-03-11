@@ -27,6 +27,11 @@ type SessionDownstream {
     lastSeen: Date
 }
 
+type SessionMetadata {
+    name: String
+    build: String
+}
+
 type Session {
     id: String!
     alive: Boolean
@@ -36,6 +41,7 @@ type Session {
 
     status: SessionStatusTransitions
     capabilities: SessionCapabilities
+    metadata: SessionMetadata
 
     upstream: SessionUpstream
     downstream: SessionDownstream

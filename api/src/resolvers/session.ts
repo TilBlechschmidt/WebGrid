@@ -6,6 +6,7 @@ export default {
 
     status: ({ id }, _, { redis }) => redis.hgetall(`session:${id}:status`),
     capabilities: ({ id }, _, { redis }) => redis.hgetall(`session:${id}:capabilities`),
+    metadata: ({ id }, _, { redis }) => redis.hgetall(`session:${id}:metadata`),
 
     upstream: ({ id }, _, { redis }) => redis.hgetall(`session:${id}:upstream`),
     downstream: ({ id }, _, { redis }) => redis.hgetall(`session:${id}:downstream`),

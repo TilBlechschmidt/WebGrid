@@ -99,7 +99,12 @@ pub struct Capabilities {
     /// Describes the current session’s user prompt handler.
     pub unhandled_prompt_behavior: Option<CapabilityUnhandledPromptBehavior>,
 
-    /// Additional capabilities that are not part of the W3C standard
+    /// Name for a session for later querying
+    pub name: Option<String>,
+    /// Build for a session for later querying
+    pub build: Option<String>,
+
+    /// Additional capabilities that are not part of the W3C standard or added by WebGrid
     #[serde(flatten)]
     pub extension_capabilities: HashMap<String, Value>,
 }
@@ -141,6 +146,9 @@ impl Capabilities {
             timeouts: None,
             unhandled_prompt_behavior: None,
 
+            name: None,
+            build: None,
+
             extension_capabilities: HashMap::new(),
         }
     }
@@ -166,6 +174,9 @@ impl Capabilities {
                 .unhandled_prompt_behavior
                 .clone()
                 .xor(other.unhandled_prompt_behavior),
+
+            name: self.name.clone().xor(other.name),
+            build: self.build.clone().xor(other.build),
 
             // TODO Merge the extension capabilities
             extension_capabilities: self.extension_capabilities.clone(),

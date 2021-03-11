@@ -7,7 +7,7 @@ enum SessionState {
 }
 
 type Query {
-    sessions(state: SessionState): [Session!]!
+    sessions(state: SessionState, name: String, build: String): [Session!]!
     orchestrators: [Orchestrator!]!
 
     session(id: String!): Session
