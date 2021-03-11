@@ -75,6 +75,15 @@ pub struct CapabilitiesProxy {
     pub socks_version: Option<u8>,
 }
 
+#[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct WebGridOptions {
+    /// Name for a session for later querying
+    pub name: Option<String>,
+    /// Build for a session for later querying
+    pub build: Option<String>,
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 /// Struct containing information about the browser requested or provided
@@ -99,10 +108,8 @@ pub struct Capabilities {
     /// Describes the current session’s user prompt handler.
     pub unhandled_prompt_behavior: Option<CapabilityUnhandledPromptBehavior>,
 
-    /// Name for a session for later querying
-    pub name: Option<String>,
-    /// Build for a session for later querying
-    pub build: Option<String>,
+    #[serde(rename = "webgrid:options")]
+    pub webgrid_options: Option<WebGridOptions>,
 
     /// Additional capabilities that are not part of the W3C standard or added by WebGrid
     #[serde(flatten)]
@@ -146,8 +153,7 @@ impl Capabilities {
             timeouts: None,
             unhandled_prompt_behavior: None,
 
-            name: None,
-            build: None,
+            webgrid_options: None,
 
             extension_capabilities: HashMap::new(),
         }
@@ -175,8 +181,7 @@ impl Capabilities {
                 .clone()
                 .xor(other.unhandled_prompt_behavior),
 
-            name: self.name.clone().xor(other.name),
-            build: self.build.clone().xor(other.build),
+            webgrid_options: self.webgrid_options.clone().xor(other.webgrid_options),
 
             // TODO Merge the extension capabilities
             extension_capabilities: self.extension_capabilities.clone(),

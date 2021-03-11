@@ -135,11 +135,15 @@ mod subtasks {
 
         let mut metadata = Vec::new();
 
-        if let Some(Some(name)) = first_capability_set.map(|c| c.name.clone()) {
+        if let Some(Some(Some(name))) =
+            first_capability_set.map(|c| c.webgrid_options.clone().map(|o| o.name))
+        {
             metadata.push(("name", name));
         }
 
-        if let Some(Some(build)) = first_capability_set.map(|c| c.build.clone()) {
+        if let Some(Some(Some(build))) =
+            first_capability_set.map(|c| c.webgrid_options.clone().map(|o| o.build))
+        {
             metadata.push(("build", build))
         }
 

@@ -17,8 +17,10 @@ When creating a session, you can attach additional metadata which you can later 
     ```java
     DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
     ...
-    desiredCapabilities.setCapability("name", "your-cool-session-name");
-    desiredCapabilities.setCapability("build", "your-build-identifier");
+    final Map<String, String> webgridOptions = new HashMap<>();
+    webgridOptions.put("name", "<your-test-name>");
+    webgridOptions.put("build", "<your-build-id>");
+    desiredCapabilities.setCapability("webgrid:options", webgridOptions);
     ...
     ```
 
