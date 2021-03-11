@@ -39,6 +39,7 @@ pub trait ResourceManager {
 #[async_trait]
 pub trait PubSubResource {
     async fn psubscribe(&mut self, pchannel: &str) -> RedisResult<()>;
+    async fn subscribe(&mut self, channel: &str) -> RedisResult<()>;
 
     fn on_message<'a>(
         &'a mut self,

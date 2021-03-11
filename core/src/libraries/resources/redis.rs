@@ -396,6 +396,10 @@ impl PubSubResource for MonitoredPubSub {
         self.pubsub.psubscribe(pchannel).await
     }
 
+    async fn subscribe(&mut self, channel: &str) -> RedisResult<()> {
+        self.pubsub.subscribe(channel).await
+    }
+
     fn on_message<'a>(
         &'a mut self,
     ) -> Pin<Box<dyn Stream<Item = Result<Msg, PubSubResourceError>> + Send + 'a>> {

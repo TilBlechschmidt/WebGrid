@@ -15,6 +15,10 @@ macro_rules! static_keys {
     };
 }
 
+static_keys! {
+    HEARTBEAT_REFRESH_CHANNEL = "heartbeat-refresh".to_string();
+}
+
 pub mod orchestrator {
     static_keys! {
         LIST = "orchestrators".to_string();

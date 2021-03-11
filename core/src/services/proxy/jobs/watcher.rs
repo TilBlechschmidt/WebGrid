@@ -1,4 +1,5 @@
 use super::super::{routing_info::RoutingInfo, Context};
+use crate::libraries::helpers::keys;
 use crate::libraries::resources::{PubSub, ResourceManager};
 use crate::libraries::scheduling::{Job, TaskManager};
 use crate::with_redis_resource;
@@ -76,6 +77,8 @@ impl Job for WatcherJob {
 
         let mut stream = pubsub.on_message();
 
+        self.request_heartbeat_refresh(&mut redis).await?;
+
         while let Ok(Some(msg)) = stream.try_next().await {
             self.process_message(msg, &manager.context.routing_info, &mut redis)
                 .await?;
@@ -91,6 +94,16 @@ impl Job for WatcherJob {
 impl WatcherJob {
     pub fn new() -> Self {
         Self {}
+    }
+
+    async fn request_heartbeat_refresh(
+        &self,
+        con: &mut (impl ConnectionLike + AsyncCommands),
+    ) -> Result<()> {
+        con.publish::<_, _, ()>(&*keys::HEARTBEAT_REFRESH_CHANNEL, "Please refresh 🙃")
+            .await?;
+
+        Ok(())
     }
 
     async fn verify_keyspace_events_config(

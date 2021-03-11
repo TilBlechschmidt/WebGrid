@@ -1,15 +1,18 @@
 //! Structures for database heartbeats
 
-use crate::libraries::resources::ResourceManager;
 use crate::libraries::scheduling::{Job, TaskManager};
+use crate::libraries::{
+    helpers::keys,
+    resources::{PubSub, ResourceManager},
+};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use chrono::Utc;
-use futures::lock::Mutex;
+use futures::{lock::Mutex, StreamExt};
 use log::debug;
 use redis::AsyncCommands;
 use std::{collections::HashMap, marker::PhantomData, sync::Arc, time::Duration};
-use tokio::time::sleep;
+use tokio::{pin, select, time::sleep};
 
 /// State change of a heartbeat
 enum BeatChange {
@@ -35,6 +38,8 @@ pub struct HeartBeat<C> {
     changes: Arc<Mutex<Vec<BeatChange>>>,
     /// Currently active beats, their interval and expiration in seconds
     beats: Arc<Mutex<HashMap<String, (usize, usize)>>>,
+    /// If this is set, all beats will be refreshed during the next interval
+    force_refresh: Arc<Mutex<bool>>,
     phantom: PhantomData<C>,
 }
 
@@ -56,8 +61,14 @@ impl<C> HeartBeat<C> {
             value: Arc::new(value),
             changes: Arc::new(Mutex::new(Vec::new())),
             beats: Arc::new(Mutex::new(HashMap::new())),
+            force_refresh: Arc::new(Mutex::new(false)),
             phantom: PhantomData,
         }
+    }
+
+    /// Force a refresh cycle on the next iteration
+    pub async fn force_refresh(&self) {
+        *self.force_refresh.lock().await = true;
     }
 
     /// Add a new beat with a specified interval and expiration time
@@ -102,6 +113,17 @@ impl<C: Send + Sync + ResourceManager> Job for HeartBeat<C> {
             .await
             .context("unable to obtain redis resource")?;
 
+        let mut pubsub: PubSub = manager
+            .context
+            .redis(manager.create_resource_handle())
+            .await
+            .context("unable to obtain redis resource")?
+            .into();
+
+        pubsub.subscribe(&*keys::HEARTBEAT_REFRESH_CHANNEL).await?;
+        let force_refresh_stream = pubsub.on_message();
+        pin!(force_refresh_stream);
+
         manager.ready().await;
 
         let interval = 1;
@@ -113,6 +135,17 @@ impl<C: Send + Sync + ResourceManager> Job for HeartBeat<C> {
                 BeatValue::Timestamp => Utc::now().to_rfc3339(),
                 BeatValue::Constant(value) => value.to_owned(),
             };
+
+            let mut force_refresh = false;
+
+            // Load and consume the force_refresh value from self
+            {
+                let mut refresh = self.force_refresh.lock().await;
+                if *refresh {
+                    force_refresh = true;
+                    *refresh = false;
+                }
+            }
 
             // Shut down gracefully if termination signal has been triggered
             if manager.termination_signal_triggered() {
@@ -151,7 +184,7 @@ impl<C: Send + Sync + ResourceManager> Job for HeartBeat<C> {
 
             // Update beats
             for (key, (refresh_time, expiration_time)) in self.beats.lock().await.iter() {
-                if passed_time % refresh_time == 0 {
+                if passed_time % refresh_time == 0 || force_refresh {
                     redis
                         .set_ex::<_, _, ()>(key, value.clone(), *expiration_time)
                         .await
@@ -164,8 +197,17 @@ impl<C: Send + Sync + ResourceManager> Job for HeartBeat<C> {
                 return Ok(());
             }
 
-            // Wait for the specified interval
-            sleep(Duration::from_secs(interval as u64)).await;
+            // Wait for the specified interval or someone requesting a forced refresh
+            let sleep_future = sleep(Duration::from_secs(interval as u64));
+            let needs_refresh = select! {
+                _ = force_refresh_stream.next() => true,
+                _ = sleep_future => false,
+            };
+
+            if needs_refresh {
+                self.force_refresh().await;
+            }
+
             passed_time += interval;
         }
     }

@@ -181,7 +181,7 @@ jobs:
 
           make install
           docker-compose -f distribution/docker/docker-compose.yml logs -f &
-          sleep 60
+          sleep 15
           python3 test/integration.py 8080
 
   kubernetes-integration:
@@ -213,10 +213,16 @@ jobs:
           kubectl create secret docker-registry regcred --docker-server=ghcr.io --docker-username=${{ github.repository_owner }} --docker-password=${{ secrets.GHCR_TOKEN }}
           helm install test ./distribution/kubernetes/chart/ --set image.repository=ghcr.io/tilblechschmidt/webgrid,image.tag=sha-${GITHUB_SHA::8},image.pullSecret=regcred
           kubectl apply -f test/node-port.yml
-          sleep 5
+
           stern --color always test-webgrid* &
-          kubectl get pods
-          sleep 120
+
+          kubectl rollout status deployment test-webgrid-api --timeout 120s
+          kubectl rollout status deployment test-webgrid-manager --timeout 120s
+          kubectl rollout status deployment test-webgrid-metrics --timeout 120s
+          kubectl rollout status deployment test-webgrid-orchestrator --timeout 120s
+          kubectl rollout status deployment test-webgrid-proxy --timeout 120s
+          kubectl rollout status deployment test-webgrid-redis --timeout 120s
+
           kubectl get pods
           kubectl get services
 
