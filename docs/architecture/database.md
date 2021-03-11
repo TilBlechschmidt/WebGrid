@@ -63,6 +63,11 @@ All metadata is stored in a key-value in-memory database called [Redis](https://
 	actual = string                                 // JSON
 }
 
+`session:${ID}:metadata` = Hashes {
+	name = string
+	build = string
+}
+
 `session:${ID}:upstream` = Hashes {
 	host = string
 	port = number

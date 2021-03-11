@@ -53,7 +53,7 @@ In order to view or embed a video you need to retrieve its unique session identi
     }
     ```
 
-    It returns you a list of all sessions with their corresponding identifiers and whether or not they are currently alive.
+    It returns you a list of all sessions with their corresponding identifiers and whether or not they are currently alive. To identify your session uniquely using metadata, head over to the [API documentation](./api.md#session-metadata).
 
 ## Embedding
 
