@@ -35,12 +35,12 @@ impl Timeout {
     fn default(&self) -> usize {
         match *self {
             // Manager
-            Timeout::Queue => 120,
+            Timeout::Queue => 600,
             Timeout::Scheduling => 60,
-            Timeout::NodeStartup => 45,
+            Timeout::NodeStartup => 120,
             // Node
             Timeout::DriverStartup => 30,
-            Timeout::SessionTermination => 60,
+            Timeout::SessionTermination => 900,
             // Orchestrator
             Timeout::SlotReclaimInterval => 300,
         }
