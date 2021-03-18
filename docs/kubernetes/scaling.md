@@ -8,10 +8,12 @@ You should look at which component requires scaling. Below is a list of common s
 
 By default, the number of concurrent sessions is limited to five per orchestrator and one Kubernetes orchestrator. Normally, only one orchestrator is required even for very large setups so the per-orchestrator limit should be used.
 
-To change the number of concurrent sessions allowed merge and apply the following helm value as described [here](./configuration.md#changing-the-defaults):
+To change the number of concurrent sessions allowed (in this case `5`) merge and apply the following helm value as described [here](./configuration.md#changing-the-defaults):
 
 ```yaml
-maxSessionsPerOrchestrator: 5
+config:
+  orchestrator:
+    maxSessions: 5
 ```
 
 !!! note

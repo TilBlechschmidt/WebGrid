@@ -20,7 +20,7 @@ use jobs::GarbageCollectorJob;
 /// Purges old or orphaned data from the database.
 pub struct Options {
     /// Duration in seconds to retain a terminated session's metadata
-    #[structopt(short, long, default_value = "604800")]
+    #[structopt(short, long, env, default_value = "604800")]
     session_retention_duration: i64,
 }
 

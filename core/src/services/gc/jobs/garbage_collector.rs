@@ -11,7 +11,7 @@ use chrono::Utc;
 use log::{debug, info, warn};
 use redis::{AsyncCommands, Script};
 use std::time::Duration;
-use tokio::time::interval;
+use tokio::{task::yield_now, time::interval};
 
 #[derive(Clone)]
 pub struct GarbageCollectorJob {
@@ -26,6 +26,14 @@ impl Job for GarbageCollectorJob {
 
     async fn execute(&self, manager: TaskManager<Self::Context>) -> Result<()> {
         manager.ready().await;
+        yield_now().await;
+
+        info!(
+            "Retaining session metadata for {}D {}H {}M",
+            self.session_retention_duration.num_days(),
+            self.session_retention_duration.num_hours(),
+            self.session_retention_duration.num_minutes()
+        );
 
         let mut interval = interval(Duration::from_secs(600));
 

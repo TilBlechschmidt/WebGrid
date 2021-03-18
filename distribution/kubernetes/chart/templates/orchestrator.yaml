@@ -58,7 +58,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
             - name: SLOT_COUNT
-              value: "{{ .Values.maxSessionsPerOrchestrator }}"
+              value: "{{ .Values.config.orchestrator.maxSessions }}"
             - name: IMAGES
               value: "{{ .Values.image.repository }}/node-firefox:{{ include "web-grid.imageTag" . }}=firefox::68.7.0esr,{{ .Values.image.repository }}/node-chrome:{{ include "web-grid.imageTag" . }}=chrome::81.0.4044.122"
             - name: RUST_LOG

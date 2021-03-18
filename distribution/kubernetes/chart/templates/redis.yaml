@@ -94,6 +94,8 @@ spec:
               value: "{{ include "web-grid.redisURL" . }}"
             - name: RUST_LOG
               value: {{ .Values.logLevel }}
+            - name: SESSION_RETENTION_DURATION
+              value: "{{ .Values.config.garbageCollector.retentionDuration }}"
           livenessProbe:
             tcpSocket:
               port: status

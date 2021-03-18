@@ -3,7 +3,14 @@
 # Declare variables to be passed into your templates.
 
 logLevel: debug,hyper=warn,warp=warn,sqlx=warn
-maxSessionsPerOrchestrator: 5
+
+config:
+  orchestrator:
+    # Number of concurrent sessions allowed *per* orchestrator
+    maxSessions: 5
+  garbageCollector:
+    # How long session metadata is kept (seconds)
+    retentionDuration: 604800
 
 recording:
   # Whether or not to create PVCs and a storage service
