@@ -34,7 +34,7 @@
   <br>
 
   <a href="">
-    <img alt="Maintenance" src="https://img.shields.io/maintenance/yes/2020">
+    <img alt="Maintenance" src="https://img.shields.io/maintenance/yes/2021">
   </a>
   <a href="https://github.com/TilBlechschmidt/WebGrid/commits/main">
     <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/TilBlechschmidt/WebGrid">
@@ -56,7 +56,7 @@
 
 ## Install
 
-Below are quick-start tutorials to get you started. For a more detailed guide visit the dedicated [Getting Started guide](https://webgrid.dev/getting-started/)!
+Below are quick-start tutorials to get you started. For a more detailed introduction visit the dedicated [Getting Started guide](https://webgrid.dev/getting-started/)!
 
 ### 🐳 Docker
 
@@ -91,7 +91,7 @@ helm install example webgrid/webgrid
 kubectl port-forward service/example-webgrid 8080:80
 ```
 
-Your grid is now available at the [`localhost:8080`](http://localhost:8080/) service.
+Your grid is now available at [`localhost:8080`](http://localhost:8080/).
 
 If you are deploying to a RBAC enabled cluster you might have to tweak some settings. Take a look at the [documentation](https://webgrid.dev/kubernetes/configuration/) on how to use your own ServiceAccount and PersistentVolumeClaims.
 

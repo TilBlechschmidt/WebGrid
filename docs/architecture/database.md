@@ -1,15 +1,17 @@
 # Database
 
+## Keys
+
 All metadata is stored in a key-value in-memory database called [Redis](https://redis.io).  Below is a list of all keys that are currently in use, annotated with their type and format (if applicable).
 
-## Root lists
+### Root lists
 ```javascript
 `orchestrators` = Set<string>       // uuids
 `sessions.active` = Set<string>     // uuids
 `sessions.terminated` = Set<string> // uuids
 ```
 
-## Configuration
+### Configuration
 ```javascript
 `timeouts` = Hashes {
 	queue = number                  // seconds
@@ -21,25 +23,25 @@ All metadata is stored in a key-value in-memory database called [Redis](https://
 }
 ```
 
-## Manager
+### Manager
 ```javascript
 `manager:${ID}:host` = number EX 120s			// (host + port)
 ```
 
-## Storage
+### Storage
 ```javascript
 // SID = storage ID
 // PID = randomly generated ephemeral provider ID
 `storage:${SID}:${PID}:host` = string EX 60s	// (host + port)
 ```
 
-## API
+### API
 ```javascript
 // AID = randomly generated ephemeral server ID
 `api:${AID}:host` = string EX 60s				// (host + port)
 ```
 
-## Sessions
+### Sessions
 ```javascript
 // ID = unique, external session identifier
 `session:${ID}:heartbeat.node` = string EX 60s      // RFC 3339
@@ -87,11 +89,11 @@ All metadata is stored in a key-value in-memory database called [Redis](https://
 `session:${ID}:storage` = string                    // storage ID
 ```
 
-### Log event codes
+#### Log event codes
 
 During the lifecycle of a session each component generates status codes for tracing purposes.
 
-#### Node
+##### Node
 
 | Level | Code       | Description                            |
 |:------|:-----------|:---------------------------------------|
@@ -108,7 +110,7 @@ During the lifecycle of a session each component generates status codes for trac
 |       | `STIMEOUT` | session has been inactive too long     |
 |       | `TERM`     | node terminates due to fault condition |
 
-#### Orchestrator
+##### Orchestrator
 | Level | Code        | Description                         |
 |:------|:------------|:------------------------------------|
 | Info  |             |                                     |
@@ -116,7 +118,7 @@ During the lifecycle of a session each component generates status codes for trac
 | Fail  |             |                                     |
 |       | `STARTFAIL` | creation/startup failure            |
 
-#### Manager
+##### Manager
 | Level | Code           | Description                                         |
 |:------|:---------------|:----------------------------------------------------|
 | Info  |                |                                                     |
@@ -133,7 +135,7 @@ During the lifecycle of a session each component generates status codes for trac
 |       | `OTIMEOUT`     | timed out waiting for orchestrator to schedule node |
 |       | `NTIMEOUT`     | timed out waiting for node to become responsive     |
 
-## Orchestrators
+### Orchestrators
 ```javascript
 `orchestrator:${ID}` = Hashes {
 	type = 'local' | 'docker' | 'k8s'
@@ -158,9 +160,9 @@ During the lifecycle of a session each component generates status codes for trac
 
 [Reliable queue documentation](https://redis.io/commands/rpoplpush#pattern-reliable-queue)
 
-## Metrics
+### Metrics
 
-### HTTP (at proxy)
+#### HTTP (at proxy)
 ```javascript
 `metrics:http:requestsTotal:${method}` = Hashes {
 	<http-status-code> = number
@@ -172,7 +174,7 @@ During the lifecycle of a session each component generates status codes for trac
 }
 ```
 
-### Sessions
+#### Sessions
 ```javascript
 `metrics:sessions:total` = Hashes {
 	queued = number
@@ -199,7 +201,7 @@ During the lifecycle of a session each component generates status codes for trac
 }
 ```
 
-### Slots
+#### Slots
 ```javascript
 `metrics:slots:reclaimed.total` = Hashes {
 	dead = number
@@ -207,6 +209,6 @@ During the lifecycle of a session each component generates status codes for trac
 }
 ```
 
-# Garbage collection
+## Garbage collection
 
 Special considerations have been taken to ensure that most keys expire on their own (e.g. active manager/storage/api metadata). Those that do not expire on their own (e.g. sessions) will be purged by a dedicated garbage collector service.
