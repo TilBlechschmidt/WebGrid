@@ -51,3 +51,6 @@ It receives requests through the proxy at `GET /storage/${SID}/*`.
 In order to route session traffic to the node that is hosting the session a reverse proxy is required. For this purpose (and load-balancing in a scenario with more than one manager instance) a service has been added.
 
 It listens on Redis key-space notifications to detect managers and nodes coming online or going offline, determined by their heartbeat. When a node comes online, the proxy routes all requests of the corresponding session (`/session/<ID>*`) to the node. For managers it routes requests matching `POST /session` to a randomly selected upstream from the list of alive managers.
+
+## Garbage collector
+As mentioned in the [database documentation](./database.md#garbage-collection), this service is responsible for removing old and unused keys from the database. Additionally, it has the task of resolving undefined states in the dataset which e.g. occured due to outages. This includes the termination of old sessions which have not been cleaned.

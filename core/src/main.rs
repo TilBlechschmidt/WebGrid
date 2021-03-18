@@ -34,6 +34,9 @@ enum Command {
 
     #[cfg(feature = "orchestrator")]
     Orchestrator(orchestrator::Options),
+
+    #[cfg(feature = "gc")]
+    GC(gc::Options),
 }
 
 #[tokio::main]
@@ -73,6 +76,9 @@ async fn main() -> Result<()> {
                 provisioners::kubernetes::run(shared_options, core_options.core, options).await
             }
         },
+
+        #[cfg(feature = "gc")]
+        Command::GC(options) => gc::run(shared_options, options).await?,
     }
 
     Ok(())

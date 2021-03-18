@@ -1,5 +1,8 @@
 //! Individual micro-services for the grid
 
+#[cfg(feature = "gc")]
+pub mod gc;
+
 #[cfg(feature = "proxy")]
 pub mod proxy;
 

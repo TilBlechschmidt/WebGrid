@@ -81,6 +81,26 @@ spec:
           name: redis-exporter
           ports:
             - containerPort: 9121
+        - image: "{{ .Values.image.repository }}/core:{{ include "web-grid.imageTag" . }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          name: {{ .Chart.Name }}-gc
+          args: ["gc", "--status-server"]
+          ports:
+            - name: status
+              containerPort: 47002
+              protocol: TCP
+          env:
+            - name: REDIS
+              value: "{{ include "web-grid.redisURL" . }}"
+            - name: RUST_LOG
+              value: {{ .Values.logLevel }}
+          livenessProbe:
+            tcpSocket:
+              port: status
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: status
 ---
 apiVersion: v1
 kind: Service

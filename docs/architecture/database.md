@@ -206,3 +206,7 @@ During the lifecycle of a session each component generates status codes for trac
 	orphaned = number
 }
 ```
+
+# Garbage collection
+
+Special considerations have been taken to ensure that most keys expire on their own (e.g. active manager/storage/api metadata). Those that do not expire on their own (e.g. sessions) will be purged by a dedicated garbage collector service.
