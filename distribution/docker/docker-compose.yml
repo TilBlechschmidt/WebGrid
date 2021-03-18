@@ -50,7 +50,7 @@ services:
     depends_on:
       - redis
   redis:
-    image: redis:alpine
+    image: redis:6.2-alpine
     container_name: webgrid-redis
     command: redis-server --notify-keyspace-events Kgx
     ports:

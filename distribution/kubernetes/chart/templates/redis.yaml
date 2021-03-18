@@ -62,7 +62,7 @@ spec:
             claimName: {{ include "web-grid.fullname" . }}-redis
           {{- end }}
       containers:
-        - image: redis:alpine
+        - image: redis:6.2-alpine
           imagePullPolicy: IfNotPresent
           name: {{ .Chart.Name }}-redis
           args: ['/config/redis.conf']
