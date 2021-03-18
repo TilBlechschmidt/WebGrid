@@ -28,12 +28,7 @@ impl Job for GarbageCollectorJob {
         manager.ready().await;
         yield_now().await;
 
-        info!(
-            "Retaining session metadata for {}D {}H {}M",
-            self.session_retention_duration.num_days(),
-            self.session_retention_duration.num_hours(),
-            self.session_retention_duration.num_minutes()
-        );
+        self.log_retention_duration();
 
         let mut interval = interval(Duration::from_secs(600));
 
@@ -59,6 +54,25 @@ impl GarbageCollectorJob {
     pub fn new(session_retention_duration: i64) -> Self {
         Self {
             session_retention_duration: chrono::Duration::seconds(session_retention_duration),
+        }
+    }
+
+    fn log_retention_duration(&self) {
+        let days = self.session_retention_duration.num_days();
+        let hours = self.session_retention_duration.num_hours();
+        let minutes = self.session_retention_duration.num_minutes();
+
+        if days > 0 {
+            info!("Retaining session metadata for {} days", days);
+        } else if hours > 0 {
+            info!("Retaining session metadata for {} hours", hours);
+        } else if minutes > 0 {
+            info!("Retaining session metadata for {} minutes", minutes);
+        } else {
+            info!(
+                "Retaining session metadata for {} seconds",
+                self.session_retention_duration.num_seconds()
+            );
         }
     }
 
