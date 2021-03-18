@@ -140,6 +140,8 @@ During the lifecycle of a session each component generates status codes for trac
 }
 
 `orchestrator:${ID}:heartbeat` = number EX 60
+`orchestrator:${ID}:retain` = number EX 604800 				// If this key is not set, the orchestrator metadata can be purged
+															// Expires after 7 days and is refreshed by a live orchestrator.
 
 `orchestrator:${ID}:capabilities:platformName` = string
 `orchestrator:${ID}:capabilities:browsers` = Set<string>    // explained below

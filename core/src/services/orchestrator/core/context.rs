@@ -34,6 +34,11 @@ impl Context {
         self.heart_beat
             .add_beat(&keys::orchestrator::heartbeat(&self.id), 60, 120)
             .await;
+
+        self.heart_beat
+            .add_beat(&keys::orchestrator::retain(&self.id), 300, 604_800)
+            .await;
+
         scheduler.spawn_job(self.heart_beat.clone(), self.resource_manager.clone());
     }
 }

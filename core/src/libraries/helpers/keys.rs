@@ -44,6 +44,10 @@ pub mod orchestrator {
         format!("{}:heartbeat", orchestrator_prefix(orchestrator_id))
     }
 
+    pub fn retain(orchestrator_id: &str) -> String {
+        format!("{}:retain", orchestrator_prefix(orchestrator_id))
+    }
+
     pub mod capabilities {
         use super::orchestrator_prefix;
 
