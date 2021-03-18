@@ -17,7 +17,9 @@ mod tasks;
 
 use context::Context;
 use jobs::{ProxyJob, RecorderJob};
-use tasks::{initialize_service, initialize_session, start_driver, stop_driver, terminate};
+use tasks::{
+    initialize_service, initialize_session, log_exit, start_driver, stop_driver, terminate,
+};
 
 #[derive(Debug, StructOpt, Clone)]
 /// Session provider
@@ -132,7 +134,7 @@ async fn launch_session(
     let death_reason = heart.death().await;
     info!("Heart died: {}", death_reason);
 
-    // TODO Send STIMEOUT || CLOSED log status code depending on the death reason
+    JobScheduler::spawn_task(&log_exit(death_reason), context.clone()).await???;
 
     scheduler.terminate_jobs().await;
 
@@ -148,8 +150,6 @@ pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> 
 
     JobScheduler::spawn_task(&terminate, context.clone()).await???;
     JobScheduler::spawn_task(&stop_driver, context).await???;
-
-    // TODO Send HALT log status code
 
     Ok(())
 }
