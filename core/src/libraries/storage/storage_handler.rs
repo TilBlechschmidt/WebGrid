@@ -80,6 +80,7 @@ impl StorageHandler {
         cleanup_target: f64,
     ) -> Result<Self, StorageError> {
         let database_path = directory.join("storage.db");
+        Self::create_db_if_not_exists(&database_path).await?;
         let pool = SqlitePool::connect(&format!("sqlite://{}", database_path.display())).await?;
         let mut con = pool.acquire().await?;
         database::setup_tables(&mut con).await?;
@@ -90,6 +91,14 @@ impl StorageHandler {
             size_threshold,
             cleanup_target,
         })
+    }
+
+    async fn create_db_if_not_exists(path: &PathBuf) -> Result<(), std::io::Error> {
+        if !path.exists() {
+            tokio::fs::File::create(path).await?;
+        }
+
+        Ok(())
     }
 
     /// Explicitly scan the full filesystem and sync the database
