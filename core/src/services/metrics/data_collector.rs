@@ -219,3 +219,43 @@ pub async fn slots_available<C: AsyncCommands + ConnectionLike>(con: &mut C) -> 
         values: vec![MetricValue::from_value(slot_count)],
     }
 }
+
+pub async fn storage_capacity<C: AsyncCommands + ConnectionLike>(con: &mut C) -> Metric {
+    let capacities: Vec<(String, f64)> = con
+        .hgetall(&*keys::metrics::storage::CAPACITY)
+        .await
+        .unwrap_or_default();
+
+    let values = capacities
+        .into_iter()
+        .map(|(id, capacity)| MetricValue::from_value(capacity).with_label("id", &id))
+        .collect();
+
+    Metric {
+        name: "webgrid_storage_disk_bytes_total".to_string(),
+        description: "Total number of bytes available for a given storage".to_string(),
+
+        metric_type: MetricType::Gauge,
+        values,
+    }
+}
+
+pub async fn storage_usage<C: AsyncCommands + ConnectionLike>(con: &mut C) -> Metric {
+    let usages: Vec<(String, f64)> = con
+        .hgetall(&*keys::metrics::storage::USAGE)
+        .await
+        .unwrap_or_default();
+
+    let values = usages
+        .into_iter()
+        .map(|(id, usage)| MetricValue::from_value(usage).with_label("id", &id))
+        .collect();
+
+    Metric {
+        name: "webgrid_storage_disk_bytes_used".to_string(),
+        description: "Bytes used in a given storage".to_string(),
+
+        metric_type: MetricType::Gauge,
+        values,
+    }
+}

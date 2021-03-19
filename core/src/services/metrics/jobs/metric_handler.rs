@@ -70,6 +70,8 @@ impl MetricHandlerJob {
             sessions_terminated(&mut con).await,
             slots_available(&mut con).await,
             slots_total(&mut con).await,
+            storage_capacity(&mut con).await,
+            storage_usage(&mut con).await,
         ]
         .iter()
         .map(|metric| format!("{}", metric))

@@ -1,5 +1,6 @@
 use super::entry::MetricsEntry;
 use super::SESSION_STARTUP_HISTOGRAM_BUCKETS;
+use crate::libraries::helpers::keys;
 use crate::libraries::scheduling::{Job, TaskManager};
 use crate::{
     libraries::resources::{ResourceManager, ResourceManagerProvider},
@@ -59,24 +60,40 @@ impl<C, R> MetricsProcessor<C, R> {
     ) -> RedisResult<()> {
         match entry {
             MetricsEntry::IncomingTraffic(bytes) => {
-                con.hincr::<_, _, _, ()>("metrics:http:net.bytes.total", "in", bytes)
+                con.hincr::<_, _, _, ()>(&*keys::metrics::http::NET_BYTES_TOTAL, "in", bytes)
                     .await
             }
             MetricsEntry::OutgoingTraffic(bytes) => {
-                con.hincr::<_, _, _, ()>("metrics:http:net.bytes.total", "out", bytes)
+                con.hincr::<_, _, _, ()>(&*keys::metrics::http::NET_BYTES_TOTAL, "out", bytes)
                     .await
             }
             MetricsEntry::RequestProcessed(method, status) => {
-                let key = format!("metrics:http:requestsTotal:{}", method.as_str().to_owned());
-                con.hincr::<_, _, _, ()>(key, status.as_u16(), 1).await
-            }
-            MetricsEntry::SessionStatusChange(new_status) => {
-                con.hincr::<_, _, _, ()>("metrics:sessions:total", format!("{}", new_status), 1)
-                    .await
+                con.hincr::<_, _, _, ()>(
+                    keys::metrics::http::requests_total(method.as_str()),
+                    status.as_u16(),
+                    1,
+                )
+                .await
             }
             MetricsEntry::SessionStarted(elapsed_time) => {
                 self.process_session_startup_histogram_entry(con, elapsed_time)
                     .await
+            }
+            MetricsEntry::StorageCapacityUpdated(storage_id, capacity) => {
+                con.hset::<_, _, _, ()>(
+                    &*keys::metrics::storage::CAPACITY,
+                    storage_id,
+                    format!("{:.0}", capacity),
+                )
+                .await
+            }
+            MetricsEntry::StorageUsageUpdated(storage_id, usage) => {
+                con.hset::<_, _, _, ()>(
+                    &*keys::metrics::storage::USAGE,
+                    storage_id,
+                    format!("{:.0}", usage),
+                )
+                .await
             }
         }
     }
@@ -86,20 +103,19 @@ impl<C, R> MetricsProcessor<C, R> {
         con: &mut Redis,
         elapsed_time: f64,
     ) -> RedisResult<()> {
-        let base_key = "metrics:sessions:startup.histogram";
-        let buckets_key = format!("{}:buckets", base_key);
-        let count_key = format!("{}:count", base_key);
-        let sum_key = format!("{}:sum", base_key);
+        let buckets_key = &*keys::metrics::session::startup_histogram::BUCKETS;
+        let count_key = &*keys::metrics::session::startup_histogram::COUNT;
+        let sum_key = &*keys::metrics::session::startup_histogram::SUM;
 
         for bucket in SESSION_STARTUP_HISTOGRAM_BUCKETS.iter() {
             let float_bucket: f64 = (*bucket).into();
 
             if float_bucket > elapsed_time {
-                con.hincr::<_, _, _, ()>(&buckets_key, *bucket, 1).await?;
+                con.hincr::<_, _, _, ()>(buckets_key, *bucket, 1).await?;
             }
         }
 
-        con.hincr::<_, _, _, ()>(&buckets_key, "+Inf", 1).await?;
+        con.hincr::<_, _, _, ()>(buckets_key, "+Inf", 1).await?;
         con.incr::<_, _, ()>(count_key, 1).await?;
         con.incr::<_, _, ()>(sum_key, elapsed_time).await
     }

@@ -182,4 +182,11 @@ pub mod metrics {
             }
         }
     }
+
+    pub mod storage {
+        static_keys! {
+            CAPACITY = "metrics:storage:disk.bytes.total".to_string();
+            USAGE = "metrics:storage:disk.bytes.used".to_string();
+        }
+    }
 }

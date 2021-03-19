@@ -21,6 +21,6 @@ pub enum MetricsEntry {
     OutgoingTraffic(u64),
     RequestProcessed(Method, StatusCode),
     SessionStarted(f64),
-    // TODO This needs to be used somewhere.
-    SessionStatusChange(SessionStatus),
+    StorageCapacityUpdated(String, f64),
+    StorageUsageUpdated(String, f64),
 }

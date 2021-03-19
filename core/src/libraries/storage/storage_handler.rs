@@ -142,6 +142,11 @@ impl StorageHandler {
         res
     }
 
+    pub async fn used_bytes(&self) -> Result<f64, StorageError> {
+        let mut con = self.acquire_connection().await?;
+        Ok(database::used_bytes(&mut con).await?)
+    }
+
     /// Runs a cleanup if the used bytes exceed the `size_threshold`
     pub async fn maybe_cleanup(&self) -> Result<usize, StorageError> {
         let mut con = self.acquire_connection().await?;

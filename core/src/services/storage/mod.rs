@@ -64,12 +64,14 @@ pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> 
 
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);
     let heart_beat_job = context.heart_beat.clone();
+    let metrics_job = context.metrics.clone();
     let server_job = ServerJob::new(options.port, options.storage_directory.clone());
     let cleanup_job = CleanupJob::new(options.storage_directory, size_limit, cleanup_target);
 
     schedule!(scheduler, context, {
         status_job,
         heart_beat_job,
+        metrics_job,
         server_job,
         cleanup_job
     });
