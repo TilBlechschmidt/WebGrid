@@ -4,7 +4,7 @@ use super::super::{
 };
 use crate::libraries::helpers::keys;
 use crate::libraries::lifecycle::logging::{LogCode, SessionLogger};
-use crate::libraries::resources::ResourceManager;
+use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
 use crate::libraries::scheduling::TaskManager;
 use crate::with_redis_resource;
 use hyper::{body, Body, Client as HttpClient, Method, Request};

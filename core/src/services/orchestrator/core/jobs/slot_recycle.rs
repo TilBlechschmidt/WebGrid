@@ -1,6 +1,6 @@
 use super::super::Context;
 use crate::libraries::helpers::keys;
-use crate::libraries::resources::ResourceManager;
+use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
 use crate::libraries::scheduling::{Job, TaskManager};
 use crate::with_redis_resource;
 use anyhow::Result;

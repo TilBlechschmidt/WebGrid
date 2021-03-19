@@ -1,7 +1,7 @@
 use super::super::{structs::NodeError, Context};
 use crate::libraries::helpers::{wait_for, Timeout};
 use crate::libraries::lifecycle::logging::{LogCode, SessionLogger};
-use crate::libraries::resources::ResourceManager;
+use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
 use crate::libraries::scheduling::TaskManager;
 use crate::with_redis_resource;
 use log::{error, info};

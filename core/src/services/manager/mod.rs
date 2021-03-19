@@ -39,16 +39,16 @@ pub async fn run(shared_options: SharedOptions, options: Options) {
     let (mut heart, _) = Heart::new();
 
     let host = format!("{}:{}", options.host, options.port);
-    let context = Context::new(shared_options.redis, host);
+    let context = Context::new(shared_options.redis, host, &options.id).await;
     let scheduler = JobScheduler::default();
 
-    context.spawn_heart_beat(&options.id, &scheduler).await;
-
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);
+    let heart_beat_job = context.heart_beat.clone();
     let session_handler_job = SessionHandlerJob::new(options.port);
 
     schedule!(scheduler, context, {
         status_job,
+        heart_beat_job,
         session_handler_job
     });
 

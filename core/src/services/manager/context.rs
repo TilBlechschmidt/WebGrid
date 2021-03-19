@@ -1,28 +1,29 @@
-use crate::libraries::lifecycle::HeartBeat;
 use crate::libraries::resources::DefaultResourceManager;
-use crate::libraries::scheduling::JobScheduler;
 use crate::libraries::{helpers::keys, lifecycle::BeatValue};
+use crate::libraries::{lifecycle::HeartBeat, resources::ResourceManagerProvider};
 use std::ops::Deref;
 
 #[derive(Clone)]
 pub struct Context {
     pub resource_manager: DefaultResourceManager,
-    pub heart_beat: HeartBeat<DefaultResourceManager>,
+    pub heart_beat: HeartBeat<Self, DefaultResourceManager>,
 }
 
 impl Context {
-    pub fn new(redis_url: String, host: String) -> Self {
+    pub async fn new(redis_url: String, host: String, id: &str) -> Self {
+        let heart_beat = HeartBeat::with_value(BeatValue::Constant(host));
+        heart_beat.add_beat(&keys::manager::host(id), 60, 120).await;
+
         Self {
             resource_manager: DefaultResourceManager::new(redis_url),
-            heart_beat: HeartBeat::with_value(BeatValue::Constant(host)),
+            heart_beat,
         }
     }
+}
 
-    pub async fn spawn_heart_beat(&self, id: &str, scheduler: &JobScheduler) {
-        self.heart_beat
-            .add_beat(&keys::manager::host(id), 60, 120)
-            .await;
-        scheduler.spawn_job(self.heart_beat.clone(), self.resource_manager.clone());
+impl ResourceManagerProvider<DefaultResourceManager> for Context {
+    fn resource_manager(&self) -> DefaultResourceManager {
+        self.resource_manager.clone()
     }
 }
 

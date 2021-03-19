@@ -120,13 +120,13 @@ async fn launch_session(
         JobScheduler::spawn_task(&initialize_session, context.clone()).await???;
 
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);
+    let heart_beat_job = context.heart_beat.clone();
     let proxy_job = ProxyJob::new(options.port, internal_session_id, heart_stone);
     let recorder_job = RecorderJob::new();
 
-    context.spawn_heart_beat(&scheduler).await;
-
     schedule!(scheduler, context, {
         status_job,
+        heart_beat_job,
         proxy_job,
         recorder_job,
     });
@@ -142,7 +142,7 @@ async fn launch_session(
 }
 
 pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> {
-    let context = Context::new(shared_options.redis.clone(), options.clone());
+    let context = Context::new(shared_options.redis.clone(), options.clone()).await;
 
     if let Err(e) = launch_session(shared_options, options, &context).await {
         warn!("Encountered error while launching session: {:?}", e);

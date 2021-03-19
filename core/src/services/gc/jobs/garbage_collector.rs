@@ -1,4 +1,5 @@
 use super::super::Context;
+use crate::libraries::resources::ResourceManagerProvider;
 use crate::libraries::{
     helpers::{keys, lua},
     resources::ResourceManager,

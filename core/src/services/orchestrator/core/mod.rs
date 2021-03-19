@@ -42,12 +42,12 @@ pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
         provisioner,
         shared_options.redis,
         options.id,
-    );
+    )
+    .await;
     let scheduler = JobScheduler::default();
 
-    context.spawn_heart_beat(&scheduler).await;
-
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);
+    let heart_beat_job = context.heart_beat.clone();
     let registration_job = RegistrationJob::new();
     let node_watcher_job = NodeWatcherJob::new();
     let slot_reclaim_job = SlotReclaimJob::new();
@@ -57,6 +57,7 @@ pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
 
     schedule!(scheduler, context, {
         status_job,
+        heart_beat_job,
         registration_job
         node_watcher_job
         processor_job

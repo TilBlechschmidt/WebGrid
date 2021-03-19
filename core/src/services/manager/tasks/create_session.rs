@@ -3,7 +3,7 @@ use crate::libraries::helpers::{
     keys, parse_browser_string, wait_for, CapabilitiesRequest, Timeout,
 };
 use crate::libraries::lifecycle::logging::{LogCode, SessionLogger};
-use crate::libraries::resources::ResourceManager;
+use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
 use crate::libraries::scheduling::TaskManager;
 use crate::with_redis_resource;
 use chrono::offset::Utc;

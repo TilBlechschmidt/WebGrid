@@ -52,17 +52,24 @@ pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> 
 
     let (mut heart, _) = Heart::new();
 
-    let context = Context::new(shared_options.redis, storage_id, options.host, options.port);
+    let context = Context::new(
+        shared_options.redis,
+        storage_id,
+        provider_id,
+        options.host,
+        options.port,
+    )
+    .await;
     let scheduler = JobScheduler::default();
 
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);
+    let heart_beat_job = context.heart_beat.clone();
     let server_job = ServerJob::new(options.port, options.storage_directory.clone());
     let cleanup_job = CleanupJob::new(options.storage_directory, size_limit, cleanup_target);
 
-    context.spawn_heart_beat(&provider_id, &scheduler).await;
-
     schedule!(scheduler, context, {
         status_job,
+        heart_beat_job,
         server_job,
         cleanup_job
     });

@@ -1,30 +1,39 @@
-use crate::libraries::helpers::keys;
 use crate::libraries::lifecycle::{BeatValue, HeartBeat};
 use crate::libraries::resources::DefaultResourceManager;
-use crate::libraries::scheduling::JobScheduler;
+use crate::libraries::{helpers::keys, resources::ResourceManagerProvider};
 
 #[derive(Clone)]
 pub struct Context {
-    pub resource_manager: DefaultResourceManager,
-    pub heart_beat: HeartBeat<DefaultResourceManager>,
+    resource_manager: DefaultResourceManager,
+    pub heart_beat: HeartBeat<Self, DefaultResourceManager>,
     pub storage_id: String,
 }
 
 impl Context {
-    pub fn new(redis_url: String, storage_id: String, host: String, port: u16) -> Self {
+    pub async fn new(
+        redis_url: String,
+        storage_id: String,
+        provider_id: String,
+        host: String,
+        port: u16,
+    ) -> Self {
         let addr = format!("{}:{}", host, port);
+        let heart_beat = HeartBeat::with_value(BeatValue::Constant(addr));
+
+        heart_beat
+            .add_beat(&keys::storage::host(&storage_id, &provider_id), 60, 120)
+            .await;
 
         Self {
             resource_manager: DefaultResourceManager::new(redis_url),
-            heart_beat: HeartBeat::with_value(BeatValue::Constant(addr)),
+            heart_beat,
             storage_id,
         }
     }
+}
 
-    pub async fn spawn_heart_beat(&self, provider_id: &str, scheduler: &JobScheduler) {
-        self.heart_beat
-            .add_beat(&keys::storage::host(&self.storage_id, provider_id), 60, 120)
-            .await;
-        scheduler.spawn_job(self.heart_beat.clone(), self.resource_manager.clone());
+impl ResourceManagerProvider<DefaultResourceManager> for Context {
+    fn resource_manager(&self) -> DefaultResourceManager {
+        self.resource_manager.clone()
     }
 }

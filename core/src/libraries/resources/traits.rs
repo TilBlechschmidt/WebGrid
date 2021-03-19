@@ -45,3 +45,16 @@ pub trait PubSubResource {
         &'a mut self,
     ) -> Pin<Box<dyn Stream<Item = Result<Msg, PubSubResourceError>> + Send + 'a>>;
 }
+
+pub trait ResourceManagerProvider<R: ResourceManager> {
+    fn resource_manager(&self) -> R;
+}
+
+impl<R> ResourceManagerProvider<R> for R
+where
+    R: ResourceManager + Clone,
+{
+    fn resource_manager(&self) -> R {
+        self.clone()
+    }
+}

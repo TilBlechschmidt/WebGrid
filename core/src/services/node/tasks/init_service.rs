@@ -4,7 +4,7 @@ use crate::libraries::lifecycle::{
     logging::{LogCode, SessionLogger},
     Heart, HeartStone,
 };
-use crate::libraries::resources::ResourceManager;
+use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
 use crate::libraries::scheduling::TaskManager;
 use crate::libraries::storage::StorageHandler;
 use crate::with_redis_resource;

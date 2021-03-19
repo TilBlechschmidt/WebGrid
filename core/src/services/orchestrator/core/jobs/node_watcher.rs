@@ -1,5 +1,5 @@
 use super::super::Context;
-use crate::libraries::resources::{PubSub, ResourceManager};
+use crate::libraries::resources::{PubSub, ResourceManager, ResourceManagerProvider};
 use crate::libraries::scheduling::{Job, TaskManager};
 use crate::with_redis_resource;
 use anyhow::{bail, Result};

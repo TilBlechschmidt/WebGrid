@@ -1,9 +1,9 @@
 use super::routing_info::RoutingInfo;
-use crate::libraries::resources::DefaultResourceManager;
+use crate::libraries::resources::{DefaultResourceManager, ResourceManagerProvider};
 
 #[derive(Clone)]
 pub struct Context {
-    pub resource_manager: DefaultResourceManager,
+    resource_manager: DefaultResourceManager,
     pub routing_info: RoutingInfo,
 }
 
@@ -13,5 +13,11 @@ impl Context {
             resource_manager: DefaultResourceManager::new(redis_url),
             routing_info: RoutingInfo::new(),
         }
+    }
+}
+
+impl ResourceManagerProvider<DefaultResourceManager> for Context {
+    fn resource_manager(&self) -> DefaultResourceManager {
+        self.resource_manager.clone()
     }
 }

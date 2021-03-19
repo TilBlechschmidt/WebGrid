@@ -1,10 +1,14 @@
 //! Structures for database heartbeats
 
-use crate::libraries::scheduling::{Job, TaskManager};
 use crate::libraries::{
     helpers::keys,
     resources::{PubSub, ResourceManager},
 };
+use crate::libraries::{
+    resources::ResourceManagerProvider,
+    scheduling::{Job, TaskManager},
+};
+use crate::{with_redis_resource, with_shared_redis_resource};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use chrono::Utc;
@@ -32,7 +36,7 @@ pub enum BeatValue {
 ///
 /// This handler has to be executed by a job scheduler to operate.
 #[derive(Clone)]
-pub struct HeartBeat<C> {
+pub struct HeartBeat<C, R> {
     value: Arc<BeatValue>,
     /// Pending changes
     changes: Arc<Mutex<Vec<BeatChange>>>,
@@ -40,16 +44,17 @@ pub struct HeartBeat<C> {
     beats: Arc<Mutex<HashMap<String, (usize, usize)>>>,
     /// If this is set, all beats will be refreshed during the next interval
     force_refresh: Arc<Mutex<bool>>,
-    phantom: PhantomData<C>,
+    phantom_c: PhantomData<C>,
+    phantom_r: PhantomData<R>,
 }
 
-impl<C> Default for HeartBeat<C> {
+impl<C, R> Default for HeartBeat<C, R> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<C> HeartBeat<C> {
+impl<C, R> HeartBeat<C, R> {
     /// Creates a new handler with timestamp based heartbeats
     pub fn new() -> Self {
         HeartBeat::with_value(BeatValue::Timestamp)
@@ -62,7 +67,8 @@ impl<C> HeartBeat<C> {
             changes: Arc::new(Mutex::new(Vec::new())),
             beats: Arc::new(Mutex::new(HashMap::new())),
             force_refresh: Arc::new(Mutex::new(false)),
-            phantom: PhantomData,
+            phantom_c: PhantomData,
+            phantom_r: PhantomData,
         }
     }
 
@@ -99,26 +105,17 @@ impl<C> HeartBeat<C> {
 }
 
 #[async_trait]
-impl<C: Send + Sync + ResourceManager> Job for HeartBeat<C> {
+impl<R: ResourceManager + Send + Sync, C: ResourceManagerProvider<R> + Send + Sync> Job
+    for HeartBeat<C, R>
+{
     type Context = C;
 
     const NAME: &'static str = module_path!();
     const SUPPORTS_GRACEFUL_TERMINATION: bool = true;
 
     async fn execute(&self, manager: TaskManager<Self::Context>) -> Result<()> {
-        // TODO This is really f***ing ugly and unreadable.
-        let mut redis = manager
-            .context
-            .shared_redis(manager.create_resource_handle())
-            .await
-            .context("unable to obtain redis resource")?;
-
-        let mut pubsub: PubSub = manager
-            .context
-            .redis(manager.create_resource_handle())
-            .await
-            .context("unable to obtain redis resource")?
-            .into();
+        let mut redis = with_shared_redis_resource!(manager);
+        let mut pubsub: PubSub = with_redis_resource!(manager).into();
 
         pubsub.subscribe(&*keys::HEARTBEAT_REFRESH_CHANNEL).await?;
         let force_refresh_stream = pubsub.on_message();
