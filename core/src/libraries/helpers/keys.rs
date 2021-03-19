@@ -157,3 +157,29 @@ pub mod storage {
         format!("{}:{}:host", storage_prefix(storage_id), provider_id)
     }
 }
+
+pub mod metrics {
+    pub mod http {
+        static_keys! {
+            NET_BYTES_TOTAL = "metrics:http:net.bytes.total".to_string();
+        }
+
+        pub fn requests_total(method: &str) -> String {
+            format!("metrics:http:requestsTotal:{}", method)
+        }
+    }
+
+    pub mod session {
+        pub fn log(level: &str) -> String {
+            format!("metrics:sessions:log:{}", level)
+        }
+
+        pub mod startup_histogram {
+            static_keys! {
+                BUCKETS = "metrics:sessions:startup.histogram:buckets".to_string();
+                SUM = "metrics:sessions:startup.histogram:sum".to_string();
+                COUNT = "metrics:sessions:startup.histogram:count".to_string();
+            }
+        }
+    }
+}
