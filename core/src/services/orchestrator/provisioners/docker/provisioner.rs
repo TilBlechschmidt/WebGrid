@@ -38,11 +38,13 @@ impl DockerProvisioner {
 #[async_trait]
 impl Provisioner for DockerProvisioner {
     fn capabilities(&self) -> ProvisionerCapabilities {
-        let browsers = self.images.iter().cloned().map(|i| i.1).collect();
-
         ProvisionerCapabilities {
             platform_name: "linux".to_owned(),
-            browsers,
+            browsers: self
+                .images
+                .iter()
+                .map(|(_, browser)| browser.to_owned())
+                .collect(),
         }
     }
 

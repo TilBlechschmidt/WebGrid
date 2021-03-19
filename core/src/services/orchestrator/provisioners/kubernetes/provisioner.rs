@@ -145,7 +145,11 @@ impl Provisioner for K8sProvisioner {
     fn capabilities(&self) -> ProvisionerCapabilities {
         ProvisionerCapabilities {
             platform_name: "linux".to_owned(),
-            browsers: Vec::new(),
+            browsers: self
+                .images
+                .iter()
+                .map(|(_, browser)| browser.to_owned())
+                .collect(),
         }
     }
 
