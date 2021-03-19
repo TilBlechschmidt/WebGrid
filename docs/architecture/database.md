@@ -201,11 +201,22 @@ During the lifecycle of a session each component generates status codes for trac
 }
 ```
 
-#### Slots
+#### Orchestrator
 ```javascript
 `metrics:slots:reclaimed.total` = Hashes {
 	dead = number
 	orphaned = number
+}
+```
+
+#### Storage
+```javascript
+`metrics:storage:disk.bytes.total` = Hashes {
+	<storage-id> = number
+}
+
+`metrics:storage:disk.bytes.used` = Hashes {
+	<storage-id> = number
 }
 ```
 
