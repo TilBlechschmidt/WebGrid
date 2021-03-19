@@ -3,6 +3,7 @@ use crate::libraries::helpers::{
     keys, parse_browser_string, wait_for, CapabilitiesRequest, Timeout,
 };
 use crate::libraries::lifecycle::logging::{LogCode, SessionLogger};
+use crate::libraries::metrics::MetricsEntry;
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
 use crate::libraries::scheduling::TaskManager;
 use crate::with_redis_resource;
@@ -13,7 +14,7 @@ use log::{debug, warn};
 use redis::{aio::ConnectionLike, pipe, AsyncCommands};
 use regex::Regex;
 use std::time::Duration;
-// use std::time::Instant;
+use std::time::Instant;
 use uuid::Uuid;
 
 pub async fn create_session(
@@ -23,7 +24,7 @@ pub async fn create_session(
     let log_con = with_redis_resource!(manager);
 
     // Allocate a session ID
-    // let session_creation_start = Instant::now();
+    let session_creation_start = Instant::now();
     let session_id = subtasks::create_new_session(&mut con, &manager.context).await?;
     let mut logger = SessionLogger::new(log_con, "manager".to_owned(), session_id.clone());
 
@@ -45,10 +46,12 @@ pub async fn create_session(
             .stop_beat(&keys::session::heartbeat::manager(&session_id))
             .await;
 
-        // let elapsed_seconds = session_creation_start.elapsed().as_secs_f64();
-        // ctx.metrics_tx
-        //     .send(MetricsEntry::SessionStarted(elapsed_seconds))
-        //     .ok();
+        let elapsed_seconds = session_creation_start.elapsed().as_secs_f64();
+        manager
+            .context
+            .metrics
+            .submit(MetricsEntry::SessionStarted(elapsed_seconds))
+            .ok();
     };
 
     // Create startup routine

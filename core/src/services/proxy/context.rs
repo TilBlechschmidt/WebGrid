@@ -1,10 +1,14 @@
 use super::routing_info::RoutingInfo;
-use crate::libraries::resources::{DefaultResourceManager, ResourceManagerProvider};
+use crate::libraries::{
+    metrics::MetricsProcessor,
+    resources::{DefaultResourceManager, ResourceManagerProvider},
+};
 
 #[derive(Clone)]
 pub struct Context {
     resource_manager: DefaultResourceManager,
     pub routing_info: RoutingInfo,
+    pub metrics: MetricsProcessor<Self, DefaultResourceManager>,
 }
 
 impl Context {
@@ -12,6 +16,7 @@ impl Context {
         Self {
             resource_manager: DefaultResourceManager::new(redis_url),
             routing_info: RoutingInfo::new(),
+            metrics: MetricsProcessor::default(),
         }
     }
 }

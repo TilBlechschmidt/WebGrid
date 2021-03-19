@@ -32,11 +32,13 @@ pub async fn run(shared_options: SharedOptions, options: Options) {
     let scheduler = JobScheduler::default();
 
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);
+    let metrics_job = context.metrics.clone();
     let watcher_job = WatcherJob::new();
     let proxy_job = ProxyJob::new(options.port);
 
     schedule!(scheduler, context, {
         status_job,
+        metrics_job,
         watcher_job,
         proxy_job
     });

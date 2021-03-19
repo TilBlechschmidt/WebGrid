@@ -1,12 +1,13 @@
-use crate::libraries::resources::DefaultResourceManager;
 use crate::libraries::{helpers::keys, lifecycle::BeatValue};
 use crate::libraries::{lifecycle::HeartBeat, resources::ResourceManagerProvider};
+use crate::libraries::{metrics::MetricsProcessor, resources::DefaultResourceManager};
 use std::ops::Deref;
 
 #[derive(Clone)]
 pub struct Context {
-    pub resource_manager: DefaultResourceManager,
+    resource_manager: DefaultResourceManager,
     pub heart_beat: HeartBeat<Self, DefaultResourceManager>,
+    pub metrics: MetricsProcessor<Self, DefaultResourceManager>,
 }
 
 impl Context {
@@ -17,6 +18,7 @@ impl Context {
         Self {
             resource_manager: DefaultResourceManager::new(redis_url),
             heart_beat,
+            metrics: MetricsProcessor::default(),
         }
     }
 }

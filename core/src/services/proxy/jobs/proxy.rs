@@ -1,11 +1,17 @@
 use super::super::{routing_info::RoutingInfo, Context};
-use crate::libraries::scheduling::{Job, TaskManager};
+use crate::libraries::{
+    metrics::MetricsEntry,
+    scheduling::{Job, TaskManager},
+};
 use anyhow::Result;
 use async_trait::async_trait;
-use hyper::service::{make_service_fn, service_fn};
+use hyper::{
+    body::HttpBody,
+    service::{make_service_fn, service_fn},
+};
 use hyper::{client::HttpConnector, Body, Client, Method, Request, Response, Server, StatusCode};
 use lazy_static::lazy_static;
-use log::{debug, info};
+use log::{debug, error, info};
 use regex::Regex;
 use std::convert::Infallible;
 
@@ -21,7 +27,6 @@ lazy_static! {
 pub struct ProxyJob {
     client: Client<HttpConnector>,
     port: u16,
-    // metrics_tx: UnboundedSender<MetricsEntry>,
 }
 
 #[async_trait]
@@ -34,12 +39,12 @@ impl Job for ProxyJob {
     async fn execute(&self, manager: TaskManager<Self::Context>) -> Result<()> {
         let make_svc = make_service_fn(|_conn| {
             let p = self.clone();
-            let info = manager.context.routing_info.clone();
+            let ctx = manager.context.clone();
             async {
                 Ok::<_, Infallible>(service_fn(move |req| {
                     let p = p.clone();
-                    let info = info.clone();
-                    async move { p.handle(req, &info).await }
+                    let ctx = ctx.clone();
+                    async move { p.handle(ctx, req).await }
                 }))
             }
         });
@@ -57,10 +62,10 @@ impl Job for ProxyJob {
 }
 
 impl ProxyJob {
-    pub fn new(port: u16 /*metrics_tx: UnboundedSender<MetricsEntry>*/) -> Self {
+    pub fn new(port: u16) -> Self {
         Self {
             client: Client::new(),
-            port, // metrics_tx,
+            port,
         }
     }
 
@@ -151,12 +156,14 @@ impl ProxyJob {
         }
     }
 
-    async fn handle(&self, req: Request<Body>, info: &RoutingInfo) -> Result<Response<Body>> {
-        // let req_method = req.method().clone();
-        // let req_size = req.body().size_hint().lower();
-        // self.metrics_tx
-        //     .send(MetricsEntry::IncomingTraffic(req_size))
-        //     .ok();
+    async fn handle(&self, context: Context, req: Request<Body>) -> Result<Response<Body>> {
+        let info = context.routing_info;
+        let req_method = req.method().clone();
+        let req_size = req.body().size_hint().lower();
+        context
+            .metrics
+            .submit(MetricsEntry::IncomingTraffic(req_size))
+            .ok();
 
         let path = req
             .uri()
@@ -164,13 +171,13 @@ impl ProxyJob {
             .map(|x| x.to_string())
             .unwrap_or_else(|| "".to_string());
 
-        if req.method() == Method::POST && path == "/session" {
-            self.handle_manager_request(req, info).await
+        let result = if req.method() == Method::POST && path == "/session" {
+            self.handle_manager_request(req, &info).await
         } else if path.starts_with("/api") || path.starts_with("/embed") {
-            self.handle_api_request(req, info).await
+            self.handle_api_request(req, &info).await
         } else if path.starts_with("/storage") {
             match REGEX_STORAGE_PATH.captures(&path) {
-                Some(caps) => self.handle_storage_request(req, &caps["sid"], info).await,
+                Some(caps) => self.handle_storage_request(req, &caps["sid"], &info).await,
                 None => {
                     debug!("{} {} -> NOT FOUND", req.method(), path);
 
@@ -182,7 +189,7 @@ impl ProxyJob {
             }
         } else {
             match REGEX_SESSION_PATH.captures(&path) {
-                Some(caps) => self.handle_session_request(req, &caps["sid"], info).await,
+                Some(caps) => self.handle_session_request(req, &caps["sid"], &info).await,
                 None => {
                     debug!("{} {} -> NOT FOUND", req.method(), path);
 
@@ -192,18 +199,35 @@ impl ProxyJob {
                         .unwrap())
                 }
             }
+        };
+
+        if let Ok(response) = &result {
+            let status_code = response.status();
+            let res_size = response.body().size_hint().lower();
+
+            context
+                .metrics
+                .submit(MetricsEntry::OutgoingTraffic(res_size))
+                .ok();
+            context
+                .metrics
+                .submit(MetricsEntry::RequestProcessed(req_method, status_code))
+                .ok();
+        } else if let Err(e) = &result {
+            error!(
+                "Encountered error while serving {} request to {}: {}",
+                req_method, path, e
+            );
+
+            context
+                .metrics
+                .submit(MetricsEntry::RequestProcessed(
+                    req_method,
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                ))
+                .ok();
         }
 
-        // if let Ok(response) = &result {
-        //     let status_code = response.status();
-        //     let res_size = response.body().size_hint().lower();
-
-        //     self.metrics_tx
-        //         .send(MetricsEntry::OutgoingTraffic(res_size))
-        //         .ok();
-        //     self.metrics_tx
-        //         .send(MetricsEntry::RequestProcessed(req_method, status_code))
-        //         .ok();
-        // }
+        result
     }
 }

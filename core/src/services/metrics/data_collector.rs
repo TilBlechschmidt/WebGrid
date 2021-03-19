@@ -1,6 +1,6 @@
-use super::structures::SESSION_STARTUP_HISTOGRAM_BUCKETS;
 use super::structures::{Metric, MetricType, MetricValue};
 use crate::libraries::helpers::keys;
+use crate::libraries::metrics::SESSION_STARTUP_HISTOGRAM_BUCKETS;
 use redis::{aio::ConnectionLike, AsyncCommands};
 
 static HTTP_METHODS: [&str; 9] = [

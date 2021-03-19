@@ -44,11 +44,13 @@ pub async fn run(shared_options: SharedOptions, options: Options) {
 
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);
     let heart_beat_job = context.heart_beat.clone();
+    let metrics_job = context.metrics.clone();
     let session_handler_job = SessionHandlerJob::new(options.port);
 
     schedule!(scheduler, context, {
         status_job,
         heart_beat_job,
+        metrics_job,
         session_handler_job
     });
 
