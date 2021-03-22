@@ -1,7 +1,7 @@
 version: "3"
 services:
   proxy:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.2.0-beta}
+    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.2.1-pipeline}
     platform: linux/amd64
     container_name: webgrid-proxy
     command: proxy --log debug,hyper=warn
@@ -10,23 +10,23 @@ services:
     depends_on:
       - redis
   manager:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.2.0-beta}
+    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.2.1-pipeline}
     platform: linux/amd64
     container_name: webgrid-manager
     command: manager example-manager webgrid-manager --log debug,hyper=warn
     depends_on:
       - redis
   orchestrator:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.2.0-beta}
+    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.2.1-pipeline}
     platform: linux/amd64
     container_name: webgrid-orchestrator
-    command: orchestrator --slot-count 5 example-orchestrator docker --images "${REPOSITORY:-webgrid}/node-firefox:${IMAGE_TAG:-v0.2.0-beta}=firefox::68.7.0esr,${REPOSITORY:-webgrid}/node-chrome:${IMAGE_TAG:-v0.2.0-beta}=chrome::81.0.4044.122" --log debug,hyper=warn
+    command: orchestrator --slot-count 5 example-orchestrator docker --images "${REPOSITORY:-webgrid}/node-firefox:${IMAGE_TAG:-v0.2.1-pipeline}=firefox::68.7.0esr,${REPOSITORY:-webgrid}/node-chrome:${IMAGE_TAG:-v0.2.1-pipeline}=chrome::81.0.4044.122" --log debug,hyper=warn
     depends_on:
       - redis
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   storage:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.2.0-beta}
+    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.2.1-pipeline}
     platform: linux/amd64
     container_name: webgrid-storage
     command: storage --log debug,hyper=warn --host webgrid-storage --storage-directory /storage --size-limit 10
@@ -35,14 +35,14 @@ services:
     volumes:
       - webgrid:/storage
   gc:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.2.0-beta}
+    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.2.1-pipeline}
     platform: linux/amd64
     container_name: webgrid-gc
     command: gc --log debug
     depends_on:
       - redis
   api:
-    image: ${REPOSITORY:-webgrid}/api:${IMAGE_TAG:-v0.2.0-beta}
+    image: ${REPOSITORY:-webgrid}/api:${IMAGE_TAG:-v0.2.1-pipeline}
     platform: linux/amd64
     container_name: webgrid-api
     environment:
