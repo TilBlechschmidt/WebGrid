@@ -1,11 +1,15 @@
-name: 🔎 Integration tests
+name: 🚀 Project build
 
-on: [push]
+on:
+  push:
+  release:
+    types: [published]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # ------------------ COMMON JOBS ------------------
   build-core:
     name: 🔨 Build Core
     runs-on: ubuntu-latest
@@ -15,9 +19,15 @@ jobs:
         with:
           path: |
             core/.cache
-          key: build-core-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          key: build-core-${{ github.event_name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+
       - name: Build core in debug configuration
+        if: github.event_name == 'push'
         run: make core-debug
+      - name: Build core in release configuration
+        if: github.event_name == 'release'
+        run: make core
+
       - name: Fix permission for cache
         run: sudo chmod -R 777 core/.cache
       - uses: actions/upload-artifact@v2
@@ -227,3 +237,143 @@ jobs:
           kubectl get services
 
           python3 test/integration.py 30007
+
+  # ------------------ RELEASE ONLY JOBS ------------------
+  docker-hub:
+    if: github.event_name == 'release'
+    name: 🐳 Publish Images to DockerHub
+    runs-on: ubuntu-latest
+    needs:
+      - bundle-api
+      - bundle-core
+      - bundle-node
+      - kubernetes-integration
+      - docker-integration
+    steps:
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: webgrid
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+      - name: Prepare environment
+        run: |
+          echo "SRC_REPOSITORY=ghcr.io/tilblechschmidt/webgrid" >> $GITHUB_ENV
+          echo "SRC_TAG=sha-${GITHUB_SHA::8}" >> $GITHUB_ENV
+
+          echo "DST_REPOSITORY=webgrid" >> $GITHUB_ENV
+          echo "DST_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      - name: Cross-push core
+        run: |
+          SRC_IMAGE=${{ env.SRC_REPOSITORY }}/core:${{ env.SRC_TAG }}
+          DST_IMAGE=${{ env.DST_REPOSITORY }}/core:${{ env.DST_TAG }}
+
+          echo "Pushing $SRC_IMAGE to $DST_IMAGE"
+          docker pull $SRC_IMAGE
+          docker tag $SRC_IMAGE $DST_IMAGE
+          docker push $DST_IMAGE
+      - name: Cross-push api
+        run: |
+          SRC_IMAGE=${{ env.SRC_REPOSITORY }}/core:${{ env.SRC_TAG }}
+          DST_IMAGE=${{ env.DST_REPOSITORY }}/core:${{ env.DST_TAG }}
+
+          echo "Pushing $SRC_IMAGE to $DST_IMAGE"
+          docker pull $SRC_IMAGE
+          docker tag $SRC_IMAGE $DST_IMAGE
+          docker push $DST_IMAGE
+      - name: Cross-push node
+        run: |
+          SRC_IMAGE=${{ env.SRC_REPOSITORY }}/core:${{ env.SRC_TAG }}
+          DST_IMAGE=${{ env.DST_REPOSITORY }}/core:${{ env.DST_TAG }}
+
+          echo "Pushing $SRC_IMAGE to $DST_IMAGE"
+          docker pull $SRC_IMAGE
+          docker tag $SRC_IMAGE $DST_IMAGE
+          docker push $DST_IMAGE
+
+  publish-docs:
+    if: github.event_name == 'release'
+    name: 📚 Publish Docs to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: [build-core, docker-hub]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: core-documentation
+          path: .artifacts/core-documentation
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      - name: Install mkdocs theme & plugins
+        run: |
+          pip3 install --no-cache \
+            'mkdocs-git-revision-date-localized-plugin>=0.4' \
+            'mkdocs-material' \
+            'mkdocs-mermaid2-plugin' \
+            'mkdocs-codeinclude-plugin' \
+            'mkdocs-material-extensions' \
+            'mkdocs-simple-hooks' \
+            'git+http://github.com/TilBlechschmidt/mkdocs-helm'
+
+      - name: Build & deploy documentation
+        env:
+          HELM_USE_GIT_TAG: true
+        run: |
+          mkdocs --version
+          mkdocs gh-deploy --force
+
+  github-release:
+    if: github.event_name == 'release'
+    name: 🐙 Update GitHub Release
+    needs: [build-core, build-api]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: core-executable
+          path: .artifacts/core-executable
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: api-executable
+          path: .artifacts/api-executable
+
+      - name: Build release asset upload url
+        run: |
+          RELEASE_ID=$(jq --raw-output '.release.id' $GITHUB_EVENT_PATH)
+          if [[ -z "${RELEASE_ID}" ]]; then
+            echo "There was no release ID in the GitHub event."
+            exit 1
+          fi
+
+          RELEASE_ASSET_UPLOAD_URL="https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets"
+          echo "$RELEASE_ASSET_UPLOAD_URL"
+          echo "RELEASE_ASSET_UPLOAD_URL=$RELEASE_ASSET_UPLOAD_URL" >> $GITHUB_ENV
+
+      - name: Attach Core executable
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.RELEASE_ASSET_UPLOAD_URL }}?name=webgrid-core-linux
+          asset_path: .artifacts/core-executable/webgrid
+          asset_name: webgrid-core-linux
+          asset_content_type: application/octet-stream
+
+      - name: Attach API executable
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.RELEASE_ASSET_UPLOAD_URL }}?name=webgrid-api.js
+          asset_path: .artifacts/api-executable/index.js
+          asset_name: webgrid-api.js
+          asset_content_type: application/javascript
