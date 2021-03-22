@@ -8,10 +8,10 @@
 <meta content="Decentralized, scalable and robust implementation of a selenium-grid equivalent. Based on the WebDriver specification by the W3C." name="description"/>
 <meta content="Til Blechschmidt" name="author"/>
 <link href="https://webgrid.dev/faq/" rel="canonical"/>
-<link href="../assets/images/favicon.png" rel="shortcut icon"/>
-<meta content="mkdocs-1.1.2, mkdocs-material-7.0.4" name="generator"/>
+<link href="../assets/images/favicon.png" rel="icon"/>
+<meta content="mkdocs-1.1.2, mkdocs-material-7.0.6" name="generator"/>
 <title>FAQ - WebGrid</title>
-<link href="../assets/stylesheets/main.77f3fd56.min.css" rel="stylesheet"/>
+<link href="../assets/stylesheets/main.2c0c5eaf.min.css" rel="stylesheet"/>
 <link href="../assets/stylesheets/palette.7fa14f5b.min.css" rel="stylesheet"/>
 <meta content="#009485" name="theme-color"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -32,7 +32,7 @@
 </div>
 <header class="md-header" data-md-component="header">
 <nav aria-label="Header" class="md-header__inner md-grid">
-<a aria-label="WebGrid" class="md-header__button md-logo" href="https://webgrid.dev/" title="WebGrid">
+<a aria-label="WebGrid" class="md-header__button md-logo" data-md-component="logo" href=".." title="WebGrid">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"></path></svg>
 </a>
 <label class="md-header__button md-icon" for="__drawer">
@@ -97,14 +97,50 @@
 </nav>
 </header>
 <div class="md-container" data-md-component="container">
+<nav aria-label="Tabs" class="md-tabs" data-md-component="tabs">
+<div class="md-tabs__inner md-grid">
+<ul class="md-tabs__list">
+<li class="md-tabs__item">
+<a class="md-tabs__link md-tabs__link--active" href="..">
+        Home
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../features/api/">
+        Features
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../kubernetes/configuration/">
+        Kubernetes
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../contribute/">
+        Contribute
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../architecture/">
+        Architecture
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="https://github.com/TilBlechschmidt/WebGrid/issues">
+        Issue Tracker
+      </a>
+</li>
+</ul>
+</div>
+</nav>
 <main class="md-main" data-md-component="main">
 <div class="md-main__inner md-grid">
 <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
 <div class="md-sidebar__scrollwrap">
 <div class="md-sidebar__inner">
-<nav aria-label="Navigation" class="md-nav md-nav--primary" data-md-level="0">
+<nav aria-label="Navigation" class="md-nav md-nav--primary md-nav--lifted" data-md-level="0">
 <label class="md-nav__title" for="__drawer">
-<a aria-label="WebGrid" class="md-nav__button md-logo" href="https://webgrid.dev/" title="WebGrid">
+<a aria-label="WebGrid" class="md-nav__button md-logo" data-md-component="logo" href=".." title="WebGrid">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"></path></svg>
 </a>
     WebGrid
@@ -120,9 +156,21 @@
 </a>
 </div>
 <ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--active md-nav__item--nested">
+<input checked="" class="md-nav__toggle md-toggle" data-md-toggle="__nav_1" id="__nav_1" type="checkbox"/>
+<label class="md-nav__link" for="__nav_1">
+        Home
+        <span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-label="Home" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_1">
+<span class="md-nav__icon md-icon"></span>
+          Home
+        </label>
+<ul class="md-nav__list" data-md-scrollfix="">
 <li class="md-nav__item">
 <a class="md-nav__link" href="..">
-        Home
+        Index
       </a>
 </li>
 <li class="md-nav__item">
@@ -146,25 +194,6 @@
     </label>
 <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#technical-details">
-    Technical details
-  </a>
-<nav aria-label="Technical details" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#does-it-work-with-selenium">
-    Does it work with Selenium?
-  </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#how-well-does-it-scale">
-    How well does it scale
-  </a>
-</li>
-</ul>
-</nav>
-</li>
-<li class="md-nav__item">
 <a class="md-nav__link" href="#about-this-project">
     About this project
   </a>
@@ -185,6 +214,30 @@
     Why are there so few issues in the tracker?
   </a>
 </li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#technical-details">
+    Technical details
+  </a>
+<nav aria-label="Technical details" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#does-it-work-with-selenium">
+    Does it work with Selenium?
+  </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#how-well-does-it-scale">
+    How well does it scale
+  </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#what-is-this-sorcery">
+    What is this sorcery?! 🧙‍♂️
+  </a>
+</li>
 <li class="md-nav__item">
 <a class="md-nav__link" href="#where-is-the-latest-tag">
     Where is the latest tag?
@@ -196,14 +249,17 @@
 </ul>
 </nav>
 </li>
+</ul>
+</nav>
+</li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" id="__nav_4" type="checkbox"/>
-<label class="md-nav__link" for="__nav_4">
+<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" id="__nav_2" type="checkbox"/>
+<label class="md-nav__link" for="__nav_2">
         Features
         <span class="md-nav__icon md-icon"></span>
 </label>
 <nav aria-label="Features" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_4">
+<label class="md-nav__title" for="__nav_2">
 <span class="md-nav__icon md-icon"></span>
           Features
         </label>
@@ -227,13 +283,13 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" id="__nav_5" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5">
+<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" id="__nav_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3">
         Kubernetes
         <span class="md-nav__icon md-icon"></span>
 </label>
 <nav aria-label="Kubernetes" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_5">
+<label class="md-nav__title" for="__nav_3">
 <span class="md-nav__icon md-icon"></span>
           Kubernetes
         </label>
@@ -262,13 +318,13 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" id="__nav_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_6">
+<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" id="__nav_4" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4">
         Contribute
         <span class="md-nav__icon md-icon"></span>
 </label>
 <nav aria-label="Contribute" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_6">
+<label class="md-nav__title" for="__nav_4">
 <span class="md-nav__icon md-icon"></span>
           Contribute
         </label>
@@ -307,13 +363,13 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" id="__nav_7" type="checkbox"/>
-<label class="md-nav__link" for="__nav_7">
+<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" id="__nav_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5">
         Architecture
         <span class="md-nav__icon md-icon"></span>
 </label>
 <nav aria-label="Architecture" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_7">
+<label class="md-nav__title" for="__nav_5">
 <span class="md-nav__icon md-icon"></span>
           Architecture
         </label>
@@ -352,13 +408,13 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" id="__nav_8" type="checkbox"/>
-<label class="md-nav__link" for="__nav_8">
+<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6">
         Issue Tracker
         <span class="md-nav__icon md-icon"></span>
 </label>
 <nav aria-label="Issue Tracker" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_8">
+<label class="md-nav__title" for="__nav_6">
 <span class="md-nav__icon md-icon"></span>
           Issue Tracker
         </label>
@@ -386,25 +442,6 @@
     </label>
 <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#technical-details">
-    Technical details
-  </a>
-<nav aria-label="Technical details" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#does-it-work-with-selenium">
-    Does it work with Selenium?
-  </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#how-well-does-it-scale">
-    How well does it scale
-  </a>
-</li>
-</ul>
-</nav>
-</li>
-<li class="md-nav__item">
 <a class="md-nav__link" href="#about-this-project">
     About this project
   </a>
@@ -423,6 +460,30 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="#why-are-there-so-few-issues-in-the-tracker">
     Why are there so few issues in the tracker?
+  </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#technical-details">
+    Technical details
+  </a>
+<nav aria-label="Technical details" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#does-it-work-with-selenium">
+    Does it work with Selenium?
+  </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#how-well-does-it-scale">
+    How well does it scale
+  </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#what-is-this-sorcery">
+    What is this sorcery?! 🧙‍♂️
   </a>
 </li>
 <li class="md-nav__item">
@@ -444,18 +505,13 @@
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"></path></svg>
 </a>
 <h1 id="faq">FAQ<a class="headerlink" href="#faq" title="Permanent link">¶</a></h1>
-<h2 id="technical-details">Technical details<a class="headerlink" href="#technical-details" title="Permanent link">¶</a></h2>
-<h3 id="does-it-work-with-selenium">Does it work with Selenium?<a class="headerlink" href="#does-it-work-with-selenium" title="Permanent link">¶</a></h3>
-<p>Yes it does, thanks to the standardization of the underlying protocol by the W3C.</p>
-<h3 id="how-well-does-it-scale">How well does it scale<a class="headerlink" href="#how-well-does-it-scale" title="Permanent link">¶</a></h3>
-<p>Let's just say that we haven't reached any performance limits yet in our internal testing with a few hundred browser instances. In theory, the only limit is your cluster bandwidth and to some degree the performance of the Redis database server (although this only affects session creation and not running browser sessions).</p>
 <h2 id="about-this-project">About this project<a class="headerlink" href="#about-this-project" title="Permanent link">¶</a></h2>
 <h3 id="why-does-this-exist">Why does this exist?<a class="headerlink" href="#why-does-this-exist" title="Permanent link">¶</a></h3>
 <p>As of early 2020 only a handful solutions for distributed selenium based software tests existed. Most of these did not provide support for advanced features like dynamic scaling/provisioning and efficient video recordings with additional problems like thread safety issues and poor scaling for large scale applications with hundreds of browsers.</p>
 <details class="info"><summary>Selenium Grid</summary><p><a href="https://www.selenium.dev/documentation/en/grid/">Selenium Grid</a> has been in use at my current workplace for some years and worked acceptable. However, with projects growing in both test volume and manpower the amount of concurrent browsers grew rather quickly. This exposed <a href="https://github.com/SeleniumHQ/selenium/issues/3574">known bottlenecks</a> in the single-proxy design of the Selenium Grid's architecture (which yielded projects like <a href="https://github.com/seleniumkit/gridrouter">GridRouter</a> which try to work around the fundamental design problem). Additionally, it raised concerns about the constant resource usage due to the static allocation of nodes creating a requirement for dynamic allocation.</p>
-<p>Add to this the fact that Grid 3 has no official support anymore and Grid 4 has been in development for about two years now with no release date in sight!</p>
+<p>Add to this the fact that Grid 3 has no official support anymore and Grid 4 has been in development for about two years now with no release date in sight (Grid 4 also lacks features like dynamic scalability and screen recordings)!</p>
 </details>
-<details class="info"><summary>Zalenium</summary><p>Zalando ran into similar findings and created an extension to the regular Selenium Grid called <a href="https://github.com/zalando/zalenium">Zalenium</a>. It boasts features like a dashboard with VNC viewers and screen recordings. However, it had some its own fair share of issues on top of the ones that the regular grid exposed, yielding even worse test flakiness on a daily basis.</p>
+<details class="info"><summary>Zalenium</summary><p>Zalando ran into similar findings and created an extension to the regular Selenium Grid called <a href="https://github.com/zalando/zalenium">Zalenium</a>. It boasts features like a dashboard with VNC viewers and screen recordings. However, it had its own fair share of issues on top of the ones that the regular grid exposed, yielding even worse test flakiness on a daily basis.</p>
 <p>Zalando stopped maintaining the project as of early 2020.</p>
 </details>
 <details class="info"><summary>Commercial solutions</summary><p>Aerokube provides a commercial off-the-shelve solution for scalable selenium grids in Kubernetes. However, for our application the pricing philosophy was out of reach by a long stretch and it was cheaper to set aside some development resources to create this Open Source solution with the added benefit of making scalable Grids available to the community!</p>
@@ -463,9 +519,19 @@
 <p>This lead to a investigation of our options to continue Selenium tests with dynamic scaling, screen recording and other future additions on the wish-list. As the underlying protocol of Selenium has been standardized by the W3C we reached the conclusion that it was feasible to develop our own solution to this problem within a few months time. With that this project was born in April 2020.</p>
 <h3 id="who-is-behind-this">Who is behind this?<a class="headerlink" href="#who-is-behind-this" title="Permanent link">¶</a></h3>
 <p>The project originates from an internal requirement at <a href="https://www.ppi.de/en/">PPI AG</a>. However, as the project progressed it became clear that other people could greatly benefit from it. I have personally taken over the public development and maintenance of the project on GitHub and it is no longer directly affiliated with the PPI AG nor does the company provide any kind of support or responsibility!</p>
-<p>I am a computer science student from Germany, currently working at PPI AG and studying Applied Computer Science at the <a href="https://nordakademie.de">Nordakademie</a> in my last semester.</p>
+<p>I am a software engineer from Germany who recently graduated from the <a href="https://nordakademie.de">Nordakademie</a> and currently works at PPI AG.</p>
 <h3 id="why-are-there-so-few-issues-in-the-tracker">Why are there so few issues in the tracker?<a class="headerlink" href="#why-are-there-so-few-issues-in-the-tracker" title="Permanent link">¶</a></h3>
 <p>The project has been developed internally at first using a private GitLab instance. Later, the decision to go public has been made and everything except past issues has been moved over.</p>
+<h2 id="technical-details">Technical details<a class="headerlink" href="#technical-details" title="Permanent link">¶</a></h2>
+<h3 id="does-it-work-with-selenium">Does it work with Selenium?<a class="headerlink" href="#does-it-work-with-selenium" title="Permanent link">¶</a></h3>
+<p>Yes it does, thanks to the standardization of the underlying protocol by the W3C. See <a href="#what-is-this-sorcery">below</a>.</p>
+<h3 id="how-well-does-it-scale">How well does it scale<a class="headerlink" href="#how-well-does-it-scale" title="Permanent link">¶</a></h3>
+<p>Let's just say that we haven't reached any performance limits yet in our internal testing with a few hundred browser instances. In theory, the only limit is your cluster bandwidth and to some degree the performance of the Redis database server (although this only affects session creation and not running browser sessions).</p>
+<h3 id="what-is-this-sorcery">What is this sorcery?! 🧙‍♂️<a class="headerlink" href="#what-is-this-sorcery" title="Permanent link">¶</a></h3>
+<p>No magic, just standardization and a efficient architecture 😉</p>
+<p>WebGrid relies on the <a href="https://www.w3.org/TR/webdriver1/">WebDriver</a> specification. When you execute a Selenium Test, you are effectively speaking to an implementation of this protocol. Almost all browser vendors provide such an API for their browser. Both Selenium Grid and WebGrid are just intermediates who delegate your requests to a browser.</p>
+<p>The standardization allows us to implement a completely transparent solution which looks just like your local browser or Selenium Grid. Furthermore, by employing a modern architecture, which is built for stability and performance with clusters and dynamic deployment of browsers in mind, we can provide significantly better scalability and speed!</p>
+<p>If you have any questions about the inner workings don't hesitate to ask either on <a href="https://github.com/TilBlechschmidt/WebGrid/discussions">GitHub Discussions</a>, the <a href="https://discord.gg/yYaPcNM">official Discord server</a>, or by contacting me via <a href="mailto:til@blechschmidt.dev">mail</a>!</p>
 <h3 id="where-is-the-latest-tag">Where is the latest tag?<a class="headerlink" href="#where-is-the-latest-tag" title="Permanent link">¶</a></h3>
 <p>We believe that the <code>:latest</code> in Docker <a href="https://vsupalov.com/docker-latest-tag/">is</a> <a href="https://medium.com/@mccode/the-misunderstood-docker-tag-latest-af3babfd6375">very</a> <a href="https://blog.container-solutions.com/docker-latest-confusion">evil</a> <a href="https://developers.redhat.com/blog/2016/02/24/10-things-to-avoid-in-docker-containers/">and</a> <a href="https://medium.com/@tariq.m.islam/container-deployments-a-lesson-in-deterministic-ops-a4a467b14a03">dangerous</a>. Apart from the problem that it is just <em>yet another tag</em> and everything else being purely convention, you should make a conscious choice to upgrade your production environment from one version to another.</p>
 <p>For this reason we are releasing versions on all distribution platforms following the <a href="https://semver.org">SemVer 2.0</a> convention so you can know which versions are safe and which might require some more work. Additionally, all Helm charts and Compose files use pinned versions for the Docker images.</p>
@@ -473,7 +539,7 @@
 <div class="md-source-date">
 <small>
     
-      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 30, 2020</span>
+      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 18, 2021</span>
 </small>
 </div>
 </article>
@@ -542,8 +608,8 @@
 <div class="md-dialog" data-md-component="dialog">
 <div class="md-dialog__inner md-typeset"></div>
 </div>
-<script id="__config" type="application/json">{"base": "..", "features": ["tabs"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../assets/javascripts/workers/search.fb4a9340.min.js", "version": null}</script>
-<script src="../assets/javascripts/bundle.9b151c6a.min.js"></script>
+<script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../assets/javascripts/workers/search.fb4a9340.min.js", "version": null}</script>
+<script src="../assets/javascripts/bundle.a1c7c35e.min.js"></script>
 <script src="https://unpkg.com/mermaid@8.5.0/dist/mermaid.min.js"></script>
 </body>
 </html>

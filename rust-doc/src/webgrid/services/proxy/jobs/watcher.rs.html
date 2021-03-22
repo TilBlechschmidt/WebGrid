@@ -294,8 +294,19 @@
 <span id="291">291</span>
 <span id="292">292</span>
 <span id="293">293</span>
+<span id="294">294</span>
+<span id="295">295</span>
+<span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
+<span id="303">303</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::<span class="kw">super</span>::{<span class="ident">routing_info</span>::<span class="ident">RoutingInfo</span>, <span class="ident">Context</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">helpers</span>::<span class="ident">keys</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">resources</span>::{<span class="ident">PubSub</span>, <span class="ident">ResourceManager</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">scheduling</span>::{<span class="ident">Job</span>, <span class="ident">TaskManager</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">with_redis_resource</span>;
@@ -309,14 +320,14 @@
 <span class="kw">use</span> <span class="ident">thiserror</span>::<span class="ident">Error</span>;
 <span class="kw">use</span> <span class="ident">tokio</span>::<span class="ident">task</span>::<span class="ident">yield_now</span>;
 
-<span class="kw">const</span> <span class="ident">PATTERN_MANAGER</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;__keyspace@0__:manager:*:heartbeat&quot;</span>;
 <span class="kw">const</span> <span class="ident">PATTERN_SESSION</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;__keyspace@0__:session:*:heartbeat.node&quot;</span>;
+<span class="kw">const</span> <span class="ident">PATTERN_MANAGER</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;__keyspace@0__:manager:*:host&quot;</span>;
 <span class="kw">const</span> <span class="ident">PATTERN_STORAGE</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;__keyspace@0__:storage:*:*:host&quot;</span>;
 <span class="kw">const</span> <span class="ident">PATTERN_API</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;__keyspace@0__:api:*:host&quot;</span>;
 
 <span class="macro">lazy_static</span><span class="macro">!</span> {
     <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">REGEX_MANAGER</span>: <span class="ident">Regex</span> <span class="op">=</span>
-        <span class="ident">Regex</span>::<span class="ident">new</span>(<span class="string">r&quot;__keyspace@0__:manager:(?P&lt;mid&gt;[^:]+):heartbeat&quot;</span>).<span class="ident">unwrap</span>();
+        <span class="ident">Regex</span>::<span class="ident">new</span>(<span class="string">r&quot;__keyspace@0__:manager:(?P&lt;mid&gt;[^:]+):host&quot;</span>).<span class="ident">unwrap</span>();
     <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">REGEX_SESSION</span>: <span class="ident">Regex</span> <span class="op">=</span>
         <span class="ident">Regex</span>::<span class="ident">new</span>(<span class="string">r&quot;__keyspace@0__:session:(?P&lt;sid&gt;[^:]+):heartbeat\.node&quot;</span>).<span class="ident">unwrap</span>();
     <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">REGEX_STORAGE</span>: <span class="ident">Regex</span> <span class="op">=</span>
@@ -373,6 +384,8 @@
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">stream</span> <span class="op">=</span> <span class="ident">pubsub</span>.<span class="ident">on_message</span>();
 
+        <span class="self">self</span>.<span class="ident">request_heartbeat_refresh</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">redis</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+
         <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">msg</span>)) <span class="op">=</span> <span class="ident">stream</span>.<span class="ident">try_next</span>().<span class="kw">await</span> {
             <span class="self">self</span>.<span class="ident">process_message</span>(<span class="ident">msg</span>, <span class="kw-2">&amp;</span><span class="ident">manager</span>.<span class="ident">context</span>.<span class="ident">routing_info</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">redis</span>)
                 .<span class="kw">await</span><span class="question-mark">?</span>;
@@ -388,6 +401,16 @@
 <span class="kw">impl</span> <span class="ident">WatcherJob</span> {
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {}
+    }
+
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">request_heartbeat_refresh</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">con</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> (<span class="kw">impl</span> <span class="ident">ConnectionLike</span> <span class="op">+</span> <span class="ident">AsyncCommands</span>),
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="ident">con</span>.<span class="ident">publish</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span>, ()<span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">keys</span>::<span class="ident">HEARTBEAT_REFRESH_CHANNEL</span>, <span class="string">&quot;Please refresh 🙃&quot;</span>)
+            .<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">verify_keyspace_events_config</span>(
@@ -456,18 +479,15 @@
             <span class="kw">match</span> <span class="ident">operation</span> {
                 <span class="comment">// Manager has been added</span>
                 <span class="string">&quot;expire&quot;</span> <span class="op">=</span><span class="op">&gt;</span> {
-                    <span class="kw">let</span> <span class="ident">data_key</span> <span class="op">=</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;manager:{}&quot;</span>, <span class="ident">manager_id</span>);
-                    <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">con</span>
-                        .<span class="ident">hget</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="kw">_</span>, (<span class="ident">String</span>, <span class="ident">String</span>)<span class="op">&gt;</span>(<span class="ident">data_key</span>, <span class="kw-2">&amp;</span>[<span class="string">&quot;host&quot;</span>, <span class="string">&quot;port&quot;</span>])
-                        .<span class="kw">await</span>;
+                    <span class="kw">let</span> <span class="ident">data_key</span> <span class="op">=</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;manager:{}:host&quot;</span>, <span class="ident">manager_id</span>);
 
-                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>((<span class="ident">host</span>, <span class="ident">port</span>)) <span class="op">=</span> <span class="ident">res</span> {
+                    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">addr</span>) <span class="op">=</span> <span class="ident">con</span>.<span class="ident">get</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">String</span><span class="op">&gt;</span>(<span class="ident">data_key</span>).<span class="kw">await</span> {
                         <span class="kw">if</span> <span class="ident">info</span>
-                            .<span class="ident">add_manager_upstream</span>(<span class="ident">manager_id</span>.<span class="ident">to_string</span>(), <span class="kw-2">&amp;</span><span class="ident">host</span>, <span class="kw-2">&amp;</span><span class="ident">port</span>)
+                            .<span class="ident">add_manager_upstream</span>(<span class="ident">manager_id</span>.<span class="ident">to_string</span>(), <span class="kw-2">&amp;</span><span class="ident">addr</span>)
                             .<span class="kw">await</span>
                             .<span class="ident">is_none</span>()
                         {
-                            <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;+ Manager {} @ {}:{}&quot;</span>, <span class="ident">manager_id</span>, <span class="ident">host</span>, <span class="ident">port</span>);
+                            <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;+ Manager {} @ {}&quot;</span>, <span class="ident">manager_id</span>, <span class="ident">addr</span>);
                         }
                     }
                 }

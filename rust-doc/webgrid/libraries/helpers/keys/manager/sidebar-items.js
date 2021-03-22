@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["heartbeat",""],["manager_prefix",""],["metadata",""]],"struct":[["LIST",""]]});
+initSidebarItems({"fn":[["host",""]]});

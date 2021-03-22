@@ -8,10 +8,10 @@
 <meta content="Decentralized, scalable and robust implementation of a selenium-grid equivalent. Based on the WebDriver specification by the W3C." name="description"/>
 <meta content="Til Blechschmidt" name="author"/>
 <link href="https://webgrid.dev/architecture/database/" rel="canonical"/>
-<link href="../../assets/images/favicon.png" rel="shortcut icon"/>
-<meta content="mkdocs-1.1.2, mkdocs-material-7.0.4" name="generator"/>
+<link href="../../assets/images/favicon.png" rel="icon"/>
+<meta content="mkdocs-1.1.2, mkdocs-material-7.0.6" name="generator"/>
 <title>Database - WebGrid</title>
-<link href="../../assets/stylesheets/main.77f3fd56.min.css" rel="stylesheet"/>
+<link href="../../assets/stylesheets/main.2c0c5eaf.min.css" rel="stylesheet"/>
 <link href="../../assets/stylesheets/palette.7fa14f5b.min.css" rel="stylesheet"/>
 <meta content="#009485" name="theme-color"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -32,7 +32,7 @@
 </div>
 <header class="md-header" data-md-component="header">
 <nav aria-label="Header" class="md-header__inner md-grid">
-<a aria-label="WebGrid" class="md-header__button md-logo" href="https://webgrid.dev/" title="WebGrid">
+<a aria-label="WebGrid" class="md-header__button md-logo" data-md-component="logo" href="../.." title="WebGrid">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"></path></svg>
 </a>
 <label class="md-header__button md-icon" for="__drawer">
@@ -97,14 +97,50 @@
 </nav>
 </header>
 <div class="md-container" data-md-component="container">
+<nav aria-label="Tabs" class="md-tabs" data-md-component="tabs">
+<div class="md-tabs__inner md-grid">
+<ul class="md-tabs__list">
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../..">
+        Home
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../features/api/">
+        Features
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../kubernetes/configuration/">
+        Kubernetes
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../contribute/">
+        Contribute
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link md-tabs__link--active" href="../">
+        Architecture
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="https://github.com/TilBlechschmidt/WebGrid/issues">
+        Issue Tracker
+      </a>
+</li>
+</ul>
+</div>
+</nav>
 <main class="md-main" data-md-component="main">
 <div class="md-main__inner md-grid">
 <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
 <div class="md-sidebar__scrollwrap">
 <div class="md-sidebar__inner">
-<nav aria-label="Navigation" class="md-nav md-nav--primary" data-md-level="0">
+<nav aria-label="Navigation" class="md-nav md-nav--primary md-nav--lifted" data-md-level="0">
 <label class="md-nav__title" for="__drawer">
-<a aria-label="WebGrid" class="md-nav__button md-logo" href="https://webgrid.dev/" title="WebGrid">
+<a aria-label="WebGrid" class="md-nav__button md-logo" data-md-component="logo" href="../.." title="WebGrid">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"></path></svg>
 </a>
     WebGrid
@@ -120,9 +156,21 @@
 </a>
 </div>
 <ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_1" id="__nav_1" type="checkbox"/>
+<label class="md-nav__link" for="__nav_1">
+        Home
+        <span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-label="Home" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_1">
+<span class="md-nav__icon md-icon"></span>
+          Home
+        </label>
+<ul class="md-nav__list" data-md-scrollfix="">
 <li class="md-nav__item">
 <a class="md-nav__link" href="../..">
-        Home
+        Index
       </a>
 </li>
 <li class="md-nav__item">
@@ -135,14 +183,17 @@
         FAQ
       </a>
 </li>
+</ul>
+</nav>
+</li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" id="__nav_4" type="checkbox"/>
-<label class="md-nav__link" for="__nav_4">
+<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" id="__nav_2" type="checkbox"/>
+<label class="md-nav__link" for="__nav_2">
         Features
         <span class="md-nav__icon md-icon"></span>
 </label>
 <nav aria-label="Features" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_4">
+<label class="md-nav__title" for="__nav_2">
 <span class="md-nav__icon md-icon"></span>
           Features
         </label>
@@ -166,13 +217,13 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" id="__nav_5" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5">
+<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" id="__nav_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3">
         Kubernetes
         <span class="md-nav__icon md-icon"></span>
 </label>
 <nav aria-label="Kubernetes" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_5">
+<label class="md-nav__title" for="__nav_3">
 <span class="md-nav__icon md-icon"></span>
           Kubernetes
         </label>
@@ -201,13 +252,13 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" id="__nav_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_6">
+<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" id="__nav_4" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4">
         Contribute
         <span class="md-nav__icon md-icon"></span>
 </label>
 <nav aria-label="Contribute" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_6">
+<label class="md-nav__title" for="__nav_4">
 <span class="md-nav__icon md-icon"></span>
           Contribute
         </label>
@@ -246,13 +297,13 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--active md-nav__item--nested">
-<input checked="" class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" id="__nav_7" type="checkbox"/>
-<label class="md-nav__link" for="__nav_7">
+<input checked="" class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" id="__nav_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5">
         Architecture
         <span class="md-nav__icon md-icon"></span>
 </label>
 <nav aria-label="Architecture" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_7">
+<label class="md-nav__title" for="__nav_5">
 <span class="md-nav__icon md-icon"></span>
           Architecture
         </label>
@@ -278,6 +329,12 @@
     </label>
 <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
 <li class="md-nav__item">
+<a class="md-nav__link" href="#keys">
+    Keys
+  </a>
+<nav aria-label="Keys" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
 <a class="md-nav__link" href="#root-lists">
     Root lists
   </a>
@@ -285,6 +342,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="#configuration">
     Configuration
+  </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#manager">
+    Manager
   </a>
 </li>
 <li class="md-nav__item">
@@ -320,7 +382,7 @@
   </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#manager">
+<a class="md-nav__link" href="#manager_1">
     Manager
   </a>
 </li>
@@ -333,11 +395,6 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="#orchestrators">
     Orchestrators
-  </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#manager_1">
-    Manager
   </a>
 </li>
 <li class="md-nav__item">
@@ -363,6 +420,14 @@
 </li>
 </ul>
 </nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#garbage-collection">
+    Garbage collection
+  </a>
 </li>
 </ul>
 </nav>
@@ -391,13 +456,13 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" id="__nav_8" type="checkbox"/>
-<label class="md-nav__link" for="__nav_8">
+<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6">
         Issue Tracker
         <span class="md-nav__icon md-icon"></span>
 </label>
 <nav aria-label="Issue Tracker" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_8">
+<label class="md-nav__title" for="__nav_6">
 <span class="md-nav__icon md-icon"></span>
           Issue Tracker
         </label>
@@ -425,6 +490,12 @@
     </label>
 <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
 <li class="md-nav__item">
+<a class="md-nav__link" href="#keys">
+    Keys
+  </a>
+<nav aria-label="Keys" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
 <a class="md-nav__link" href="#root-lists">
     Root lists
   </a>
@@ -432,6 +503,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="#configuration">
     Configuration
+  </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#manager">
+    Manager
   </a>
 </li>
 <li class="md-nav__item">
@@ -467,7 +543,7 @@
   </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#manager">
+<a class="md-nav__link" href="#manager_1">
     Manager
   </a>
 </li>
@@ -480,11 +556,6 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="#orchestrators">
     Orchestrators
-  </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#manager_1">
-    Manager
   </a>
 </li>
 <li class="md-nav__item">
@@ -513,6 +584,14 @@
 </li>
 </ul>
 </nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#garbage-collection">
+    Garbage collection
+  </a>
+</li>
+</ul>
+</nav>
 </div>
 </div>
 </div>
@@ -522,14 +601,14 @@
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"></path></svg>
 </a>
 <h1 id="database">Database<a class="headerlink" href="#database" title="Permanent link">¶</a></h1>
+<h2 id="keys">Keys<a class="headerlink" href="#keys" title="Permanent link">¶</a></h2>
 <p>All metadata is stored in a key-value in-memory database called <a href="https://redis.io">Redis</a>.  Below is a list of all keys that are currently in use, annotated with their type and format (if applicable).</p>
-<h2 id="root-lists">Root lists<a class="headerlink" href="#root-lists" title="Permanent link">¶</a></h2>
+<h3 id="root-lists">Root lists<a class="headerlink" href="#root-lists" title="Permanent link">¶</a></h3>
 <div class="highlight"><pre><span></span><code><span class="sb">`orchestrators`</span> <span class="o">=</span> <span class="nx">Set</span><span class="o">&lt;</span><span class="nx">string</span><span class="o">&gt;</span>       <span class="c1">// uuids</span>
-<span class="sb">`managers`</span> <span class="o">=</span> <span class="nx">Set</span><span class="o">&lt;</span><span class="nx">string</span><span class="o">&gt;</span>            <span class="c1">// uuids</span>
 <span class="sb">`sessions.active`</span> <span class="o">=</span> <span class="nx">Set</span><span class="o">&lt;</span><span class="nx">string</span><span class="o">&gt;</span>     <span class="c1">// uuids</span>
 <span class="sb">`sessions.terminated`</span> <span class="o">=</span> <span class="nx">Set</span><span class="o">&lt;</span><span class="nx">string</span><span class="o">&gt;</span> <span class="c1">// uuids</span>
 </code></pre></div>
-<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">¶</a></h2>
+<h3 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">¶</a></h3>
 <div class="highlight"><pre><span></span><code><span class="sb">`timeouts`</span> <span class="o">=</span> <span class="nx">Hashes</span> <span class="p">{</span>
     <span class="nx">queue</span> <span class="o">=</span> <span class="nx">number</span>                  <span class="c1">// seconds</span>
     <span class="nx">scheduling</span> <span class="o">=</span> <span class="nx">number</span>             <span class="c1">// seconds</span>
@@ -539,16 +618,19 @@
     <span class="nx">slotReclaimInterval</span> <span class="o">=</span> <span class="nx">number</span>    <span class="c1">// seconds</span>
 <span class="p">}</span>
 </code></pre></div>
-<h2 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">¶</a></h2>
+<h3 id="manager">Manager<a class="headerlink" href="#manager" title="Permanent link">¶</a></h3>
+<div class="highlight"><pre><span></span><code><span class="sb">`manager:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:host`</span> <span class="o">=</span> <span class="nx">number</span> <span class="nx">EX</span> <span class="mf">120</span><span class="nx">s</span>           <span class="c1">// (host + port)</span>
+</code></pre></div>
+<h3 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">¶</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1">// SID = storage ID</span>
 <span class="c1">// PID = randomly generated ephemeral provider ID</span>
-<span class="sb">`storage:</span><span class="si">${</span><span class="nx">SID</span><span class="si">}</span><span class="sb">:</span><span class="si">${</span><span class="nx">PID</span><span class="si">}</span><span class="sb">:host`</span> <span class="o">=</span> <span class="nx">string</span> <span class="nx">EX</span> <span class="mf">60</span><span class="nx">s</span>    <span class="c1">// `${host}:${port}`</span>
+<span class="sb">`storage:</span><span class="si">${</span><span class="nx">SID</span><span class="si">}</span><span class="sb">:</span><span class="si">${</span><span class="nx">PID</span><span class="si">}</span><span class="sb">:host`</span> <span class="o">=</span> <span class="nx">string</span> <span class="nx">EX</span> <span class="mf">60</span><span class="nx">s</span>    <span class="c1">// (host + port)</span>
 </code></pre></div>
-<h2 id="api">API<a class="headerlink" href="#api" title="Permanent link">¶</a></h2>
+<h3 id="api">API<a class="headerlink" href="#api" title="Permanent link">¶</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1">// AID = randomly generated ephemeral server ID</span>
-<span class="sb">`api:</span><span class="si">${</span><span class="nx">AID</span><span class="si">}</span><span class="sb">:host`</span> <span class="o">=</span> <span class="nx">string</span> <span class="nx">EX</span> <span class="mf">60</span><span class="nx">s</span> <span class="p">(</span><span class="nx">host</span> <span class="o">+</span> <span class="nx">port</span><span class="p">)</span>
+<span class="sb">`api:</span><span class="si">${</span><span class="nx">AID</span><span class="si">}</span><span class="sb">:host`</span> <span class="o">=</span> <span class="nx">string</span> <span class="nx">EX</span> <span class="mf">60</span><span class="nx">s</span>               <span class="c1">// (host + port)</span>
 </code></pre></div>
-<h2 id="sessions">Sessions<a class="headerlink" href="#sessions" title="Permanent link">¶</a></h2>
+<h3 id="sessions">Sessions<a class="headerlink" href="#sessions" title="Permanent link">¶</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1">// ID = unique, external session identifier</span>
 <span class="sb">`session:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:heartbeat.node`</span> <span class="o">=</span> <span class="nx">string</span> <span class="nx">EX</span> <span class="mf">60</span><span class="nx">s</span>      <span class="c1">// RFC 3339</span>
 <span class="sb">`session:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:heartbeat.manager`</span> <span class="o">=</span> <span class="nx">string</span> <span class="nx">EX</span> <span class="mf">30</span><span class="nx">s</span>   <span class="c1">// RFC 3339</span>
@@ -575,6 +657,11 @@
     <span class="nx">actual</span> <span class="o">=</span> <span class="nx">string</span>                                 <span class="c1">// JSON</span>
 <span class="p">}</span>
 
+<span class="sb">`session:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:metadata`</span> <span class="o">=</span> <span class="nx">Hashes</span> <span class="p">{</span>
+    <span class="nx">name</span> <span class="o">=</span> <span class="nx">string</span>
+    <span class="nx">build</span> <span class="o">=</span> <span class="nx">string</span>
+<span class="p">}</span>
+
 <span class="sb">`session:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:upstream`</span> <span class="o">=</span> <span class="nx">Hashes</span> <span class="p">{</span>
     <span class="nx">host</span> <span class="o">=</span> <span class="nx">string</span>
     <span class="nx">port</span> <span class="o">=</span> <span class="nx">number</span>
@@ -589,9 +676,9 @@
 
 <span class="sb">`session:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:storage`</span> <span class="o">=</span> <span class="nx">string</span>                    <span class="c1">// storage ID</span>
 </code></pre></div>
-<h3 id="log-event-codes">Log event codes<a class="headerlink" href="#log-event-codes" title="Permanent link">¶</a></h3>
+<h4 id="log-event-codes">Log event codes<a class="headerlink" href="#log-event-codes" title="Permanent link">¶</a></h4>
 <p>During the lifecycle of a session each component generates status codes for tracing purposes.</p>
-<h4 id="node">Node<a class="headerlink" href="#node" title="Permanent link">¶</a></h4>
+<h5 id="node">Node<a class="headerlink" href="#node" title="Permanent link">¶</a></h5>
 <table>
 <thead>
 <tr>
@@ -663,7 +750,7 @@
 </tr>
 </tbody>
 </table>
-<h4 id="orchestrator">Orchestrator<a class="headerlink" href="#orchestrator" title="Permanent link">¶</a></h4>
+<h5 id="orchestrator">Orchestrator<a class="headerlink" href="#orchestrator" title="Permanent link">¶</a></h5>
 <table>
 <thead>
 <tr>
@@ -695,7 +782,7 @@
 </tr>
 </tbody>
 </table>
-<h4 id="manager">Manager<a class="headerlink" href="#manager" title="Permanent link">¶</a></h4>
+<h5 id="manager_1">Manager<a class="headerlink" href="#manager_1" title="Permanent link">¶</a></h5>
 <table>
 <thead>
 <tr>
@@ -772,12 +859,14 @@
 </tr>
 </tbody>
 </table>
-<h2 id="orchestrators">Orchestrators<a class="headerlink" href="#orchestrators" title="Permanent link">¶</a></h2>
+<h3 id="orchestrators">Orchestrators<a class="headerlink" href="#orchestrators" title="Permanent link">¶</a></h3>
 <div class="highlight"><pre><span></span><code><span class="sb">`orchestrator:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">`</span> <span class="o">=</span> <span class="nx">Hashes</span> <span class="p">{</span>
     <span class="nx">type</span> <span class="o">=</span> <span class="s1">'local'</span> <span class="o">|</span> <span class="s1">'docker'</span> <span class="o">|</span> <span class="s1">'k8s'</span>
 <span class="p">}</span>
 
 <span class="sb">`orchestrator:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:heartbeat`</span> <span class="o">=</span> <span class="nx">number</span> <span class="nx">EX</span> <span class="mf">60</span>
+<span class="sb">`orchestrator:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:retain`</span> <span class="o">=</span> <span class="nx">number</span> <span class="nx">EX</span> <span class="mf">604800</span>              <span class="c1">// If this key is not set, the orchestrator metadata can be purged</span>
+                                                            <span class="c1">// Expires after 7 days and is refreshed by a live orchestrator.</span>
 
 <span class="sb">`orchestrator:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:capabilities:platformName`</span> <span class="o">=</span> <span class="nx">string</span>
 <span class="sb">`orchestrator:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:capabilities:browsers`</span> <span class="o">=</span> <span class="nx">Set</span><span class="o">&lt;</span><span class="nx">string</span><span class="o">&gt;</span>    <span class="c1">// explained below</span>
@@ -791,16 +880,8 @@
 </code></pre></div>
 <p>*Browsers are represented by a string containing the <code>browserName</code> and <code>browserVersion</code> separated by <code>::</code>. For example <code>chrome::81.0.4044.113</code> or <code>firefox::74.0.1</code>.</p>
 <p><a href="https://redis.io/commands/rpoplpush#pattern-reliable-queue">Reliable queue documentation</a></p>
-<h2 id="manager_1">Manager<a class="headerlink" href="#manager_1" title="Permanent link">¶</a></h2>
-<div class="highlight"><pre><span></span><code><span class="sb">`manager:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:heartbeat`</span> <span class="o">=</span> <span class="nx">number</span> <span class="nx">EX</span> <span class="mf">120</span>
-
-<span class="sb">`manager:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">`</span> <span class="o">=</span> <span class="nx">Hashes</span> <span class="p">{</span>
-    <span class="nx">host</span> <span class="o">=</span> <span class="nx">string</span>
-    <span class="nx">port</span> <span class="o">=</span> <span class="nx">number</span>
-<span class="p">}</span>
-</code></pre></div>
-<h2 id="metrics">Metrics<a class="headerlink" href="#metrics" title="Permanent link">¶</a></h2>
-<h3 id="http-at-proxy">HTTP (at proxy)<a class="headerlink" href="#http-at-proxy" title="Permanent link">¶</a></h3>
+<h3 id="metrics">Metrics<a class="headerlink" href="#metrics" title="Permanent link">¶</a></h3>
+<h4 id="http-at-proxy">HTTP (at proxy)<a class="headerlink" href="#http-at-proxy" title="Permanent link">¶</a></h4>
 <div class="highlight"><pre><span></span><code><span class="sb">`metrics:http:requestsTotal:</span><span class="si">${</span><span class="nx">method</span><span class="si">}</span><span class="sb">`</span> <span class="o">=</span> <span class="nx">Hashes</span> <span class="p">{</span>
     <span class="o">&lt;</span><span class="nx">http</span><span class="o">-</span><span class="nx">status</span><span class="o">-</span><span class="nx">code</span><span class="o">&gt;</span> <span class="o">=</span> <span class="nx">number</span>
 <span class="p">}</span>
@@ -810,7 +891,7 @@
     <span class="nx">out</span> <span class="o">=</span> <span class="nx">number</span>
 <span class="p">}</span>
 </code></pre></div>
-<h3 id="sessions_1">Sessions<a class="headerlink" href="#sessions_1" title="Permanent link">¶</a></h3>
+<h4 id="sessions_1">Sessions<a class="headerlink" href="#sessions_1" title="Permanent link">¶</a></h4>
 <div class="highlight"><pre><span></span><code><span class="sb">`metrics:sessions:total`</span> <span class="o">=</span> <span class="nx">Hashes</span> <span class="p">{</span>
     <span class="nx">queued</span> <span class="o">=</span> <span class="nx">number</span>
     <span class="nx">pending</span> <span class="o">=</span> <span class="nx">number</span>
@@ -835,17 +916,19 @@
     <span class="o">&lt;</span><span class="nx">session</span><span class="o">-</span><span class="nx">log</span><span class="o">-</span><span class="nx">code</span><span class="o">&gt;</span> <span class="o">=</span> <span class="nx">number</span>
 <span class="p">}</span>
 </code></pre></div>
-<h3 id="slots">Slots<a class="headerlink" href="#slots" title="Permanent link">¶</a></h3>
+<h4 id="slots">Slots<a class="headerlink" href="#slots" title="Permanent link">¶</a></h4>
 <div class="highlight"><pre><span></span><code><span class="sb">`metrics:slots:reclaimed.total`</span> <span class="o">=</span> <span class="nx">Hashes</span> <span class="p">{</span>
     <span class="nx">dead</span> <span class="o">=</span> <span class="nx">number</span>
     <span class="nx">orphaned</span> <span class="o">=</span> <span class="nx">number</span>
 <span class="p">}</span>
 </code></pre></div>
+<h2 id="garbage-collection">Garbage collection<a class="headerlink" href="#garbage-collection" title="Permanent link">¶</a></h2>
+<p>Special considerations have been taken to ensure that most keys expire on their own (e.g. active manager/storage/api metadata). Those that do not expire on their own (e.g. sessions) will be purged by a dedicated garbage collector service.</p>
 <hr/>
 <div class="md-source-date">
 <small>
     
-      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 30, 2020</span>
+      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 18, 2021</span>
 </small>
 </div>
 </article>
@@ -914,8 +997,8 @@
 <div class="md-dialog" data-md-component="dialog">
 <div class="md-dialog__inner md-typeset"></div>
 </div>
-<script id="__config" type="application/json">{"base": "../..", "features": ["tabs"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../../assets/javascripts/workers/search.fb4a9340.min.js", "version": null}</script>
-<script src="../../assets/javascripts/bundle.9b151c6a.min.js"></script>
+<script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../../assets/javascripts/workers/search.fb4a9340.min.js", "version": null}</script>
+<script src="../../assets/javascripts/bundle.a1c7c35e.min.js"></script>
 <script src="https://unpkg.com/mermaid@8.5.0/dist/mermaid.min.js"></script>
 </body>
 </html>

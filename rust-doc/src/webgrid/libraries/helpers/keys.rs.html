@@ -155,6 +155,11 @@
 <span id="152">152</span>
 <span id="153">153</span>
 <span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Redis database keys</span>
 <span class="doccomment">//!</span>
@@ -171,6 +176,10 @@
             )<span class="op">+</span>
         }
     };
+}
+
+<span class="macro">static_keys</span><span class="macro">!</span> {
+    <span class="ident">HEARTBEAT_REFRESH_CHANNEL</span> <span class="op">=</span> <span class="string">&quot;heartbeat-refresh&quot;</span>.<span class="ident">to_string</span>();
 }
 
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">orchestrator</span> {
@@ -196,6 +205,10 @@
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">heartbeat</span>(<span class="ident">orchestrator_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
         <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}:heartbeat&quot;</span>, <span class="ident">orchestrator_prefix</span>(<span class="ident">orchestrator_id</span>))
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">retain</span>(<span class="ident">orchestrator_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
+        <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}:retain&quot;</span>, <span class="ident">orchestrator_prefix</span>(<span class="ident">orchestrator_id</span>))
     }
 
     <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">capabilities</span> {
@@ -234,26 +247,19 @@
 }
 
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">manager</span> {
-    <span class="macro">static_keys</span><span class="macro">!</span> {
-        <span class="ident">LIST</span> <span class="op">=</span> <span class="string">&quot;managers&quot;</span>.<span class="ident">to_string</span>();
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">manager_prefix</span>(<span class="ident">manager_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
+    <span class="kw">fn</span> <span class="ident">manager_prefix</span>(<span class="ident">manager_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
         <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;manager:{}&quot;</span>, <span class="ident">manager_id</span>)
     }
 
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">metadata</span>(<span class="ident">manager_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
-        <span class="ident">manager_prefix</span>(<span class="ident">manager_id</span>)
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">heartbeat</span>(<span class="ident">manager_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
-        <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}:heartbeat&quot;</span>, <span class="ident">manager_prefix</span>(<span class="ident">manager_id</span>))
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">host</span>(<span class="ident">manager_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
+        <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}:host&quot;</span>, <span class="ident">manager_prefix</span>(<span class="ident">manager_id</span>))
     }
 }
 
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">session</span> {
     <span class="macro">static_keys</span><span class="macro">!</span> {
         <span class="ident">LIST_ACTIVE</span> <span class="op">=</span> <span class="string">&quot;sessions.active&quot;</span>.<span class="ident">to_string</span>();
+        <span class="ident">LIST_TERMINATED</span> <span class="op">=</span> <span class="string">&quot;sessions.terminated&quot;</span>.<span class="ident">to_string</span>();
     }
 
     <span class="kw">fn</span> <span class="ident">session_prefix</span>(<span class="ident">session_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
@@ -266,6 +272,10 @@
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">capabilities</span>(<span class="ident">session_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
         <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}:capabilities&quot;</span>, <span class="ident">session_prefix</span>(<span class="ident">session_id</span>))
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">metadata</span>(<span class="ident">session_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
+        <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}:metadata&quot;</span>, <span class="ident">session_prefix</span>(<span class="ident">session_id</span>))
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">upstream</span>(<span class="ident">session_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {

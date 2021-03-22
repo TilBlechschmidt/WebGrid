@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["backlog",""],["heartbeat",""],["metadata",""],["pending",""]],"mod":[["capabilities",""],["slots",""]],"struct":[["LIST",""]]});
+initSidebarItems({"fn":[["backlog",""],["heartbeat",""],["metadata",""],["pending",""],["retain",""]],"mod":[["capabilities",""],["slots",""]],"struct":[["LIST",""]]});
