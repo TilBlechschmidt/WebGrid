@@ -7,6 +7,7 @@
 pub mod helpers;
 pub mod lifecycle;
 pub mod metrics;
+pub mod recording;
 pub mod resources;
 pub mod scheduling;
 pub mod storage;

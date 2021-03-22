@@ -1,8 +1,8 @@
 //! Session provider and driver manager
 
 use super::SharedOptions;
-use crate::libraries::helpers::constants;
 use crate::libraries::scheduling::{JobScheduler, StatusServer};
+use crate::libraries::{helpers::constants, recording::VideoQualityPreset};
 use crate::schedule;
 use anyhow::Result;
 use log::{info, warn};
@@ -11,7 +11,6 @@ use structopt::StructOpt;
 
 mod context;
 mod jobs;
-mod recorder;
 mod structs;
 mod tasks;
 
@@ -100,8 +99,8 @@ pub struct Options {
 }
 
 impl Options {
-    fn recording_quality(&self) -> recorder::VideoQualityPreset {
-        recorder::VideoQualityPreset::new(self.crf, self.max_bitrate)
+    fn recording_quality(&self) -> VideoQualityPreset {
+        VideoQualityPreset::new(self.crf, self.max_bitrate)
     }
 }
 

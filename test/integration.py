@@ -16,12 +16,15 @@ browser = webdriver.Remote(url)
 print("Session id: " + browser.session_id)
 
 browser.get('https://duckduckgo.com')
+browser.add_cookie({"name": "webgrid:message", "value": "Visiting DuckDuckGo"})
 search_form = browser.find_element_by_id('search_form_input_homepage')
+browser.add_cookie({"name": "webgrid:message", "value": "Searching for webgrid.dev"})
 search_form.send_keys('webgrid.dev')
 search_form.submit()
 
 wait(browser, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'result__a')))
 
+browser.add_cookie({"name": "webgrid:message", "value": "Looking at results"})
 results = browser.find_elements_by_class_name('result__a')
 
 found = False

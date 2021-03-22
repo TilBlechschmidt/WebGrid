@@ -1,12 +1,15 @@
-use super::super::{recorder::VideoRecorder, Context};
+use super::super::Context;
+use crate::libraries::recording::SequentialWebVTTWriter;
+use crate::libraries::recording::VideoRecorder;
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
 use crate::libraries::scheduling::{Job, TaskManager};
 use crate::libraries::storage::StorageHandler;
 use crate::with_shared_redis_resource;
 use anyhow::{bail, Result};
 use async_trait::async_trait;
+use chrono::Utc;
 use log::warn;
-use tokio::task;
+use tokio::{fs::File, task};
 
 #[derive(Clone)]
 pub struct RecorderJob {}
@@ -47,10 +50,18 @@ impl Job for RecorderJob {
             output_manifest.clone(),
             log.clone(),
         )?;
+        let recording_start = Utc::now();
+
+        // Create a WebVTT output and store it in the service context
+        let webvtt_path = storage.join(format!("{}.vtt", prefix));
+        let webvtt_file = File::create(&webvtt_path).await?;
+        let webvtt = SequentialWebVTTWriter::new(webvtt_file, recording_start).await?;
+        *(manager.context.webvtt.lock().await) = Some(webvtt);
 
         // Register the files
         {
             let mut redis = with_shared_redis_resource!(manager);
+            StorageHandler::queue_file_metadata(&webvtt_path, &storage_id, &mut redis).await?;
             StorageHandler::queue_file_metadata(&output_manifest, &storage_id, &mut redis).await?;
             StorageHandler::queue_file_metadata(&output_stream, &storage_id, &mut redis).await?;
             StorageHandler::queue_file_metadata(&log, &storage_id, &mut redis).await?;
@@ -66,9 +77,15 @@ impl Job for RecorderJob {
         // Update the file metadata
         {
             let mut redis = with_shared_redis_resource!(manager);
+            StorageHandler::queue_file_metadata(&webvtt_path, &storage_id, &mut redis).await?;
             StorageHandler::queue_file_metadata(&output_manifest, &storage_id, &mut redis).await?;
             StorageHandler::queue_file_metadata(&output_stream, &storage_id, &mut redis).await?;
             StorageHandler::queue_file_metadata(&log, &storage_id, &mut redis).await?;
+        }
+
+        // Flush the WebVTT outputs
+        if let Some(webvtt) = &mut *manager.context.webvtt.lock().await {
+            webvtt.finish().await?;
         }
 
         // Check the return code

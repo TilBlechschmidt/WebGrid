@@ -1,7 +1,9 @@
 use super::{tasks::DriverReference, Options};
-use crate::libraries::lifecycle::HeartBeat;
 use crate::libraries::resources::DefaultResourceManager;
 use crate::libraries::{helpers::keys, resources::ResourceManagerProvider};
+use crate::libraries::{lifecycle::HeartBeat, recording::SequentialWebVTTWriter};
+use std::sync::Arc;
+use tokio::{fs::File, sync::Mutex};
 
 #[derive(Clone)]
 pub struct Context {
@@ -10,6 +12,7 @@ pub struct Context {
     pub heart_beat: HeartBeat<Self, DefaultResourceManager>,
     pub id: String,
     pub options: Options,
+    pub webvtt: Arc<Mutex<Option<SequentialWebVTTWriter<File>>>>,
 }
 
 impl Context {
@@ -27,6 +30,7 @@ impl Context {
             heart_beat,
             id,
             options,
+            webvtt: Arc::new(Mutex::new(None)),
         }
     }
 }
