@@ -273,17 +273,26 @@ jobs:
           docker push $DST_IMAGE
       - name: Cross-push api
         run: |
-          SRC_IMAGE=${{ env.SRC_REPOSITORY }}/core:${{ env.SRC_TAG }}
-          DST_IMAGE=${{ env.DST_REPOSITORY }}/core:${{ env.DST_TAG }}
+          SRC_IMAGE=${{ env.SRC_REPOSITORY }}/api:${{ env.SRC_TAG }}
+          DST_IMAGE=${{ env.DST_REPOSITORY }}/api:${{ env.DST_TAG }}
 
           echo "Pushing $SRC_IMAGE to $DST_IMAGE"
           docker pull $SRC_IMAGE
           docker tag $SRC_IMAGE $DST_IMAGE
           docker push $DST_IMAGE
-      - name: Cross-push node
+      - name: Cross-push node-firefox
         run: |
-          SRC_IMAGE=${{ env.SRC_REPOSITORY }}/core:${{ env.SRC_TAG }}
-          DST_IMAGE=${{ env.DST_REPOSITORY }}/core:${{ env.DST_TAG }}
+          SRC_IMAGE=${{ env.SRC_REPOSITORY }}/node-firefox:${{ env.SRC_TAG }}
+          DST_IMAGE=${{ env.DST_REPOSITORY }}/node-firefox:${{ env.DST_TAG }}
+
+          echo "Pushing $SRC_IMAGE to $DST_IMAGE"
+          docker pull $SRC_IMAGE
+          docker tag $SRC_IMAGE $DST_IMAGE
+          docker push $DST_IMAGE
+      - name: Cross-push node-chrome
+        run: |
+          SRC_IMAGE=${{ env.SRC_REPOSITORY }}/node-chrome:${{ env.SRC_TAG }}
+          DST_IMAGE=${{ env.DST_REPOSITORY }}/node-chrome:${{ env.DST_TAG }}
 
           echo "Pushing $SRC_IMAGE to $DST_IMAGE"
           docker pull $SRC_IMAGE
