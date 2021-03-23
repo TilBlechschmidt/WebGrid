@@ -210,15 +210,45 @@
 <span id="207">207</span>
 <span id="208">208</span>
 <span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
+<span id="228">228</span>
+<span id="229">229</span>
+<span id="230">230</span>
+<span id="231">231</span>
+<span id="232">232</span>
+<span id="233">233</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::<span class="kw">super</span>::{<span class="ident">routing_info</span>::<span class="ident">RoutingInfo</span>, <span class="ident">Context</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">scheduling</span>::{<span class="ident">Job</span>, <span class="ident">TaskManager</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::{
+    <span class="ident">metrics</span>::<span class="ident">MetricsEntry</span>,
+    <span class="ident">scheduling</span>::{<span class="ident">Job</span>, <span class="ident">TaskManager</span>},
+};
 <span class="kw">use</span> <span class="ident">anyhow</span>::<span class="prelude-ty">Result</span>;
 <span class="kw">use</span> <span class="ident">async_trait</span>::<span class="ident">async_trait</span>;
-<span class="kw">use</span> <span class="ident">hyper</span>::<span class="ident">service</span>::{<span class="ident">make_service_fn</span>, <span class="ident">service_fn</span>};
+<span class="kw">use</span> <span class="ident">hyper</span>::{
+    <span class="ident">body</span>::<span class="ident">HttpBody</span>,
+    <span class="ident">service</span>::{<span class="ident">make_service_fn</span>, <span class="ident">service_fn</span>},
+};
 <span class="kw">use</span> <span class="ident">hyper</span>::{<span class="ident">client</span>::<span class="ident">HttpConnector</span>, <span class="ident">Body</span>, <span class="ident">Client</span>, <span class="ident">Method</span>, <span class="ident">Request</span>, <span class="ident">Response</span>, <span class="ident">Server</span>, <span class="ident">StatusCode</span>};
 <span class="kw">use</span> <span class="ident">lazy_static</span>::<span class="ident">lazy_static</span>;
-<span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">debug</span>, <span class="ident">info</span>};
+<span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">debug</span>, <span class="ident">error</span>, <span class="ident">info</span>};
 <span class="kw">use</span> <span class="ident">regex</span>::<span class="ident">Regex</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">convert</span>::<span class="ident">Infallible</span>;
 
@@ -234,7 +264,6 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ProxyJob</span> {
     <span class="ident">client</span>: <span class="ident">Client</span><span class="op">&lt;</span><span class="ident">HttpConnector</span><span class="op">&gt;</span>,
     <span class="ident">port</span>: <span class="ident">u16</span>,
-    <span class="comment">// metrics_tx: UnboundedSender&lt;MetricsEntry&gt;,</span>
 }
 
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
@@ -247,12 +276,12 @@
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">execute</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">manager</span>: <span class="ident">TaskManager</span><span class="op">&lt;</span><span class="self">Self</span>::<span class="ident">Context</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">make_svc</span> <span class="op">=</span> <span class="ident">make_service_fn</span>(<span class="op">|</span><span class="ident">_conn</span><span class="op">|</span> {
             <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">clone</span>();
-            <span class="kw">let</span> <span class="ident">info</span> <span class="op">=</span> <span class="ident">manager</span>.<span class="ident">context</span>.<span class="ident">routing_info</span>.<span class="ident">clone</span>();
+            <span class="kw">let</span> <span class="ident">ctx</span> <span class="op">=</span> <span class="ident">manager</span>.<span class="ident">context</span>.<span class="ident">clone</span>();
             <span class="kw">async</span> {
                 <span class="prelude-val">Ok</span>::<span class="op">&lt;</span><span class="kw">_</span>, <span class="ident">Infallible</span><span class="op">&gt;</span>(<span class="ident">service_fn</span>(<span class="kw">move</span> <span class="op">|</span><span class="ident">req</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="ident">p</span> <span class="op">=</span> <span class="ident">p</span>.<span class="ident">clone</span>();
-                    <span class="kw">let</span> <span class="ident">info</span> <span class="op">=</span> <span class="ident">info</span>.<span class="ident">clone</span>();
-                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">p</span>.<span class="ident">handle</span>(<span class="ident">req</span>, <span class="kw-2">&amp;</span><span class="ident">info</span>).<span class="kw">await</span> }
+                    <span class="kw">let</span> <span class="ident">ctx</span> <span class="op">=</span> <span class="ident">ctx</span>.<span class="ident">clone</span>();
+                    <span class="kw">async</span> <span class="kw">move</span> { <span class="ident">p</span>.<span class="ident">handle</span>(<span class="ident">ctx</span>, <span class="ident">req</span>).<span class="kw">await</span> }
                 }))
             }
         });
@@ -270,10 +299,10 @@
 }
 
 <span class="kw">impl</span> <span class="ident">ProxyJob</span> {
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">port</span>: <span class="ident">u16</span> <span class="comment">/*metrics_tx: UnboundedSender&lt;MetricsEntry&gt;*/</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">port</span>: <span class="ident">u16</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">client</span>: <span class="ident">Client</span>::<span class="ident">new</span>(),
-            <span class="ident">port</span>, <span class="comment">// metrics_tx,</span>
+            <span class="ident">port</span>,
         }
     }
 
@@ -364,12 +393,14 @@
         }
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">req</span>: <span class="ident">Request</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span>, <span class="ident">info</span>: <span class="kw-2">&amp;</span><span class="ident">RoutingInfo</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Response</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="comment">// let req_method = req.method().clone();</span>
-        <span class="comment">// let req_size = req.body().size_hint().lower();</span>
-        <span class="comment">// self.metrics_tx</span>
-        <span class="comment">//     .send(MetricsEntry::IncomingTraffic(req_size))</span>
-        <span class="comment">//     .ok();</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">handle</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">context</span>: <span class="ident">Context</span>, <span class="ident">req</span>: <span class="ident">Request</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Response</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">info</span> <span class="op">=</span> <span class="ident">context</span>.<span class="ident">routing_info</span>;
+        <span class="kw">let</span> <span class="ident">req_method</span> <span class="op">=</span> <span class="ident">req</span>.<span class="ident">method</span>().<span class="ident">clone</span>();
+        <span class="kw">let</span> <span class="ident">req_size</span> <span class="op">=</span> <span class="ident">req</span>.<span class="ident">body</span>().<span class="ident">size_hint</span>().<span class="ident">lower</span>();
+        <span class="ident">context</span>
+            .<span class="ident">metrics</span>
+            .<span class="ident">submit</span>(<span class="ident">MetricsEntry</span>::<span class="ident">IncomingTraffic</span>(<span class="ident">req_size</span>))
+            .<span class="ident">ok</span>();
 
         <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">req</span>
             .<span class="ident">uri</span>()
@@ -377,13 +408,13 @@
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">x</span><span class="op">|</span> <span class="ident">x</span>.<span class="ident">to_string</span>())
             .<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="string">&quot;&quot;</span>.<span class="ident">to_string</span>());
 
-        <span class="kw">if</span> <span class="ident">req</span>.<span class="ident">method</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">Method</span>::<span class="ident">POST</span> <span class="op">&amp;&amp;</span> <span class="ident">path</span> <span class="op">=</span><span class="op">=</span> <span class="string">&quot;/session&quot;</span> {
-            <span class="self">self</span>.<span class="ident">handle_manager_request</span>(<span class="ident">req</span>, <span class="ident">info</span>).<span class="kw">await</span>
+        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="kw">if</span> <span class="ident">req</span>.<span class="ident">method</span>() <span class="op">=</span><span class="op">=</span> <span class="ident">Method</span>::<span class="ident">POST</span> <span class="op">&amp;&amp;</span> <span class="ident">path</span> <span class="op">=</span><span class="op">=</span> <span class="string">&quot;/session&quot;</span> {
+            <span class="self">self</span>.<span class="ident">handle_manager_request</span>(<span class="ident">req</span>, <span class="kw-2">&amp;</span><span class="ident">info</span>).<span class="kw">await</span>
         } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">path</span>.<span class="ident">starts_with</span>(<span class="string">&quot;/api&quot;</span>) <span class="op">|</span><span class="op">|</span> <span class="ident">path</span>.<span class="ident">starts_with</span>(<span class="string">&quot;/embed&quot;</span>) {
-            <span class="self">self</span>.<span class="ident">handle_api_request</span>(<span class="ident">req</span>, <span class="ident">info</span>).<span class="kw">await</span>
+            <span class="self">self</span>.<span class="ident">handle_api_request</span>(<span class="ident">req</span>, <span class="kw-2">&amp;</span><span class="ident">info</span>).<span class="kw">await</span>
         } <span class="kw">else</span> <span class="kw">if</span> <span class="ident">path</span>.<span class="ident">starts_with</span>(<span class="string">&quot;/storage&quot;</span>) {
             <span class="kw">match</span> <span class="ident">REGEX_STORAGE_PATH</span>.<span class="ident">captures</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>) {
-                <span class="prelude-val">Some</span>(<span class="ident">caps</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">handle_storage_request</span>(<span class="ident">req</span>, <span class="kw-2">&amp;</span><span class="ident">caps</span>[<span class="string">&quot;sid&quot;</span>], <span class="ident">info</span>).<span class="kw">await</span>,
+                <span class="prelude-val">Some</span>(<span class="ident">caps</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">handle_storage_request</span>(<span class="ident">req</span>, <span class="kw-2">&amp;</span><span class="ident">caps</span>[<span class="string">&quot;sid&quot;</span>], <span class="kw-2">&amp;</span><span class="ident">info</span>).<span class="kw">await</span>,
                 <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;{} {} -&gt; NOT FOUND&quot;</span>, <span class="ident">req</span>.<span class="ident">method</span>(), <span class="ident">path</span>);
 
@@ -395,7 +426,7 @@
             }
         } <span class="kw">else</span> {
             <span class="kw">match</span> <span class="ident">REGEX_SESSION_PATH</span>.<span class="ident">captures</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>) {
-                <span class="prelude-val">Some</span>(<span class="ident">caps</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">handle_session_request</span>(<span class="ident">req</span>, <span class="kw-2">&amp;</span><span class="ident">caps</span>[<span class="string">&quot;sid&quot;</span>], <span class="ident">info</span>).<span class="kw">await</span>,
+                <span class="prelude-val">Some</span>(<span class="ident">caps</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">handle_session_request</span>(<span class="ident">req</span>, <span class="kw-2">&amp;</span><span class="ident">caps</span>[<span class="string">&quot;sid&quot;</span>], <span class="kw-2">&amp;</span><span class="ident">info</span>).<span class="kw">await</span>,
                 <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
                     <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;{} {} -&gt; NOT FOUND&quot;</span>, <span class="ident">req</span>.<span class="ident">method</span>(), <span class="ident">path</span>);
 
@@ -405,19 +436,36 @@
                         .<span class="ident">unwrap</span>())
                 }
             }
+        };
+
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="ident">response</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">result</span> {
+            <span class="kw">let</span> <span class="ident">status_code</span> <span class="op">=</span> <span class="ident">response</span>.<span class="ident">status</span>();
+            <span class="kw">let</span> <span class="ident">res_size</span> <span class="op">=</span> <span class="ident">response</span>.<span class="ident">body</span>().<span class="ident">size_hint</span>().<span class="ident">lower</span>();
+
+            <span class="ident">context</span>
+                .<span class="ident">metrics</span>
+                .<span class="ident">submit</span>(<span class="ident">MetricsEntry</span>::<span class="ident">OutgoingTraffic</span>(<span class="ident">res_size</span>))
+                .<span class="ident">ok</span>();
+            <span class="ident">context</span>
+                .<span class="ident">metrics</span>
+                .<span class="ident">submit</span>(<span class="ident">MetricsEntry</span>::<span class="ident">RequestProcessed</span>(<span class="ident">req_method</span>, <span class="ident">status_code</span>))
+                .<span class="ident">ok</span>();
+        } <span class="kw">else</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">result</span> {
+            <span class="macro">error</span><span class="macro">!</span>(
+                <span class="string">&quot;Encountered error while serving {} request to {}: {}&quot;</span>,
+                <span class="ident">req_method</span>, <span class="ident">path</span>, <span class="ident">e</span>
+            );
+
+            <span class="ident">context</span>
+                .<span class="ident">metrics</span>
+                .<span class="ident">submit</span>(<span class="ident">MetricsEntry</span>::<span class="ident">RequestProcessed</span>(
+                    <span class="ident">req_method</span>,
+                    <span class="ident">StatusCode</span>::<span class="ident">INTERNAL_SERVER_ERROR</span>,
+                ))
+                .<span class="ident">ok</span>();
         }
 
-        <span class="comment">// if let Ok(response) = &amp;result {</span>
-        <span class="comment">//     let status_code = response.status();</span>
-        <span class="comment">//     let res_size = response.body().size_hint().lower();</span>
-
-        <span class="comment">//     self.metrics_tx</span>
-        <span class="comment">//         .send(MetricsEntry::OutgoingTraffic(res_size))</span>
-        <span class="comment">//         .ok();</span>
-        <span class="comment">//     self.metrics_tx</span>
-        <span class="comment">//         .send(MetricsEntry::RequestProcessed(req_method, status_code))</span>
-        <span class="comment">//         .ok();</span>
-        <span class="comment">// }</span>
+        <span class="ident">result</span>
     }
 }
 </pre></div>

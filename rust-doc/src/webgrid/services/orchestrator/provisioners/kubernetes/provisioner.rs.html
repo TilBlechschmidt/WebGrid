@@ -185,6 +185,10 @@
 <span id="182">182</span>
 <span id="183">183</span>
 <span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::<span class="kw">super</span>::<span class="kw">super</span>::<span class="ident">core</span>::<span class="ident">provisioner</span>::{
     <span class="ident">match_image_from_capabilities</span>, <span class="ident">NodeInfo</span>, <span class="ident">Provisioner</span>, <span class="ident">ProvisionerCapabilities</span>,
@@ -333,7 +337,11 @@
     <span class="kw">fn</span> <span class="ident">capabilities</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">ProvisionerCapabilities</span> {
         <span class="ident">ProvisionerCapabilities</span> {
             <span class="ident">platform_name</span>: <span class="string">&quot;linux&quot;</span>.<span class="ident">to_owned</span>(),
-            <span class="ident">browsers</span>: <span class="ident">Vec</span>::<span class="ident">new</span>(),
+            <span class="ident">browsers</span>: <span class="self">self</span>
+                .<span class="ident">images</span>
+                .<span class="ident">iter</span>()
+                .<span class="ident">map</span>(<span class="op">|</span>(<span class="kw">_</span>, <span class="ident">browser</span>)<span class="op">|</span> <span class="ident">browser</span>.<span class="ident">to_owned</span>())
+                .<span class="ident">collect</span>(),
         }
     }
 

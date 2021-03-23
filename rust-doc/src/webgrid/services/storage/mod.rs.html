@@ -77,6 +77,15 @@
 <span id="74">74</span>
 <span id="75">75</span>
 <span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Content delivery service</span>
 
@@ -132,17 +141,26 @@
 
     <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">heart</span>, <span class="kw">_</span>) <span class="op">=</span> <span class="ident">Heart</span>::<span class="ident">new</span>();
 
-    <span class="kw">let</span> <span class="ident">context</span> <span class="op">=</span> <span class="ident">Context</span>::<span class="ident">new</span>(<span class="ident">shared_options</span>.<span class="ident">redis</span>, <span class="ident">storage_id</span>, <span class="ident">options</span>.<span class="ident">host</span>, <span class="ident">options</span>.<span class="ident">port</span>);
+    <span class="kw">let</span> <span class="ident">context</span> <span class="op">=</span> <span class="ident">Context</span>::<span class="ident">new</span>(
+        <span class="ident">shared_options</span>.<span class="ident">redis</span>,
+        <span class="ident">storage_id</span>,
+        <span class="ident">provider_id</span>,
+        <span class="ident">options</span>.<span class="ident">host</span>,
+        <span class="ident">options</span>.<span class="ident">port</span>,
+    )
+    .<span class="kw">await</span>;
     <span class="kw">let</span> <span class="ident">scheduler</span> <span class="op">=</span> <span class="ident">JobScheduler</span>::<span class="ident">default</span>();
 
     <span class="kw">let</span> <span class="ident">status_job</span> <span class="op">=</span> <span class="ident">StatusServer</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">scheduler</span>, <span class="ident">shared_options</span>.<span class="ident">status_server</span>);
+    <span class="kw">let</span> <span class="ident">heart_beat_job</span> <span class="op">=</span> <span class="ident">context</span>.<span class="ident">heart_beat</span>.<span class="ident">clone</span>();
+    <span class="kw">let</span> <span class="ident">metrics_job</span> <span class="op">=</span> <span class="ident">context</span>.<span class="ident">metrics</span>.<span class="ident">clone</span>();
     <span class="kw">let</span> <span class="ident">server_job</span> <span class="op">=</span> <span class="ident">ServerJob</span>::<span class="ident">new</span>(<span class="ident">options</span>.<span class="ident">port</span>, <span class="ident">options</span>.<span class="ident">storage_directory</span>.<span class="ident">clone</span>());
     <span class="kw">let</span> <span class="ident">cleanup_job</span> <span class="op">=</span> <span class="ident">CleanupJob</span>::<span class="ident">new</span>(<span class="ident">options</span>.<span class="ident">storage_directory</span>, <span class="ident">size_limit</span>, <span class="ident">cleanup_target</span>);
 
-    <span class="ident">context</span>.<span class="ident">spawn_heart_beat</span>(<span class="kw-2">&amp;</span><span class="ident">provider_id</span>, <span class="kw-2">&amp;</span><span class="ident">scheduler</span>).<span class="kw">await</span>;
-
     <span class="macro">schedule</span><span class="macro">!</span>(<span class="ident">scheduler</span>, <span class="ident">context</span>, {
         <span class="ident">status_job</span>,
+        <span class="ident">heart_beat_job</span>,
+        <span class="ident">metrics_job</span>,
         <span class="ident">server_job</span>,
         <span class="ident">cleanup_job</span>
     });
