@@ -1,6 +1,6 @@
 [package]
 name = "webgrid"
-version = "0.1.0"
+version = "0.0.0"
 authors = ["Til Blechschmidt <til@blechschmidt.de>"]
 edition = "2018"
 
@@ -40,6 +40,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 sqlx = { version = "0.5", default-features = false, features = [ "macros", "sqlite", "runtime-tokio-native-tls" ] }
 tokio = { version = "1.2", features = ["full"] }
+git2 = "0.13"
 
 [features]
 default = ["gc", "proxy", "manager", "node", "metrics", "storage", "docker", "kubernetes"]

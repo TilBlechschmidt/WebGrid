@@ -33,11 +33,14 @@ echo "Copying project to build cache"
 rsync -a --progress $SOURCE_DIR/* $BUILD_DIR/project --exclude target --exclude .build --exclude .cache
 
 echo "Running build in webgrid/rust-musl-builder:${BUILDER_TAG} container"
+# We are mounting the repository into the container for the build-script to determine the version from git
 docker run --rm --name core-build \
 	-v "$BUILD_DIR/project":/home/rust/src \
 	-v "$BUILD_DIR/cargo-git":/home/rust/.cargo/git \
 	-v "$BUILD_DIR/cargo-registry":/home/rust/.cargo/registry \
 	-v "$BUILD_DIR/target":/home/rust/src/target \
+	-v "$(pwd)/../":/repository \
+	-e WEBGRID_GIT_REPOSITORY=/repository \
 	-e CARGO_TERM_COLOR=always \
 	webgrid/rust-musl-builder:${BUILDER_TAG} \
 	bash -c "cargo build ${RELEASE_FLAG} --locked && cargo doc ${RELEASE_FLAG} --locked --no-deps && rm -f /home/rust/src/target/x86_64-unknown-linux-musl/doc/.lock"

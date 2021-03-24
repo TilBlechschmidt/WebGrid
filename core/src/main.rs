@@ -6,7 +6,10 @@ use webgrid::services::orchestrator::{provisioners, Provisioner};
 use webgrid::services::*;
 
 #[derive(Debug, StructOpt)]
-#[structopt(about = "Decentralized, scalable and robust selenium-grid equivalent.")]
+#[structopt(
+    about = "Decentralized, scalable and robust selenium-grid equivalent.",
+    version = env!("WEBGRID_VERSION")
+)]
 struct MainOptions {
     #[structopt(flatten)]
     shared_options: SharedOptions,
@@ -47,6 +50,8 @@ async fn main() -> Result<()> {
     pretty_env_logger::formatted_timed_builder()
         .parse_filters(&shared_options.log)
         .init();
+
+    log::info!("{}", env!("WEBGRID_VERSION"));
 
     match main_options.cmd {
         #[cfg(feature = "metrics")]
