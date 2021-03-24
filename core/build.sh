@@ -45,7 +45,6 @@ docker run --rm --name core-build \
 	webgrid/rust-musl-builder:${BUILDER_TAG} \
 	bash -c "cargo build ${RELEASE_FLAG} --locked && cargo doc ${RELEASE_FLAG} --locked --no-deps && rm -f /home/rust/src/target/x86_64-unknown-linux-musl/doc/.lock"
 
-# TODO: Strip debug symbols from binary
 
 echo "Creating output directories in $TARGET_DIR"
 mkdir -p $TARGET_DIR/core-documentation
@@ -55,3 +54,13 @@ echo "Copying documentation to output"
 rsync -a --progress $BUILD_DIR/target/x86_64-unknown-linux-musl/doc $TARGET_DIR/core-documentation
 echo "Copying executable to output"
 rsync -av --progress $BUILD_DIR/target/x86_64-unknown-linux-musl/$BUILD_OUTPUT_DIR/webgrid $TARGET_DIR/core-executable
+
+# Strip the binary
+if [[ $1 = "--release" ]];
+then
+	echo "Stripping binary"
+	docker run --rm --name core-strip \
+		-v $TARGET_DIR/core-executable:/output \
+		alpine \
+		sh -c "apk add --update binutils && ls /output && strip /output/webgrid"
+fi
