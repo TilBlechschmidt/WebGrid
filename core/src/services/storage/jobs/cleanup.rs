@@ -1,18 +1,15 @@
 use super::super::Context;
 use crate::libraries::metrics::MetricsEntry;
 use crate::libraries::scheduling::{Job, TaskManager};
-use crate::libraries::storage::StorageHandler;
 use anyhow::Result;
 use async_trait::async_trait;
 use log::{debug, info, warn};
-use std::{path::PathBuf, time::Duration};
+use std::time::Duration;
 use tokio::time::sleep;
 
 #[derive(Clone)]
 pub struct CleanupJob {
-    storage_directory: PathBuf,
     size_threshold: f64,
-    cleanup_target: f64,
 }
 
 #[async_trait]
@@ -31,12 +28,7 @@ impl Job for CleanupJob {
             ))
             .ok();
 
-        let storage = StorageHandler::new(
-            self.storage_directory.clone(),
-            self.size_threshold,
-            self.cleanup_target,
-        )
-        .await?;
+        let storage = &manager.context.storage;
 
         manager.ready().await;
 
@@ -80,13 +72,7 @@ impl Job for CleanupJob {
 }
 
 impl CleanupJob {
-    pub fn new(storage_directory: PathBuf, size_threshold: f64, cleanup_target: f64) -> Self {
-        debug!("Size threshold: {} bytes", size_threshold);
-        debug!("Cleanup target: {} bytes", cleanup_target);
-        Self {
-            storage_directory,
-            size_threshold,
-            cleanup_target,
-        }
+    pub fn new(size_threshold: f64) -> Self {
+        Self { size_threshold }
     }
 }

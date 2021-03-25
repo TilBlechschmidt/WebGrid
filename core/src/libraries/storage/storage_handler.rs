@@ -1,4 +1,9 @@
+use super::{database, scan};
+use crate::libraries::helpers::keys;
+use chrono::{DateTime, Duration, TimeZone, Utc};
 use log::{debug, error, warn};
+use redis::{aio::ConnectionLike, AsyncCommands};
+use serde::{Deserialize, Serialize};
 use sqlx::{pool::PoolConnection, Executor, Sqlite, SqlitePool};
 use std::{
     fs,
@@ -8,7 +13,56 @@ use std::{
 use thiserror::Error;
 use uuid::Uuid;
 
-use super::{database, scan};
+#[derive(Serialize, Deserialize)]
+pub struct FileMetadata {
+    pub path: PathBuf,
+    pub size: f64,
+    pub last_modified: DateTime<Utc>,
+    pub last_access: DateTime<Utc>,
+}
+
+impl FileMetadata {
+    pub fn from_fs_metadata(path: PathBuf, metadata: Result<fs::Metadata, std::io::Error>) -> Self {
+        let mut size: f64 = 0.0;
+        let mut last_modified = Utc::now();
+        let mut last_access = Utc::now();
+
+        // Consider dates that are before 2000 or more than 24 hours in the future to be invalid.
+        let past_sanity_date = Utc.ymd(2000, 1, 1).and_hms(0, 0, 0);
+        let future_sanity_date = Utc::now() + Duration::hours(24);
+
+        if let Ok(meta) = metadata {
+            size = meta.len() as f64;
+
+            if let Ok(modified) = meta.modified() {
+                let date_time = modified.into();
+                if date_time > past_sanity_date && date_time < future_sanity_date {
+                    last_modified = date_time;
+                }
+            }
+
+            if let Ok(accessed) = meta.accessed() {
+                let date_time = accessed.into();
+                if date_time > past_sanity_date && date_time < future_sanity_date {
+                    last_access = date_time;
+                }
+            }
+        }
+
+        Self {
+            path,
+            size,
+            last_modified,
+            last_access,
+        }
+    }
+
+    pub fn new(path: PathBuf) -> Self {
+        let metadata = fs::metadata(&path);
+
+        FileMetadata::from_fs_metadata(path, metadata)
+    }
+}
 
 /// Filesystem accessor
 #[derive(Clone)]
@@ -36,6 +90,10 @@ pub enum StorageError {
     InternalError,
     #[error("File is not in watch directory")]
     StripPrefixError(#[from] StripPrefixError),
+    #[error("Failed to serialize metadata")]
+    SerializationError(#[from] serde_json::Error),
+    #[error("Unable to enqueue metadata")]
+    RedisError(#[from] redis::RedisError),
     #[error("Error reading from disk")]
     IOError(#[from] IOError),
 }
@@ -43,7 +101,7 @@ pub enum StorageError {
 impl StorageHandler {
     /// Fetches the storage ID of the given directory. If the directory has not previously been used
     /// as a storage a new identifier will be created and written to disk.
-    pub async fn storage_id(directory: PathBuf) -> Result<String, StorageError> {
+    pub async fn storage_id(directory: &PathBuf) -> Result<String, StorageError> {
         let id_path = directory.join(".webgrid-storage");
         debug!("Attempting to read storage ID from {}", id_path.display());
 
@@ -69,6 +127,21 @@ impl StorageHandler {
                 }
             },
         }
+    }
+
+    pub async fn queue_file_metadata<C: ConnectionLike + AsyncCommands>(
+        path: &PathBuf,
+        storage_id: &str,
+        redis: &mut C,
+    ) -> Result<(), StorageError> {
+        let metadata = FileMetadata::new(path.to_owned());
+        let serialized = serde_json::to_string(&metadata)?;
+
+        redis
+            .rpush(keys::storage::metadata::pending(storage_id), serialized)
+            .await?;
+
+        Ok(())
     }
 
     /// Creates new instance that watches a given directory
@@ -119,15 +192,13 @@ impl StorageHandler {
     /// Import or update a file to the database
     ///
     /// Reads the files metadata from disk and upserts the value into the database.
-    pub async fn add_file<P: AsRef<Path>>(&self, path: P) -> Result<(), StorageError> {
-        let metadata = fs::metadata(&path);
-
-        let relative_path = self.relative_path(path)?;
-        let path_str = relative_path.to_str().unwrap_or_default();
+    pub async fn add_file(&self, mut metadata: FileMetadata) -> Result<(), StorageError> {
+        let relative_path = self.relative_path(metadata.path)?;
+        metadata.path = relative_path;
 
         let mut con = self.acquire_connection().await?;
 
-        database::insert_file(path_str, metadata.ok(), &mut con).await?;
+        database::insert_file(metadata, &mut con).await?;
 
         Ok(())
     }

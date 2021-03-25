@@ -156,6 +156,14 @@ pub mod storage {
     pub fn host(storage_id: &str, provider_id: &str) -> String {
         format!("{}:{}:host", storage_prefix(storage_id), provider_id)
     }
+
+    pub mod metadata {
+        use super::storage_prefix;
+
+        pub fn pending(storage_id: &str) -> String {
+            format!("{}:metadata.pending", storage_prefix(storage_id))
+        }
+    }
 }
 
 pub mod metrics {

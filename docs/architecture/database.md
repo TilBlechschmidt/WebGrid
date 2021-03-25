@@ -33,7 +33,11 @@ All metadata is stored in a key-value in-memory database called [Redis](https://
 // SID = storage ID
 // PID = randomly generated ephemeral provider ID
 `storage:${SID}:${PID}:host` = string EX 60s	// (host + port)
+
+`storage:${SID}:metadata.pending` = List<FileMetadata>	// see below
 ```
+
+To optimise storage performance and reduce the need for database synchronization, metadata of newly created and modified files is not written to the storage database by the writing service directly. Instead, the relevant metadata is collected and appended to the `:metadata.pending` list. The corresponding storage service will then update its internal database with this information by continously watching this list and pulling new metadata.
 
 ### API
 ```javascript

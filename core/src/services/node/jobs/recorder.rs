@@ -1,6 +1,8 @@
 use super::super::{recorder::VideoRecorder, Context};
+use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
 use crate::libraries::scheduling::{Job, TaskManager};
 use crate::libraries::storage::StorageHandler;
+use crate::with_shared_redis_resource;
 use anyhow::{bail, Result};
 use async_trait::async_trait;
 use log::warn;
@@ -28,7 +30,8 @@ impl Job for RecorderJob {
         let quality_preset = manager.context.options.recording_quality();
 
         // Because we are only inserting files we can safely set the thresholds to 0
-        let handler = StorageHandler::new(storage.clone(), 0.0, 0.0).await?;
+        // let handler = StorageHandler::new(storage.clone(), 0.0, 0.0).await?;
+        let storage_id = StorageHandler::storage_id(&storage).await?;
 
         let prefix = &manager.context.id;
         let output_manifest = storage.join(format!("{}.m3u8", prefix));
@@ -46,9 +49,12 @@ impl Job for RecorderJob {
         )?;
 
         // Register the files
-        handler.add_file(&output_manifest).await?;
-        handler.add_file(&output_stream).await?;
-        handler.add_file(&log).await?;
+        {
+            let mut redis = with_shared_redis_resource!(manager);
+            StorageHandler::queue_file_metadata(&output_manifest, &storage_id, &mut redis).await?;
+            StorageHandler::queue_file_metadata(&output_stream, &storage_id, &mut redis).await?;
+            StorageHandler::queue_file_metadata(&log, &storage_id, &mut redis).await?;
+        }
 
         // Wait for system termination
         manager.ready().await;
@@ -58,9 +64,12 @@ impl Job for RecorderJob {
         let res = task::spawn_blocking(move || recorder.stop_capture()).await??;
 
         // Update the file metadata
-        handler.add_file(&output_manifest).await?;
-        handler.add_file(&output_stream).await?;
-        handler.add_file(&log).await?;
+        {
+            let mut redis = with_shared_redis_resource!(manager);
+            StorageHandler::queue_file_metadata(&output_manifest, &storage_id, &mut redis).await?;
+            StorageHandler::queue_file_metadata(&output_stream, &storage_id, &mut redis).await?;
+            StorageHandler::queue_file_metadata(&log, &storage_id, &mut redis).await?;
+        }
 
         // Check the return code
         if !res.success() {

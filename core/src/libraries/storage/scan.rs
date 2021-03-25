@@ -5,6 +5,8 @@ use tokio::{
     sync::{Mutex, Notify, Semaphore},
 };
 
+use super::FileMetadata;
+
 #[derive(Clone)]
 pub struct FileSystemScanner {
     root: PathBuf,
@@ -136,7 +138,9 @@ impl FileSystemScanner {
         }
 
         let mut con = self.transaction.lock().await;
-        super::database::insert_file(path_str, entry.metadata().await.ok(), &mut *con)
+        let metadata =
+            FileMetadata::from_fs_metadata(PathBuf::from(path_str), entry.metadata().await);
+        super::database::insert_file(metadata, &mut *con)
             .await
             .unwrap();
     }

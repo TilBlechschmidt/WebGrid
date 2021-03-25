@@ -1,4 +1,4 @@
-use chrono::{Duration, TimeZone, Utc};
+use crate::libraries::storage::FileMetadata;
 use futures::StreamExt;
 use sqlx::{error::Error as SQLError, sqlite::Sqlite, Executor, Row, SqliteConnection};
 use std::path::PathBuf;
@@ -23,42 +23,13 @@ where
         .rows_affected())
 }
 
-pub async fn insert_file<'e, E>(
-    path: &str,
-    metadata: Option<std::fs::Metadata>,
-    con: E,
-) -> Result<(), SQLError>
+pub async fn insert_file<'e, E>(metadata: FileMetadata, con: E) -> Result<(), SQLError>
 where
     E: Executor<'e, Database = Sqlite>,
 {
-    let mut size: f64 = 0.0;
-    let mut last_modified = Utc::now();
-    let mut last_access = Utc::now();
-
-    // Consider dates that are before 2000 or more than 24 hours in the future to be invalid.
-    let past_sanity_date = Utc.ymd(2000, 1, 1).and_hms(0, 0, 0);
-    let future_sanity_date = Utc::now() + Duration::hours(24);
-
-    if let Some(meta) = metadata {
-        size = meta.len() as f64;
-
-        if let Ok(modified) = meta.modified() {
-            let date_time = modified.into();
-            if date_time > past_sanity_date && date_time < future_sanity_date {
-                last_modified = date_time;
-            }
-        }
-
-        if let Ok(accessed) = meta.accessed() {
-            let date_time = accessed.into();
-            if date_time > past_sanity_date && date_time < future_sanity_date {
-                last_access = date_time;
-            }
-        }
-    }
-
-    let last_modified_string = last_modified.to_rfc3339();
-    let last_access_string = last_access.to_rfc3339();
+    let last_modified_string = metadata.last_modified.to_rfc3339();
+    let last_access_string = metadata.last_access.to_rfc3339();
+    let path = metadata.path.to_str().unwrap_or_default();
 
     sqlx::query!(
         r#"
@@ -66,7 +37,7 @@ where
             VALUES ( $1, $2, $3, $4 )
         "#,
         path,
-        size,
+        metadata.size,
         last_modified_string,
         last_access_string
     )
@@ -80,9 +51,6 @@ pub async fn used_bytes<'e, E>(executor: E) -> Result<f64, SQLError>
 where
     E: 'e + Send + Executor<'e, Database = Sqlite>,
 {
-    // let mut cursor = sqlx::query(r#"SELECT SUM(Size) FROM Files"#).fetch(executor);
-    // Ok(cursor.next().await?)
-
     let row: (f64,) = sqlx::query_as("SELECT SUM(Size) FROM Files")
         .fetch_one(executor)
         .await?;

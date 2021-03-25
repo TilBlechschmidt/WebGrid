@@ -7,7 +7,7 @@ use crate::libraries::scheduling::{JobScheduler, StatusServer};
 use crate::libraries::storage::StorageHandler;
 use crate::schedule;
 use anyhow::Result;
-use log::info;
+use log::{debug, info};
 use std::path::PathBuf;
 use structopt::StructOpt;
 use uuid::Uuid;
@@ -16,7 +16,7 @@ mod context;
 mod jobs;
 
 use context::Context;
-use jobs::{CleanupJob, ServerJob};
+use jobs::{CleanupJob, MetadataJob, ServerJob};
 
 #[derive(Debug, StructOpt)]
 /// Content delivery service
@@ -45,35 +45,41 @@ pub struct Options {
 }
 
 pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> {
-    let storage_id = StorageHandler::storage_id(options.storage_directory.clone()).await?;
+    let storage_id = StorageHandler::storage_id(&options.storage_directory).await?;
     let provider_id = Uuid::new_v4().to_string();
-    let size_limit = options.size_limit * 1_000_000_000.0;
-    let cleanup_target = size_limit * (options.cleanup_percentage / 100.0);
+    let size_threshold = options.size_limit * 1_000_000_000.0;
+    let cleanup_target = size_threshold * (options.cleanup_percentage / 100.0);
+
+    debug!("Size threshold: {} bytes", size_threshold);
+    debug!("Cleanup target: {} bytes", cleanup_target);
 
     let (mut heart, _) = Heart::new();
 
+    let scheduler = JobScheduler::default();
     let context = Context::new(
+        &options,
         shared_options.redis,
         storage_id,
         provider_id,
-        options.host,
-        options.port,
+        size_threshold,
+        cleanup_target,
     )
-    .await;
-    let scheduler = JobScheduler::default();
+    .await?;
 
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);
     let heart_beat_job = context.heart_beat.clone();
     let metrics_job = context.metrics.clone();
     let server_job = ServerJob::new(options.port, options.storage_directory.clone());
-    let cleanup_job = CleanupJob::new(options.storage_directory, size_limit, cleanup_target);
+    let cleanup_job = CleanupJob::new(size_threshold);
+    let metadata_job = MetadataJob::new();
 
     schedule!(scheduler, context, {
         status_job,
         heart_beat_job,
         metrics_job,
         server_job,
-        cleanup_job
+        cleanup_job,
+        metadata_job
     });
 
     let death_reason = heart.death().await;

@@ -22,7 +22,7 @@ pub async fn initialize_service(
     ));
 
     if let Some(storage_directory) = manager.context.options.storage_directory {
-        let storage_id = StorageHandler::storage_id(storage_directory.clone())
+        let storage_id = StorageHandler::storage_id(&storage_directory)
             .await
             .map_err(|e| {
                 error!("Storage unavailable: {:?}", e);
