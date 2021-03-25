@@ -75,7 +75,21 @@ impl ProxyJob {
         debug!("{} {} -> {}", req.method(), path, upstream);
 
         *req.uri_mut() = format!("http://{}{}", upstream, path).parse().unwrap();
-        Ok(self.client.request(req).await?)
+
+        let result = self.client.request(req).await;
+
+        match result {
+            Ok(res) => Ok(res),
+            Err(e) => {
+                error!("Failed to fulfill request to '{}': {}", upstream, e);
+                let error_message = format!("Unable to forward request to {}: {}", upstream, e);
+
+                Ok(Response::builder()
+                    .status(StatusCode::BAD_GATEWAY)
+                    .body(error_message.into())
+                    .unwrap())
+            }
+        }
     }
 
     async fn handle_session_request(
