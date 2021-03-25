@@ -4,6 +4,7 @@
 
 use hyper::{body, Client, Uri};
 use log::{debug, trace};
+use redis::{aio::ConnectionLike, AsyncCommands, RedisResult};
 use std::time::Duration;
 use tokio::time::sleep;
 use tokio::time::timeout;
@@ -44,6 +45,39 @@ pub async fn wait_for(url: &str, timeout_duration: Duration) -> Result<String, (
 
         if remaining_duration.as_secs() == 0 {
             debug!("Timeout while waiting for {}", url);
+            return Err(());
+        }
+
+        sleep(check_interval).await;
+        remaining_duration -= check_interval;
+    }
+}
+
+pub async fn wait_for_key<C: ConnectionLike + AsyncCommands>(
+    key: &str,
+    timeout_duration: Duration,
+    con: &mut C,
+) -> Result<(), ()> {
+    let check_interval = Duration::from_millis(250);
+    let mut remaining_duration = timeout_duration;
+
+    debug!("Awaiting existence of redis key {}", key);
+
+    loop {
+        let result: RedisResult<bool> = con.exists(key).await;
+
+        if let Ok(exists) = result {
+            if exists {
+                return Ok(());
+            } else {
+                trace!("Expected redis key does not exist yet");
+            }
+        } else {
+            trace!("Unable to check existence of redis key! {:?}", result);
+        }
+
+        if remaining_duration.as_secs() == 0 {
+            debug!("Timeout while waiting for redis key {}", key);
             return Err(());
         }
 

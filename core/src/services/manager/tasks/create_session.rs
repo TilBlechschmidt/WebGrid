@@ -1,6 +1,6 @@
 use super::super::{context::SessionCreationContext, RequestError, SessionReplyValue};
 use crate::libraries::helpers::{
-    keys, parse_browser_string, wait_for, CapabilitiesRequest, Timeout,
+    keys, parse_browser_string, wait_for, wait_for_key, CapabilitiesRequest, Timeout,
 };
 use crate::libraries::lifecycle::logging::{LogCode, SessionLogger};
 use crate::libraries::metrics::MetricsEntry;
@@ -256,7 +256,7 @@ mod subtasks {
     pub async fn await_healthcheck<C: ConnectionLike + AsyncCommands>(
         con: &mut C,
         session_id: &str,
-    ) -> Result<String, RequestError> {
+    ) -> Result<(), RequestError> {
         let (host, port): (String, String) = con
             .hget(keys::session::upstream(session_id), &["host", "port"])
             .map_err(RequestError::RedisError)
@@ -264,10 +264,27 @@ mod subtasks {
 
         let url = format!("http://{}:{}/status", host, port);
         let timeout = Timeout::NodeStartup.get(con).await as u64;
+        let timeout_duration = Duration::from_secs(timeout);
+        let healthcheck_start = Instant::now();
 
-        wait_for(&url, Duration::from_secs(timeout))
+        // Wait for the node heartbeat in redis first to save some HTTP calls
+        wait_for_key(
+            &keys::session::heartbeat::node(session_id),
+            timeout_duration,
+            con,
+        )
+        .map_err(|_| RequestError::HealthCheckTimeout)
+        .await?;
+
+        // Spend the remaining timeout duration HTTP polling the webdrivers status endpoint
+        let remaining_duration =
+            timeout_duration - Instant::now().duration_since(healthcheck_start);
+
+        wait_for(&url, remaining_duration)
             .map_err(|_| RequestError::HealthCheckTimeout)
-            .await
+            .await?;
+
+        Ok(())
     }
 
     mod helpers {

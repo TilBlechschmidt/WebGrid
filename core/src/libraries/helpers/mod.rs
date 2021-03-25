@@ -13,7 +13,7 @@ pub mod lua;
 
 pub use backoff::Backoff;
 pub use capabilities::*;
-pub use healthcheck::wait_for;
+pub use healthcheck::{wait_for, wait_for_key};
 pub use timeout::Timeout;
 
 /// Splits the input string into two parts at the first occurence of the separator
