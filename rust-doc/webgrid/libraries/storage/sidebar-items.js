@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["StorageError","Errors thrown during filesystem access"]],"struct":[["StorageHandler","Filesystem accessor"]]});
+initSidebarItems({"enum":[["StorageError","Errors thrown during filesystem access"]],"struct":[["FileMetadata",""],["StorageHandler","Filesystem accessor"]]});

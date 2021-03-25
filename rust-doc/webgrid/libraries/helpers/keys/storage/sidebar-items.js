@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["host",""]]});
+initSidebarItems({"fn":[["host",""]],"mod":[["metadata",""]]});

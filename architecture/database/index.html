@@ -635,7 +635,10 @@
 <div class="highlight"><pre><span></span><code><span class="c1">// SID = storage ID</span>
 <span class="c1">// PID = randomly generated ephemeral provider ID</span>
 <span class="sb">`storage:</span><span class="si">${</span><span class="nx">SID</span><span class="si">}</span><span class="sb">:</span><span class="si">${</span><span class="nx">PID</span><span class="si">}</span><span class="sb">:host`</span> <span class="o">=</span> <span class="nx">string</span> <span class="nx">EX</span> <span class="mf">60</span><span class="nx">s</span>    <span class="c1">// (host + port)</span>
+
+<span class="sb">`storage:</span><span class="si">${</span><span class="nx">SID</span><span class="si">}</span><span class="sb">:metadata.pending`</span> <span class="o">=</span> <span class="nx">List</span><span class="o">&lt;</span><span class="nx">FileMetadata</span><span class="o">&gt;</span>  <span class="c1">// see below</span>
 </code></pre></div>
+<p>To optimise storage performance and reduce the need for database synchronization, metadata of newly created and modified files is not written to the storage database by the writing service directly. Instead, the relevant metadata is collected and appended to the <code>:metadata.pending</code> list. The corresponding storage service will then update its internal database with this information by continously watching this list and pulling new metadata.</p>
 <h3 id="api">API<a class="headerlink" href="#api" title="Permanent link">¶</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1">// AID = randomly generated ephemeral server ID</span>
 <span class="sb">`api:</span><span class="si">${</span><span class="nx">AID</span><span class="si">}</span><span class="sb">:host`</span> <span class="o">=</span> <span class="nx">string</span> <span class="nx">EX</span> <span class="mf">60</span><span class="nx">s</span>               <span class="c1">// (host + port)</span>
@@ -947,7 +950,7 @@
 <div class="md-source-date">
 <small>
     
-      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 19, 2021</span>
+      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 25, 2021</span>
 </small>
 </div>
 </article>

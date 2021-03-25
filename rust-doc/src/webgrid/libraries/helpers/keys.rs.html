@@ -193,6 +193,14 @@
 <span id="190">190</span>
 <span id="191">191</span>
 <span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Redis database keys</span>
 <span class="doccomment">//!</span>
@@ -351,6 +359,14 @@
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">host</span>(<span class="ident">storage_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">provider_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
         <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}:{}:host&quot;</span>, <span class="ident">storage_prefix</span>(<span class="ident">storage_id</span>), <span class="ident">provider_id</span>)
+    }
+
+    <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">metadata</span> {
+        <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">storage_prefix</span>;
+
+        <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pending</span>(<span class="ident">storage_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
+            <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}:metadata.pending&quot;</span>, <span class="ident">storage_prefix</span>(<span class="ident">storage_id</span>))
+        }
     }
 }
 

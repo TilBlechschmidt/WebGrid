@@ -144,6 +144,10 @@
 <span id="141">141</span>
 <span id="142">142</span>
 <span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">sqlx</span>::{<span class="ident">Sqlite</span>, <span class="ident">Transaction</span>};
 <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">collections</span>::<span class="ident">VecDeque</span>, <span class="ident">path</span>::<span class="ident">PathBuf</span>, <span class="ident">sync</span>::<span class="ident">Arc</span>};
@@ -151,6 +155,8 @@
     <span class="ident">fs</span>::{<span class="ident">read_dir</span>, <span class="ident">DirEntry</span>, <span class="ident">ReadDir</span>},
     <span class="ident">sync</span>::{<span class="ident">Mutex</span>, <span class="ident">Notify</span>, <span class="ident">Semaphore</span>},
 };
+
+<span class="kw">use</span> <span class="kw">super</span>::<span class="ident">FileMetadata</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">FileSystemScanner</span> {
@@ -283,7 +289,9 @@
         }
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">con</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">transaction</span>.<span class="ident">lock</span>().<span class="kw">await</span>;
-        <span class="kw">super</span>::<span class="ident">database</span>::<span class="ident">insert_file</span>(<span class="ident">path_str</span>, <span class="ident">entry</span>.<span class="ident">metadata</span>().<span class="kw">await</span>.<span class="ident">ok</span>(), <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="ident">con</span>)
+        <span class="kw">let</span> <span class="ident">metadata</span> <span class="op">=</span>
+            <span class="ident">FileMetadata</span>::<span class="ident">from_fs_metadata</span>(<span class="ident">PathBuf</span>::<span class="ident">from</span>(<span class="ident">path_str</span>), <span class="ident">entry</span>.<span class="ident">metadata</span>().<span class="kw">await</span>);
+        <span class="kw">super</span>::<span class="ident">database</span>::<span class="ident">insert_file</span>(<span class="ident">metadata</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="kw-2">*</span><span class="ident">con</span>)
             .<span class="kw">await</span>
             .<span class="ident">unwrap</span>();
     }

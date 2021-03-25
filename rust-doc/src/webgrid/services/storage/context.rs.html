@@ -45,13 +45,27 @@
 <span id="42">42</span>
 <span id="43">43</span>
 <span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">resources</span>::<span class="ident">DefaultResourceManager</span>;
+<span class="kw">use</span> <span class="kw">super</span>::<span class="ident">Options</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::{<span class="ident">helpers</span>::<span class="ident">keys</span>, <span class="ident">resources</span>::<span class="ident">ResourceManagerProvider</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::{
     <span class="ident">lifecycle</span>::{<span class="ident">BeatValue</span>, <span class="ident">HeartBeat</span>},
     <span class="ident">metrics</span>::<span class="ident">MetricsProcessor</span>,
 };
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::{<span class="ident">resources</span>::<span class="ident">DefaultResourceManager</span>, <span class="ident">storage</span>::<span class="ident">StorageHandler</span>};
+<span class="kw">use</span> <span class="ident">anyhow</span>::<span class="prelude-ty">Result</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Context</span> {
@@ -59,29 +73,39 @@
     <span class="kw">pub</span> <span class="ident">heart_beat</span>: <span class="ident">HeartBeat</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">DefaultResourceManager</span><span class="op">&gt;</span>,
     <span class="kw">pub</span> <span class="ident">storage_id</span>: <span class="ident">String</span>,
     <span class="kw">pub</span> <span class="ident">metrics</span>: <span class="ident">MetricsProcessor</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">DefaultResourceManager</span><span class="op">&gt;</span>,
+    <span class="kw">pub</span> <span class="ident">storage</span>: <span class="ident">StorageHandler</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Context</span> {
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">new</span>(
+        <span class="ident">options</span>: <span class="kw-2">&amp;</span><span class="ident">Options</span>,
         <span class="ident">redis_url</span>: <span class="ident">String</span>,
         <span class="ident">storage_id</span>: <span class="ident">String</span>,
         <span class="ident">provider_id</span>: <span class="ident">String</span>,
-        <span class="ident">host</span>: <span class="ident">String</span>,
-        <span class="ident">port</span>: <span class="ident">u16</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">addr</span> <span class="op">=</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}:{}&quot;</span>, <span class="ident">host</span>, <span class="ident">port</span>);
+        <span class="ident">size_threshold</span>: <span class="ident">f64</span>,
+        <span class="ident">cleanup_target</span>: <span class="ident">f64</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">addr</span> <span class="op">=</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}:{}&quot;</span>, <span class="ident">options</span>.<span class="ident">host</span>, <span class="ident">options</span>.<span class="ident">port</span>);
         <span class="kw">let</span> <span class="ident">heart_beat</span> <span class="op">=</span> <span class="ident">HeartBeat</span>::<span class="ident">with_value</span>(<span class="ident">BeatValue</span>::<span class="ident">Constant</span>(<span class="ident">addr</span>));
 
         <span class="ident">heart_beat</span>
             .<span class="ident">add_beat</span>(<span class="kw-2">&amp;</span><span class="ident">keys</span>::<span class="ident">storage</span>::<span class="ident">host</span>(<span class="kw-2">&amp;</span><span class="ident">storage_id</span>, <span class="kw-2">&amp;</span><span class="ident">provider_id</span>), <span class="number">60</span>, <span class="number">120</span>)
             .<span class="kw">await</span>;
 
-        <span class="self">Self</span> {
+        <span class="kw">let</span> <span class="ident">storage</span> <span class="op">=</span> <span class="ident">StorageHandler</span>::<span class="ident">new</span>(
+            <span class="ident">options</span>.<span class="ident">storage_directory</span>.<span class="ident">clone</span>(),
+            <span class="ident">size_threshold</span>,
+            <span class="ident">cleanup_target</span>,
+        )
+        .<span class="kw">await</span><span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
             <span class="ident">resource_manager</span>: <span class="ident">DefaultResourceManager</span>::<span class="ident">new</span>(<span class="ident">redis_url</span>),
             <span class="ident">heart_beat</span>,
             <span class="ident">storage_id</span>,
             <span class="ident">metrics</span>: <span class="ident">MetricsProcessor</span>::<span class="ident">default</span>(),
-        }
+            <span class="ident">storage</span>,
+        })
     }
 }
 
