@@ -11,6 +11,8 @@ use chrono::offset::Utc;
 use futures::TryFutureExt;
 use lazy_static::lazy_static;
 use log::{debug, warn};
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 use redis::{aio::ConnectionLike, pipe, AsyncCommands};
 use regex::Regex;
 use std::time::Duration;
@@ -187,7 +189,7 @@ mod subtasks {
     ) -> Result<(), RequestError> {
         let queue_timeout = Timeout::Queue.get(con).await;
 
-        let queues: Vec<String> = helpers::match_orchestrators(con, capabilities)
+        let mut queues: Vec<String> = helpers::match_orchestrators(con, capabilities)
             .await?
             .iter()
             .map(|orchestrator_id| keys::orchestrator::slots::available(orchestrator_id))
@@ -196,6 +198,9 @@ mod subtasks {
         if queues.is_empty() {
             return Err(RequestError::NoOrchestratorAvailable);
         }
+
+        // Ensure some degree of load balancing for orchestrators
+        queues.shuffle(&mut thread_rng());
 
         let response: Option<(String, String)> = con
             .blpop(queues, queue_timeout)
