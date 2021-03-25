@@ -234,6 +234,20 @@
 <span id="231">231</span>
 <span id="232">232</span>
 <span id="233">233</span>
+<span id="234">234</span>
+<span id="235">235</span>
+<span id="236">236</span>
+<span id="237">237</span>
+<span id="238">238</span>
+<span id="239">239</span>
+<span id="240">240</span>
+<span id="241">241</span>
+<span id="242">242</span>
+<span id="243">243</span>
+<span id="244">244</span>
+<span id="245">245</span>
+<span id="246">246</span>
+<span id="247">247</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::<span class="kw">super</span>::{<span class="ident">routing_info</span>::<span class="ident">RoutingInfo</span>, <span class="ident">Context</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::{
@@ -312,7 +326,21 @@
         <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;{} {} -&gt; {}&quot;</span>, <span class="ident">req</span>.<span class="ident">method</span>(), <span class="ident">path</span>, <span class="ident">upstream</span>);
 
         <span class="kw-2">*</span><span class="ident">req</span>.<span class="ident">uri_mut</span>() <span class="op">=</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;http://{}{}&quot;</span>, <span class="ident">upstream</span>, <span class="ident">path</span>).<span class="ident">parse</span>().<span class="ident">unwrap</span>();
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">client</span>.<span class="ident">request</span>(<span class="ident">req</span>).<span class="kw">await</span><span class="question-mark">?</span>)
+
+        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">client</span>.<span class="ident">request</span>(<span class="ident">req</span>).<span class="kw">await</span>;
+
+        <span class="kw">match</span> <span class="ident">result</span> {
+            <span class="prelude-val">Ok</span>(<span class="ident">res</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">res</span>),
+            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="macro">error</span><span class="macro">!</span>(<span class="string">&quot;Failed to fulfill request to &#39;{}&#39;: {}&quot;</span>, <span class="ident">upstream</span>, <span class="ident">e</span>);
+                <span class="kw">let</span> <span class="ident">error_message</span> <span class="op">=</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;Unable to forward request to {}: {}&quot;</span>, <span class="ident">upstream</span>, <span class="ident">e</span>);
+
+                <span class="prelude-val">Ok</span>(<span class="ident">Response</span>::<span class="ident">builder</span>()
+                    .<span class="ident">status</span>(<span class="ident">StatusCode</span>::<span class="ident">BAD_GATEWAY</span>)
+                    .<span class="ident">body</span>(<span class="ident">error_message</span>.<span class="ident">into</span>())
+                    .<span class="ident">unwrap</span>())
+            }
+        }
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">handle_session_request</span>(
