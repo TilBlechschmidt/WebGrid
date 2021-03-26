@@ -7,7 +7,7 @@ use hyper::{
     body,
     client::HttpConnector,
     service::{make_service_fn, service_fn},
-    Body, Client as HttpClient, Error as HyperError, Method, Request, Response, Server,
+    Body, Client as HttpClient, Error as HyperError, Method, Request, Response, Server, Version,
 };
 use lazy_static::lazy_static;
 use log::{info, trace, warn};
@@ -168,12 +168,13 @@ impl ProxyJob {
             None => req_path.to_string(),
         };
 
-        // Overwrite the original path with the translated one
+        // Overwrite the original path with the translated one and downgrade to HTTP/1.1
         let driver_addr: SocketAddr = ([127, 0, 0, 1], driver_port).into();
         let req_method = req.method().clone();
         let uri_string = format!("http://{}{}", driver_addr, path);
         let uri = uri_string.parse().unwrap();
         *req.uri_mut() = uri;
+        *req.version_mut() = Version::HTTP_11;
 
         // Split the request body apart and read it for logging
         let (req_parts, req_body) = req.into_parts();

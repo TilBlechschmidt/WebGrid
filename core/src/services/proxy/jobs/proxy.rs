@@ -13,7 +13,7 @@ use hyper::{client::HttpConnector, Body, Client, Method, Request, Response, Serv
 use lazy_static::lazy_static;
 use log::{debug, error, info};
 use regex::Regex;
-use std::convert::Infallible;
+use std::{convert::Infallible, time::Duration};
 
 static NOTFOUND: &[u8] = b"Not Found";
 static NOGATEWAY: &[u8] = b"No upstream available to handle the request";
@@ -63,10 +63,12 @@ impl Job for ProxyJob {
 
 impl ProxyJob {
     pub fn new(port: u16) -> Self {
-        Self {
-            client: Client::new(),
-            port,
-        }
+        let client = Client::builder()
+            .pool_idle_timeout(Duration::from_secs(30))
+            .http2_only(true)
+            .build_http();
+
+        Self { client, port }
     }
 
     async fn forward(&self, mut req: Request<Body>, upstream: String) -> Result<Response<Body>> {
