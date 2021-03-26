@@ -1,9 +1,13 @@
+use super::super::schema::{schema, GQLContext};
 use super::super::Context;
+use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
 use crate::libraries::scheduling::{Job, TaskManager};
+use crate::with_shared_redis_resource;
 use anyhow::Result;
 use async_trait::async_trait;
 use log::info;
-use std::net::SocketAddr;
+use std::{net::SocketAddr, sync::Arc};
+use tokio::sync::Mutex;
 use warp::Filter;
 
 #[derive(Clone)]
@@ -21,12 +25,21 @@ impl Job for ServerJob {
     async fn execute(&self, manager: TaskManager<Self::Context>) -> Result<()> {
         let cors = warp::cors()
             .allow_any_origin()
-            .allow_methods(vec!["OPTIONS", "GET"])
-            .allow_headers(vec!["range"]);
+            .allow_methods(vec!["OPTIONS", "GET", "POST"]);
 
-        let hello = warp::any().map(|| "Hello world!");
+        let redis = Arc::new(Mutex::new(with_shared_redis_resource!(manager)));
+        let state = warp::any().map(move || GQLContext {
+            redis: redis.clone(),
+        });
+        let graphql_filter = juniper_warp::make_graphql_filter(schema(), state.boxed());
 
-        let routes = warp::path("api").and(hello).with(cors);
+        let graphql_route = warp::post().and(graphql_filter);
+        let playground_route = warp::get().and(juniper_warp::playground_filter("/api", None));
+
+        let routes = warp::path("api")
+            .and(playground_route)
+            .or(graphql_route)
+            .with(cors);
 
         let source_addr: SocketAddr = ([0, 0, 0, 0], self.port).into();
         let (addr, server) = warp::serve(routes)

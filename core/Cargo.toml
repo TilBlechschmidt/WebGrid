@@ -22,8 +22,12 @@ structopt = "0.3"
 warp = { version = "0.3", default-features = false }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-chrono = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "0.8", features = ["v4"] }
+
+# API
+juniper = { git = "https://github.com/TilBlechschmidt/juniper", branch = "patch-1", optional = true, features = ["expose-test-schema"] }
+juniper_warp = { git = "https://github.com/TilBlechschmidt/juniper", branch = "patch-1", optional = true }
 
 # Docker
 bollard = { version = "0.10", optional = true }
@@ -45,7 +49,7 @@ git2 = "0.13"
 [features]
 default = ["gc", "api", "proxy", "manager", "node", "metrics", "storage", "docker", "kubernetes"]
 gc = []
-api = []
+api = ["juniper", "juniper_warp"]
 proxy = []
 manager = []
 node = []

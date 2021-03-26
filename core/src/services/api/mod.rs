@@ -12,6 +12,7 @@ use structopt::StructOpt;
 
 mod context;
 mod jobs;
+mod schema;
 
 use context::Context;
 use uuid::Uuid;
