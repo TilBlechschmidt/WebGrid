@@ -198,3 +198,13 @@ pub mod metrics {
         }
     }
 }
+
+pub mod api {
+    fn api_prefix(api_id: &str) -> String {
+        format!("api:{}", api_id)
+    }
+
+    pub fn host(api_id: &str) -> String {
+        format!("{}:host", api_prefix(api_id))
+    }
+}

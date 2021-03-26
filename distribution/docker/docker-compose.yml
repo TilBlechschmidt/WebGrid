@@ -42,11 +42,10 @@ services:
     depends_on:
       - redis
   api:
-    image: ${REPOSITORY:-webgrid}/api:${IMAGE_TAG:-latest}
+    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-latest}
     platform: linux/amd64
     container_name: webgrid-api
-    environment:
-      HOST: webgrid-api
+    command: api --log debug,hyper=warn --host webgrid-api
     depends_on:
       - redis
   redis:

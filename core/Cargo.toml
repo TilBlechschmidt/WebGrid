@@ -43,8 +43,9 @@ tokio = { version = "1.2", features = ["full"] }
 git2 = "0.13"
 
 [features]
-default = ["gc", "proxy", "manager", "node", "metrics", "storage", "docker", "kubernetes"]
+default = ["gc", "api", "proxy", "manager", "node", "metrics", "storage", "docker", "kubernetes"]
 gc = []
+api = []
 proxy = []
 manager = []
 node = []

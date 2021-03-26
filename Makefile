@@ -10,19 +10,11 @@ builder:
 	docker build --platform linux/arm64 --build-arg TAG=arm64 -f distribution/docker/images/builder/Dockerfile -t webgrid/rust-musl-builder:arm64-root .
 	docker build --platform linux/amd64 --build-arg TAG=amd64 -f distribution/docker/images/builder/Dockerfile -t webgrid/rust-musl-builder:amd64-root .
 
-api:
-	cd api && yarn install && yarn build
-	mkdir -p .artifacts/api-executable
-	mv api/dist/index.js .artifacts/api-executable
-
 core:
 	cd core && ./build.sh --release
 
 core-debug:
 	cd core && ./build.sh
-
-bundle-api: api
-	docker build --platform linux/amd64 -f distribution/docker/images/api/Dockerfile -t webgrid/api:latest .
 
 bundle-core: core
 	docker build --platform linux/amd64 -f distribution/docker/images/core/Dockerfile -t webgrid/core:latest .

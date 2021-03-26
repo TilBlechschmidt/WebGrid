@@ -3,6 +3,9 @@
 #[cfg(feature = "gc")]
 pub mod gc;
 
+#[cfg(feature = "api")]
+pub mod api;
+
 #[cfg(feature = "proxy")]
 pub mod proxy;
 

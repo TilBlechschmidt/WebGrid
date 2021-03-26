@@ -40,6 +40,9 @@ enum Command {
 
     #[cfg(feature = "gc")]
     GC(gc::Options),
+
+    #[cfg(feature = "api")]
+    API(api::Options),
 }
 
 #[tokio::main]
@@ -84,6 +87,9 @@ async fn main() -> Result<()> {
 
         #[cfg(feature = "gc")]
         Command::GC(options) => gc::run(shared_options, options).await?,
+
+        #[cfg(feature = "api")]
+        Command::API(options) => api::run(shared_options, options).await?,
     }
 
     Ok(())
