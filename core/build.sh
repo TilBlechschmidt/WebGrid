@@ -30,7 +30,7 @@ mkdir -p $BUILD_DIR/cargo-registry
 mkdir -p $BUILD_DIR/target
 
 echo "Copying project to build cache"
-rsync -a --progress $SOURCE_DIR/* $BUILD_DIR/project --exclude target --exclude .build --exclude .cache
+rsync -a $SOURCE_DIR/* $BUILD_DIR/project --exclude target --exclude .build --exclude .cache
 
 echo "Running build in webgrid/rust-musl-builder:${BUILDER_TAG} container"
 # We are mounting the repository into the container for the build-script to determine the version from git
@@ -51,9 +51,9 @@ mkdir -p $TARGET_DIR/core-documentation
 mkdir -p $TARGET_DIR/core-executable
 
 echo "Copying documentation to output"
-rsync -a --progress $BUILD_DIR/target/x86_64-unknown-linux-musl/doc $TARGET_DIR/core-documentation
+rsync -a $BUILD_DIR/target/x86_64-unknown-linux-musl/doc $TARGET_DIR/core-documentation
 echo "Copying executable to output"
-rsync -av --progress $BUILD_DIR/target/x86_64-unknown-linux-musl/$BUILD_OUTPUT_DIR/webgrid $TARGET_DIR/core-executable
+rsync -av $BUILD_DIR/target/x86_64-unknown-linux-musl/$BUILD_OUTPUT_DIR/webgrid $TARGET_DIR/core-executable
 
 # Strip the binary
 if [[ $1 = "--release" ]];
