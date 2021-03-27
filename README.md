@@ -109,7 +109,7 @@ The grid provides a GraphQL API at [`/api`](http://localhost:8080/api) with a Pl
 
 ### 📺 Watch your browsers
 
-You can take a **live** look at what your browsers are doing by taking the [Session ID](https://webgrid.dev/features/screen-recording/#session-id) of a instance and visiting `localhost:8080/embed/<session-id>`. You can also embed the videos in your existing tools! Head over to the <a href="https://webgrid.dev/features/screen-recording/#embedding">embedding documentation</a> to learn how.
+You can take a **live** look at what your browsers are doing by taking the [Session ID](https://webgrid.dev/features/screen-recording/#session-id) of a instance and visiting [`localhost:8080`](http://localhost:8080). You can also embed the videos in your existing tools! Head over to the <a href="https://webgrid.dev/features/screen-recording/#embedding">embedding documentation</a> to learn how.
 
 
 <sub>

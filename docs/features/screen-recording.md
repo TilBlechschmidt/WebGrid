@@ -57,26 +57,33 @@ In order to view or embed a video you need to retrieve its unique session identi
 
 ## Embedding
 
-You can embed the browser recording directly into your existing tools by using the JavaScript SDK. You need to import the script in your `<head>` and add a custom HTML tag to the body where the video should be placed.
+You can embed the browser recording directly into your existing tools by using the JavaScript SDK. You need to import the stylesheet in your `<head>` and initialize the video from within JavaScript. Note that all CSS is scoped with the `webgrid` class so it should not affect your website.
 
 ```html
 <head>
-    <script src="http://<your-webgrid-address>/embed" defer></script>
+    <link rel="stylesheet" href="http://<your-webgrid-address>/embed.css">
 </head>
 <body>
-    <webgrid-video session-id="<your-session-id>"></webgrid-video>
+    <div id="your-identifier"></div>
+
+    <script type="module">
+        import { WebGridVideo } from 'http://<your-webgrid-address>/embed.js';
+
+        new WebGridVideo({
+            target: document.getElementById("your-identifier"),
+            props: {
+                sessionID: '<your-session-id>',
+            }
+        });
+    </script>
 </body>
 ```
 
-By default, the script tries to guess the webgrid address from the script tag. This behaviour can be overruled by adding the `host="<your-webgrid-address"` attribute to the video tag. Especially when fetching the script for a static page builder which embeds it directly, this is required as the host is evaluated at runtime not at request time.
+By default, the script tries to guess the webgrid address from the import URL. This behaviour can be overruled by passing the `host: '<your-webgrid-address>'` property in the `props` object. Especially when fetching the script from within a static page builder which embeds it directly, this is required as the host is evaluated at runtime not at request time.
 
 ## Viewing
 
-If you want to monitor your session manually you may use the video player provided by the grid. To do so just plug your session id from above into this url:
-
-```
-http://<your-webgrid-address>/embed/<session-id>
-```
+If you want to monitor your session manually you may use the dashboard provided by the grid. To do so just visit it at `http://<your-webgrid-address>` (without any path) and enter the previously obtained session ID.
 
 !!! danger
-    This player is not supposed to be embedded into other pages through `iframes` or other means. For embedding refer the [embedding](#embedding) section!
+    This dashboard is not supposed to be embedded into other pages through `iframes` or other means. For embedding refer the [embedding](#embedding) section!
