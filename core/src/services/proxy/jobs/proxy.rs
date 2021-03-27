@@ -189,9 +189,7 @@ impl ProxyJob {
 
         let result = if req.method() == Method::POST && path == "/session" {
             self.handle_manager_request(req, &info).await
-        } else if path.starts_with("/api") || path.starts_with("/embed") {
-            self.handle_api_request(req, &info).await
-        } else if path.starts_with("/storage") {
+        } else if path.starts_with("/storage/") {
             match REGEX_STORAGE_PATH.captures(&path) {
                 Some(caps) => self.handle_storage_request(req, &caps["sid"], &info).await,
                 None => {
@@ -203,7 +201,7 @@ impl ProxyJob {
                         .unwrap())
                 }
             }
-        } else {
+        } else if path.starts_with("/session/") {
             match REGEX_SESSION_PATH.captures(&path) {
                 Some(caps) => self.handle_session_request(req, &caps["sid"], &info).await,
                 None => {
@@ -215,6 +213,10 @@ impl ProxyJob {
                         .unwrap())
                 }
             }
+        } else {
+            // Send all unmatched requests to the API since it serves the
+            // dashboard which might cover some paths we don't know about.
+            self.handle_api_request(req, &info).await
         };
 
         if let Ok(response) = &result {

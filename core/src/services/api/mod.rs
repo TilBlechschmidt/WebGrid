@@ -1,5 +1,7 @@
 //! GraphQL API service
 
+use std::path::PathBuf;
+
 use super::SharedOptions;
 use crate::libraries::helpers::constants;
 use crate::libraries::lifecycle::Heart;
@@ -33,6 +35,10 @@ pub struct Options {
     /// Port on which the HTTP server will listen
     #[structopt(short, long, default_value = constants::PORT_API)]
     port: u16,
+
+    /// Directory from which files will be served
+    #[structopt(long, env, parse(from_os_str), default_value = "/www")]
+    web_root: PathBuf,
 }
 
 pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> {

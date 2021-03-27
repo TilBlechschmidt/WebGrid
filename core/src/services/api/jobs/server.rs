@@ -23,10 +23,7 @@ impl Job for ServerJob {
     const SUPPORTS_GRACEFUL_TERMINATION: bool = true;
 
     async fn execute(&self, manager: TaskManager<Self::Context>) -> Result<()> {
-        let cors = warp::cors()
-            .allow_any_origin()
-            .allow_methods(vec!["OPTIONS", "GET", "POST"]);
-
+        // Define GraphQL filters
         let redis = Arc::new(Mutex::new(with_shared_redis_resource!(manager)));
         let state = warp::any().map(move || GQLContext {
             redis: redis.clone(),
@@ -35,17 +32,27 @@ impl Job for ServerJob {
 
         let graphql_route = warp::post().and(graphql_filter);
         let playground_route = warp::get().and(juniper_warp::playground_filter("/api", None));
+        let api_routes = warp::path("api").and(playground_route.or(graphql_route));
 
-        let routes = warp::path("api")
-            .and(playground_route)
-            .or(graphql_route)
-            .with(cors);
+        // Define file serving routes
+        let file_serving_path = &manager.context.web_root;
+        let directory_route = warp::get().and(warp::fs::dir(file_serving_path.clone()));
+        let fallback_route = warp::fs::file(file_serving_path.join("__app.html"));
 
+        // Setup CORS
+        let cors = warp::cors()
+            .allow_any_origin()
+            .allow_methods(vec!["OPTIONS", "GET", "POST"]);
+
+        // Put everything together
+        let routes = api_routes.or(directory_route).or(fallback_route).with(cors);
+
+        // Piece the server together
         let source_addr: SocketAddr = ([0, 0, 0, 0], self.port).into();
         let (addr, server) = warp::serve(routes)
             .bind_with_graceful_shutdown(source_addr, manager.termination_signal());
 
-        info!("Listening at {}/api", addr);
+        info!("Serving files and API at {}", addr);
         manager.ready().await;
 
         server.await;

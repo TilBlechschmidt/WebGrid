@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::libraries::{
     helpers::keys,
     lifecycle::{BeatValue, HeartBeat},
@@ -10,6 +12,7 @@ use super::Options;
 pub struct Context {
     pub heart_beat: HeartBeat<Self, DefaultResourceManager>,
     pub api_id: String,
+    pub web_root: PathBuf,
     resource_manager: DefaultResourceManager,
 }
 
@@ -24,6 +27,7 @@ impl Context {
             heart_beat,
             api_id: api_id.to_owned(),
             resource_manager: DefaultResourceManager::new(redis_url),
+            web_root: options.web_root.clone(),
         }
     }
 }
