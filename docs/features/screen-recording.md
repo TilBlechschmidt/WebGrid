@@ -57,20 +57,17 @@ In order to view or embed a video you need to retrieve its unique session identi
 
 ## Embedding
 
-You can embed the browser recording directly into your existing tools by using the JavaScript SDK. You need to import the stylesheet in your `<head>` and initialize the video from within JavaScript. Note that all CSS is scoped with the `webgrid` class so it should not affect your website.
+You can embed the browser recording directly into your existing tools by using the JavaScript SDK. You need to import the JavaScript module and bind it to a DOM element of your choice. All CSS used is scoped to the `webgrid` class so it should not affect your website as long as you don't use this class in your styles.
 
 ```html
-<head>
-    <link rel="stylesheet" href="http://<your-webgrid-address>/embed.css">
-</head>
 <body>
-    <div id="your-identifier"></div>
+    <div id="<your-identifier>"></div>
 
     <script type="module">
-        import { WebGridVideo } from 'http://<your-webgrid-address>/embed.js';
+        import { WebGridVideo } from 'http://<your-webgrid-address>/embed';
 
         new WebGridVideo({
-            target: document.getElementById("your-identifier"),
+            target: document.getElementById("<your-identifier>"),
             props: {
                 sessionID: '<your-session-id>',
             }

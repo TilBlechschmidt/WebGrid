@@ -9,7 +9,7 @@
     new WebGridAPI(host);
 </script>
 
-<Styles />
+<Styles loadEmbedStyles />
 
 <div class="webgrid">
     <SessionPlayer {sessionID} />
