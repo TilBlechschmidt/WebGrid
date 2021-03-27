@@ -1,0 +1,3 @@
+a.md-tabs__link[href*="--separator--"] {
+    pointer-events: none;
+}

@@ -27,6 +27,10 @@ nav:
       - "kubernetes/access.md"
       - "kubernetes/storage.md"
       - "kubernetes/scaling.md"
+  - "Guides":
+      - "guides/k3s.md"
+  - "|":
+      - "--separator--"
   - "Contribute":
       - "contribute/index.md"
       - "contribute/issues.md"
@@ -57,6 +61,9 @@ theme:
     code: Roboto Mono
   features:
     - navigation.tabs
+
+extra_css:
+  - docs.css
 
 # Extras
 extra:
