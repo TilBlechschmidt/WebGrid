@@ -39,7 +39,7 @@ pub struct Options {
     #[structopt(long, env)]
     size_limit: f64,
 
-    /// Percentage (0-100) of size limit to purge during cleanup routing
+    /// Percentage (0-100) of size limit to purge during the cleanup routine
     #[structopt(long, env, default_value = "20")]
     cleanup_percentage: f64,
 }
