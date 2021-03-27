@@ -1,6 +1,6 @@
 .git
 core/target
 core/.cache
-api/node_modules
-api/dist
+dashboard/node_modules
+dashboard/dist
 legacy-workarea
