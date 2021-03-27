@@ -31,7 +31,7 @@ recording:
     # the node-affinity for sessions and storage pods if recording is enabled.
     #
     # Note: The storage class needs to support concurrent access by multiple pods! (e.g. a hostPath based PV)
-    storageClassName: local-storage
+    storageClassName: local-path
 
 replicaCount:
   proxy: 1
