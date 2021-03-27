@@ -1,6 +1,9 @@
 use super::super::Context;
-use crate::libraries::lifecycle::HeartStone;
+use crate::libraries::helpers::keys;
+use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
 use crate::libraries::scheduling::{Job, TaskManager};
+use crate::libraries::{lifecycle::HeartStone, resources::RedisResource};
+use crate::with_shared_redis_resource;
 use anyhow::Result;
 use async_trait::async_trait;
 use hyper::{
@@ -12,9 +15,11 @@ use hyper::{
 };
 use lazy_static::lazy_static;
 use log::{info, trace, warn};
+use redis::{aio::MultiplexedConnection, AsyncCommands};
 use regex::Regex;
 use serde::Deserialize;
-use std::net::SocketAddr;
+use std::{net::SocketAddr, sync::Arc};
+use tokio::sync::Mutex;
 
 lazy_static! {
     static ref SESSION_RE: Regex = Regex::new(r"/session/(?P<sid>[^/]*)(?:/(?P<op>.+))?").unwrap();
@@ -36,6 +41,7 @@ struct RequestContext {
     heart_stone: HeartStone,
     context: Context,
     driver_port: u16,
+    redis: Arc<Mutex<RedisResource<MultiplexedConnection>>>,
 }
 
 #[async_trait]
@@ -46,6 +52,7 @@ impl Job for ProxyJob {
     const SUPPORTS_GRACEFUL_TERMINATION: bool = true;
 
     async fn execute(&self, manager: TaskManager<Self::Context>) -> Result<()> {
+        let redis = Arc::new(Mutex::new(with_shared_redis_resource!(manager)));
         let request_context = RequestContext {
             internal_session_id: self.internal_session_id.clone(),
             external_session_id: manager.context.id.clone(),
@@ -53,6 +60,7 @@ impl Job for ProxyJob {
             heart_stone: self.heart_stone.clone(),
             context: manager.context.clone(),
             driver_port: manager.context.options.driver_port,
+            redis,
         };
 
         let make_svc = make_service_fn(|_conn| {
@@ -228,6 +236,23 @@ impl ProxyJob {
             if let Some(webvtt) = &mut *ctx.context.webvtt.lock().await {
                 webvtt.write(request.cookie.value).await.ok();
             }
+        } else if let Some(key) = request
+            .cookie
+            .name
+            .strip_prefix("webgrid:metadata.session:")
+        {
+            let value = request.cookie.value;
+
+            ctx.redis
+                .lock()
+                .await
+                .hset::<_, _, _, ()>(
+                    keys::session::metadata(&ctx.external_session_id),
+                    key,
+                    value,
+                )
+                .await
+                .ok();
         }
     }
 }

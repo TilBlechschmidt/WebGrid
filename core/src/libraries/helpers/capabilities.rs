@@ -78,10 +78,8 @@ pub struct CapabilitiesProxy {
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct WebGridOptions {
-    /// Name for a session for later querying
-    pub name: Option<String>,
-    /// Build for a session for later querying
-    pub build: Option<String>,
+    /// Arbitrary metadata which can be set by the client and later fetched through the API.
+    pub metadata: Option<HashMap<String, String>>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -111,7 +109,7 @@ pub struct Capabilities {
     #[serde(rename = "webgrid:options")]
     pub webgrid_options: Option<WebGridOptions>,
 
-    /// Additional capabilities that are not part of the W3C standard or added by WebGrid
+    /// Additional capabilities that are not part of the W3C standard or added by WebGrid.
     #[serde(flatten)]
     pub extension_capabilities: HashMap<String, Value>,
 }

@@ -121,6 +121,8 @@ pub async fn create_session(
 }
 
 mod subtasks {
+    use std::collections::HashMap;
+
     use super::*;
 
     pub async fn create_new_session<C: ConnectionLike + AsyncCommands>(
@@ -138,18 +140,12 @@ mod subtasks {
         let capability_sets = requested_capabilities.into_sets();
         let first_capability_set = capability_sets.first();
 
-        let mut metadata = Vec::new();
+        let mut metadata = HashMap::new();
 
-        if let Some(Some(Some(name))) =
-            first_capability_set.map(|c| c.webgrid_options.clone().map(|o| o.name))
+        if let Some(Some(Some(client_metadata))) =
+            first_capability_set.map(|c| c.webgrid_options.clone().map(|o| o.metadata))
         {
-            metadata.push(("name", name));
-        }
-
-        if let Some(Some(Some(build))) =
-            first_capability_set.map(|c| c.webgrid_options.clone().map(|o| o.build))
-        {
-            metadata.push(("build", build))
+            metadata = client_metadata;
         }
 
         pipe()
@@ -174,9 +170,12 @@ mod subtasks {
             .await?;
 
         if !metadata.is_empty() {
-            con.hset_multiple::<_, _, _, ()>(keys::session::metadata(&session_id), &metadata)
-                .map_err(RequestError::RedisError)
-                .await?;
+            con.hset_multiple::<_, _, _, ()>(
+                keys::session::metadata(&session_id),
+                &metadata.into_iter().collect::<Vec<(String, String)>>(),
+            )
+            .map_err(RequestError::RedisError)
+            .await?;
         }
 
         Ok(session_id)
