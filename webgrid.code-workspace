@@ -13,7 +13,16 @@
 		],
 		"rust-analyzer.linkedProjects": [
 			"core/Cargo.toml"
-		]
+		],
+		"[svelte]": {
+			"editor.defaultFormatter": "svelte.svelte-vscode",
+			"editor.quickSuggestions": {
+				"strings": true
+			}
+		},
+		"tailwindCSS.includeLanguages": {
+			"svelte": "html"
+		}
 	},
 	"extensions": {
 		"recommendations": [
@@ -21,7 +30,8 @@
 			"matklad.rust-analyzer",
 			"vadimcn.vscode-lldb",
 			"ms-kubernetes-tools.vscode-kubernetes-tools",
-			"dbaeumer.vscode-eslint"
+			"dbaeumer.vscode-eslint",
+			"svelte.svelte-vscode"
 		],
 		// List of extensions recommended by VS Code that should not be recommended for users of this workspace.
 		"unwantedRecommendations": [
