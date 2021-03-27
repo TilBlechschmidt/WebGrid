@@ -1,6 +1,6 @@
 .PHONY: core api clean
 
-bundle: bundle-api bundle-core bundle-node
+bundle: bundle-core bundle-node
 build: api core
 build-debug: api core-debug
 all: build bundle
