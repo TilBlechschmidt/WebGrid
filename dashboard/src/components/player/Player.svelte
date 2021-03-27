@@ -62,6 +62,7 @@
     bind:currentTime
     bind:ended
     bind:buffered
+    crossorigin="anonymous"
     class="absolute inset-0 w-full max-h-screen"
 >
     <track
