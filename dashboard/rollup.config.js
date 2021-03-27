@@ -115,5 +115,22 @@ const dashboardBundle = {
 	}
 };
 
-export default dashboardBundle
+const embedBundle = {
+	input: 'src/embed/embed.ts',
+	output: {
+		sourcemap: !production,
+		format: 'es',
+		name: 'embed',
+		dir: distDir,
+		assetFileNames: '[name][extname]'
+	},
+	plugins: [
+		...generateBasePlugins(),
+		cssHot({ file: 'embed.css' }),
+	]
+}
 
+export default production ? [
+	dashboardBundle,
+	embedBundle
+] : dashboardBundle
