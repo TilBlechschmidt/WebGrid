@@ -1,8 +1,8 @@
-.PHONY: core api clean
+.PHONY: core dashboard clean
 
 bundle: bundle-core bundle-node
-build: api core
-build-debug: api core-debug
+build: dashboard core
+build-debug: dashboard core-debug
 all: build bundle
 
 builder:
@@ -16,7 +16,12 @@ core:
 core-debug:
 	cd core && ./build.sh
 
-bundle-core: core
+dashboard:
+	cd dashboard && yarn && yarn build
+	mkdir -p .artifacts/web-root
+	rsync -av --delete ./dashboard/dist/ ./.artifacts/web-root
+
+bundle-core: dashboard core
 	docker build --platform linux/amd64 -f distribution/docker/images/core/Dockerfile -t webgrid/core:latest .
 
 bundle-node: core
@@ -26,7 +31,7 @@ bundle-node: core
 clean:
 	rm -rf .artifacts
 	rm -rf core/.cache core/target
-	rm -rf api/dist api/node_modules api/src/generated.ts
+	rm -rf dashboard/dist dashboard/node_modules
 
 install:
 	-docker network create webgrid
