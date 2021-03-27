@@ -1,5 +1,5 @@
 {{- if .Values.recording.enabled }}
-{{- if .Values.recording.createVolumeClaim }}
+{{- if .Values.recording.persistentVolumeClaim.create }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
