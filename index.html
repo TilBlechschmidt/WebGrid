@@ -17,6 +17,7 @@
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&amp;display=fallback" rel="stylesheet"/>
 <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+<link href="docs.css" rel="stylesheet"/>
 </head>
 <body data-md-color-accent="teal" data-md-color-primary="teal" data-md-color-scheme="preference" dir="ltr">
 <script>matchMedia("(prefers-color-scheme: dark)").matches&&document.body.setAttribute("data-md-color-scheme","slate")</script>
@@ -113,6 +114,16 @@
 <li class="md-tabs__item">
 <a class="md-tabs__link" href="kubernetes/configuration/">
         Kubernetes
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="guides/k3s/">
+        Guides
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="--separator--">
+        |
       </a>
 </li>
 <li class="md-tabs__item">
@@ -315,11 +326,51 @@
 <li class="md-nav__item md-nav__item--nested">
 <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" id="__nav_4" type="checkbox"/>
 <label class="md-nav__link" for="__nav_4">
+        Guides
+        <span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-label="Guides" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_4">
+<span class="md-nav__icon md-icon"></span>
+          Guides
+        </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="guides/k3s/">
+        Deploying in K3s
+      </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" id="__nav_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5">
+        |
+        <span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-label="|" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_5">
+<span class="md-nav__icon md-icon"></span>
+          |
+        </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="--separator--">
+        None
+      </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6">
         Contribute
         <span class="md-nav__icon md-icon"></span>
 </label>
 <nav aria-label="Contribute" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_4">
+<label class="md-nav__title" for="__nav_6">
 <span class="md-nav__icon md-icon"></span>
           Contribute
         </label>
@@ -358,13 +409,13 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" id="__nav_5" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5">
+<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" id="__nav_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_7">
         Architecture
         <span class="md-nav__icon md-icon"></span>
 </label>
 <nav aria-label="Architecture" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_5">
+<label class="md-nav__title" for="__nav_7">
 <span class="md-nav__icon md-icon"></span>
           Architecture
         </label>
@@ -403,13 +454,13 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" id="__nav_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_6">
+<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" id="__nav_8" type="checkbox"/>
+<label class="md-nav__link" for="__nav_8">
         Issue Tracker
         <span class="md-nav__icon md-icon"></span>
 </label>
 <nav aria-label="Issue Tracker" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_6">
+<label class="md-nav__title" for="__nav_8">
 <span class="md-nav__icon md-icon"></span>
           Issue Tracker
         </label>
@@ -577,7 +628,7 @@ kubectl port-forward service/example-webgrid <span class="m">8080</span>:80
 <h3 id="browse-the-api">🔍 Browse the API<a class="headerlink" href="#browse-the-api" title="Permanent link">¶</a></h3>
 <p>The grid provides a GraphQL API at <a href="http://localhost:8080/api"><code>/api</code></a> with a Playground for you to explore. It exposes all available metadata about sessions, grid health and advanced features like video recordings.</p>
 <h3 id="watch-your-browsers">📺 Watch your browsers<a class="headerlink" href="#watch-your-browsers" title="Permanent link">¶</a></h3>
-<p>You can take a <strong>live</strong> look at what your browsers are doing by taking the <a href="https://webgrid.dev/features/screen-recording/#session-id">Session ID</a> of a instance and visiting <code>localhost:8080/embed/&lt;session-id&gt;</code>. You can also embed the videos in your existing tools! Head over to the <a href="https://webgrid.dev/features/screen-recording/#embedding">embedding documentation</a> to learn how.</p>
+<p>You can take a <strong>live</strong> look at what your browsers are doing by taking the <a href="https://webgrid.dev/features/screen-recording/#session-id">Session ID</a> of a instance and visiting <a href="http://localhost:8080"><code>localhost:8080</code></a>. You can also embed the videos in your existing tools! Head over to the <a href="https://webgrid.dev/features/screen-recording/#embedding">embedding documentation</a> to learn how.</p>
 <div class="admonition warning">
 <p class="admonition-title">Screen recordings in clusters</p>
 <p>Video recordings are disabled by default in K8s as every cluster has specific requirements for file storage. The <a href="https://webgrid.dev/kubernetes/storage/">storage documentation</a> explains how to enable it.</p>
@@ -595,7 +646,7 @@ make install
 <div class="md-source-date">
 <small>
     
-      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 18, 2021</span>
+      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 27, 2021</span>
 </small>
 </div>
 </article>

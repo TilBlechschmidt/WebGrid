@@ -222,8 +222,6 @@
 <span id="219">219</span>
 <span id="220">220</span>
 <span id="221">221</span>
-<span id="222">222</span>
-<span id="223">223</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Capability parsing structures</span>
 <span class="doccomment">//!</span>
@@ -305,10 +303,8 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Deserialize</span>, <span class="ident">Debug</span>, <span class="ident">Clone</span>)]</span>
 <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename_all</span> <span class="op">=</span> <span class="string">&quot;camelCase&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">WebGridOptions</span> {
-    <span class="doccomment">/// Name for a session for later querying</span>
-    <span class="kw">pub</span> <span class="ident">name</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
-    <span class="doccomment">/// Build for a session for later querying</span>
-    <span class="kw">pub</span> <span class="ident">build</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
+    <span class="doccomment">/// Arbitrary metadata which can be set by the client and later fetched through the API.</span>
+    <span class="kw">pub</span> <span class="ident">metadata</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Deserialize</span>, <span class="ident">Debug</span>)]</span>
@@ -338,7 +334,7 @@
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">rename</span> <span class="op">=</span> <span class="string">&quot;webgrid:options&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="ident">webgrid_options</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">WebGridOptions</span><span class="op">&gt;</span>,
 
-    <span class="doccomment">/// Additional capabilities that are not part of the W3C standard or added by WebGrid</span>
+    <span class="doccomment">/// Additional capabilities that are not part of the W3C standard or added by WebGrid.</span>
     <span class="attribute">#[<span class="ident">serde</span>(<span class="ident">flatten</span>)]</span>
     <span class="kw">pub</span> <span class="ident">extension_capabilities</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">Value</span><span class="op">&gt;</span>,
 }

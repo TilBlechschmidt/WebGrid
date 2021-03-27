@@ -155,13 +155,12 @@
 <span id="152">152</span>
 <span id="153">153</span>
 <span id="154">154</span>
-<span id="155">155</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Session provider and driver manager</span>
 
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">SharedOptions</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">helpers</span>::<span class="ident">constants</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">scheduling</span>::{<span class="ident">JobScheduler</span>, <span class="ident">StatusServer</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::{<span class="ident">helpers</span>::<span class="ident">constants</span>, <span class="ident">recording</span>::<span class="ident">VideoQualityPreset</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">schedule</span>;
 <span class="kw">use</span> <span class="ident">anyhow</span>::<span class="prelude-ty">Result</span>;
 <span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">info</span>, <span class="ident">warn</span>};
@@ -170,7 +169,6 @@
 
 <span class="kw">mod</span> <span class="ident">context</span>;
 <span class="kw">mod</span> <span class="ident">jobs</span>;
-<span class="kw">mod</span> <span class="ident">recorder</span>;
 <span class="kw">mod</span> <span class="ident">structs</span>;
 <span class="kw">mod</span> <span class="ident">tasks</span>;
 
@@ -259,8 +257,8 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Options</span> {
-    <span class="kw">fn</span> <span class="ident">recording_quality</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">recorder</span>::<span class="ident">VideoQualityPreset</span> {
-        <span class="ident">recorder</span>::<span class="ident">VideoQualityPreset</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">crf</span>, <span class="self">self</span>.<span class="ident">max_bitrate</span>)
+    <span class="kw">fn</span> <span class="ident">recording_quality</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">VideoQualityPreset</span> {
+        <span class="ident">VideoQualityPreset</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">crf</span>, <span class="self">self</span>.<span class="ident">max_bitrate</span>)
     }
 }
 

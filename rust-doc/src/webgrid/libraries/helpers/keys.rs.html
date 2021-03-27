@@ -201,6 +201,16 @@
 <span id="198">198</span>
 <span id="199">199</span>
 <span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Redis database keys</span>
 <span class="doccomment">//!</span>
@@ -400,6 +410,16 @@
             <span class="ident">CAPACITY</span> <span class="op">=</span> <span class="string">&quot;metrics:storage:disk.bytes.total&quot;</span>.<span class="ident">to_string</span>();
             <span class="ident">USAGE</span> <span class="op">=</span> <span class="string">&quot;metrics:storage:disk.bytes.used&quot;</span>.<span class="ident">to_string</span>();
         }
+    }
+}
+
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">api</span> {
+    <span class="kw">fn</span> <span class="ident">api_prefix</span>(<span class="ident">api_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
+        <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;api:{}&quot;</span>, <span class="ident">api_id</span>)
+    }
+
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">host</span>(<span class="ident">api_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
+        <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}:host&quot;</span>, <span class="ident">api_prefix</span>(<span class="ident">api_id</span>))
     }
 }
 </pre></div>

@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["helpers","Helper functions that don't belong elsewhere"],["lifecycle","Service lifecycle functions"],["metrics",""],["resources","Monitored resources for jobs"],["scheduling","Job handling and scheduling structs"],["storage","File system accessors"]]});
+initSidebarItems({"mod":[["helpers","Helper functions that don't belong elsewhere"],["lifecycle","Service lifecycle functions"],["metrics",""],["recording",""],["resources","Monitored resources for jobs"],["scheduling","Job handling and scheduling structs"],["storage","File system accessors"]]});

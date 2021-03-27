@@ -17,6 +17,7 @@
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&amp;display=fallback" rel="stylesheet"/>
 <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
+<link href="../../docs.css" rel="stylesheet"/>
 </head>
 <body data-md-color-accent="teal" data-md-color-primary="teal" data-md-color-scheme="preference" dir="ltr">
 <script>matchMedia("(prefers-color-scheme: dark)").matches&&document.body.setAttribute("data-md-color-scheme","slate")</script>
@@ -113,6 +114,16 @@
 <li class="md-tabs__item">
 <a class="md-tabs__link" href="../../kubernetes/configuration/">
         Kubernetes
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../guides/k3s/">
+        Guides
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../--separator--">
+        |
       </a>
 </li>
 <li class="md-tabs__item">
@@ -282,11 +293,51 @@
 <li class="md-nav__item md-nav__item--nested">
 <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" id="__nav_4" type="checkbox"/>
 <label class="md-nav__link" for="__nav_4">
+        Guides
+        <span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-label="Guides" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_4">
+<span class="md-nav__icon md-icon"></span>
+          Guides
+        </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../guides/k3s/">
+        Deploying in K3s
+      </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" id="__nav_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5">
+        |
+        <span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-label="|" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_5">
+<span class="md-nav__icon md-icon"></span>
+          |
+        </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../--separator--">
+        None
+      </a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6">
         Contribute
         <span class="md-nav__icon md-icon"></span>
 </label>
 <nav aria-label="Contribute" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_4">
+<label class="md-nav__title" for="__nav_6">
 <span class="md-nav__icon md-icon"></span>
           Contribute
         </label>
@@ -325,13 +376,13 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" id="__nav_5" type="checkbox"/>
-<label class="md-nav__link" for="__nav_5">
+<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" id="__nav_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_7">
         Architecture
         <span class="md-nav__icon md-icon"></span>
 </label>
 <nav aria-label="Architecture" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_5">
+<label class="md-nav__title" for="__nav_7">
 <span class="md-nav__icon md-icon"></span>
           Architecture
         </label>
@@ -370,13 +421,13 @@
 </nav>
 </li>
 <li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" id="__nav_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_6">
+<input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" id="__nav_8" type="checkbox"/>
+<label class="md-nav__link" for="__nav_8">
         Issue Tracker
         <span class="md-nav__icon md-icon"></span>
 </label>
 <nav aria-label="Issue Tracker" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_6">
+<label class="md-nav__title" for="__nav_8">
 <span class="md-nav__icon md-icon"></span>
           Issue Tracker
         </label>
@@ -477,28 +528,34 @@
 <p>It returns you a list of all sessions with their corresponding identifiers and whether or not they are currently alive. To identify your session uniquely using metadata, head over to the <a href="../api/#session-metadata">API documentation</a>.</p>
 </details>
 <h2 id="embedding">Embedding<a class="headerlink" href="#embedding" title="Permanent link">¶</a></h2>
-<p>You can embed the browser recording directly into your existing tools by using the JavaScript SDK. You need to import the script in your <code>&lt;head&gt;</code> and add a custom HTML tag to the body where the video should be placed.</p>
-<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
-    <span class="p">&lt;</span><span class="nt">script</span> <span class="na">src</span><span class="o">=</span><span class="s">"http://&lt;your-webgrid-address&gt;/embed"</span> <span class="na">defer</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
-<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
-<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
-    <span class="p">&lt;</span><span class="nt">webgrid-video</span> <span class="na">session-id</span><span class="o">=</span><span class="s">"&lt;your-session-id&gt;"</span><span class="p">&gt;&lt;/</span><span class="nt">webgrid-video</span><span class="p">&gt;</span>
+<p>You can embed the browser recording directly into your existing tools by using the JavaScript SDK. You need to import the JavaScript module and bind it to a DOM element of your choice. All CSS used is scoped to the <code>webgrid</code> class so it should not affect your website as long as you don't use this class in your styles.</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">"&lt;your-identifier&gt;"</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="nt">script</span> <span class="na">type</span><span class="o">=</span><span class="s">"module"</span><span class="p">&gt;</span>
+        <span class="k">import</span> <span class="p">{</span> <span class="nx">WebGridVideo</span> <span class="p">}</span> <span class="nx">from</span> <span class="s1">'http://&lt;your-webgrid-address&gt;/embed'</span><span class="p">;</span>
+
+        <span class="k">new</span> <span class="nx">WebGridVideo</span><span class="p">({</span>
+            <span class="nx">target</span><span class="o">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">"&lt;your-identifier&gt;"</span><span class="p">),</span>
+            <span class="nx">props</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">sessionID</span><span class="o">:</span> <span class="s1">'&lt;your-session-id&gt;'</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">});</span>
+    <span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
 </code></pre></div>
-<p>By default, the script tries to guess the webgrid address from the script tag. This behaviour can be overruled by adding the <code>host="&lt;your-webgrid-address"</code> attribute to the video tag. Especially when fetching the script for a static page builder which embeds it directly, this is required as the host is evaluated at runtime not at request time.</p>
+<p>By default, the script tries to guess the webgrid address from the import URL. This behaviour can be overruled by passing the <code>host: '&lt;your-webgrid-address&gt;'</code> property in the <code>props</code> object. Especially when fetching the script from within a static page builder which embeds it directly, this is required as the host is evaluated at runtime not at request time.</p>
 <h2 id="viewing">Viewing<a class="headerlink" href="#viewing" title="Permanent link">¶</a></h2>
-<p>If you want to monitor your session manually you may use the video player provided by the grid. To do so just plug your session id from above into this url:</p>
-<div class="highlight"><pre><span></span><code>http://&lt;your-webgrid-address&gt;/embed/&lt;session-id&gt;
-</code></pre></div>
+<p>If you want to monitor your session manually you may use the dashboard provided by the grid. To do so just visit it at <code>http://&lt;your-webgrid-address&gt;</code> (without any path) and enter the previously obtained session ID.</p>
 <div class="admonition danger">
 <p class="admonition-title">Danger</p>
-<p>This player is not supposed to be embedded into other pages through <code>iframes</code> or other means. For embedding refer the <a href="#embedding">embedding</a> section!</p>
+<p>This dashboard is not supposed to be embedded into other pages through <code>iframes</code> or other means. For embedding refer the <a href="#embedding">embedding</a> section!</p>
 </div>
 <hr/>
 <div class="md-source-date">
 <small>
     
-      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 11, 2021</span>
+      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">March 27, 2021</span>
 </small>
 </div>
 </article>
