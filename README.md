@@ -131,3 +131,9 @@ make install
 ```
 
 To start individual components outside of Docker or setup the development environment, see the [development environment documentation](https://webgrid.dev/contribute/dev-environment/).
+
+## License
+
+This project is licensed under the MIT License. While this does grant you a lot of freedom in how to use the software and keeps the legal headache to a minimum, it also no longer requires you to publish modifications made to the project. The original intention behind the AGPL license was to encourage contributions by users who added features for their own use.
+
+Since this project is so small at this stage, it heavily relies on feedback and contributions from the community (thats you!). So *please* strongly consider contributing any changes you make for the benefit of all users 🙂
