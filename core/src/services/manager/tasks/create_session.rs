@@ -329,7 +329,8 @@ mod subtasks {
                     let mut browser_match = true;
 
                     if let Some(requested_platform_name) = &capability.platform_name {
-                        platform_match = requested_platform_name == &platform_name;
+                        platform_match = requested_platform_name == &platform_name
+                            || requested_platform_name == "any";
                     }
 
                     if !browsers.is_empty() {
