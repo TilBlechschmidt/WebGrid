@@ -1,8 +1,8 @@
 use super::super::Context;
 use crate::libraries::metrics::MetricsEntry;
-use crate::libraries::scheduling::{Job, TaskManager};
 use anyhow::Result;
 use async_trait::async_trait;
+use jatsl::{Job, TaskManager};
 use log::{debug, info, warn};
 use std::time::Duration;
 use tokio::time::sleep;

@@ -5,9 +5,9 @@ use crate::libraries::lifecycle::{
     Heart, HeartStone,
 };
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
-use crate::libraries::scheduling::TaskManager;
 use crate::libraries::storage::StorageHandler;
 use crate::with_redis_resource;
+use jatsl::TaskManager;
 use log::error;
 use redis::AsyncCommands;
 use std::time::Duration;

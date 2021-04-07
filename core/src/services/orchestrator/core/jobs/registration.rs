@@ -1,9 +1,9 @@
 use super::super::Context;
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
-use crate::libraries::scheduling::{Job, TaskManager};
 use crate::with_shared_redis_resource;
 use anyhow::Result;
 use async_trait::async_trait;
+use jatsl::{Job, TaskManager};
 use redis::{aio::ConnectionLike, AsyncCommands};
 
 #[derive(Clone)]

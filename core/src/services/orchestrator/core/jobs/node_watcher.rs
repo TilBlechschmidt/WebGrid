@@ -1,10 +1,10 @@
 use super::super::Context;
 use crate::libraries::resources::{PubSub, ResourceManager, ResourceManagerProvider};
-use crate::libraries::scheduling::{Job, TaskManager};
 use crate::with_redis_resource;
 use anyhow::{bail, Result};
 use async_trait::async_trait;
 use futures::stream::TryStreamExt;
+use jatsl::{Job, TaskManager};
 use lazy_static::lazy_static;
 use log::info;
 use regex::Regex;

@@ -2,9 +2,9 @@ use super::super::{
     context::SessionCreationContext, tasks, Context, RequestError, SessionReply, SessionReplyError,
     SessionRequest,
 };
-use crate::libraries::scheduling::{Job, JobScheduler, TaskManager};
 use anyhow::Result;
 use async_trait::async_trait;
+use jatsl::{Job, JobScheduler, TaskManager};
 use log::{debug, info, warn};
 use serde_json::json;
 use std::net::SocketAddr;

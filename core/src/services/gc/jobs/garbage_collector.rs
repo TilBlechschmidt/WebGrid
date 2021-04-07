@@ -3,12 +3,12 @@ use crate::libraries::resources::ResourceManagerProvider;
 use crate::libraries::{
     helpers::{keys, lua},
     resources::ResourceManager,
-    scheduling::{Job, TaskManager},
 };
 use crate::with_shared_redis_resource;
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::Utc;
+use jatsl::{Job, TaskManager};
 use log::{debug, info, warn};
 use redis::{AsyncCommands, Script};
 use std::time::Duration;

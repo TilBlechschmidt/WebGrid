@@ -1,10 +1,9 @@
 //! Session provider and driver manager
 
 use super::SharedOptions;
-use crate::libraries::scheduling::{JobScheduler, StatusServer};
 use crate::libraries::{helpers::constants, recording::VideoQualityPreset};
-use crate::schedule;
 use anyhow::Result;
+use jatsl::{schedule, JobScheduler, StatusServer};
 use log::{info, warn};
 use std::path::PathBuf;
 use structopt::StructOpt;

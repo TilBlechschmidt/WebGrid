@@ -2,9 +2,8 @@
 
 use super::SharedOptions;
 use crate::libraries::lifecycle::Heart;
-use crate::libraries::scheduling::{JobScheduler, StatusServer};
-use crate::schedule;
 use anyhow::Result;
+use jatsl::{schedule, JobScheduler, StatusServer};
 use log::info;
 use structopt::StructOpt;
 

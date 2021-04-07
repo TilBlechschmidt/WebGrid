@@ -2,11 +2,11 @@ use super::super::Context;
 use crate::libraries::helpers::keys;
 use crate::libraries::lifecycle::logging::{LogCode, Logger};
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
-use crate::libraries::scheduling::{Job, TaskManager};
 use crate::with_redis_resource;
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::offset::Utc;
+use jatsl::{Job, TaskManager};
 use log::{debug, info};
 use redis::{AsyncCommands, RedisResult};
 

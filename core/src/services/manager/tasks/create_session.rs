@@ -5,10 +5,10 @@ use crate::libraries::helpers::{
 use crate::libraries::lifecycle::logging::{LogCode, SessionLogger};
 use crate::libraries::metrics::MetricsEntry;
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
-use crate::libraries::scheduling::TaskManager;
 use crate::with_redis_resource;
 use chrono::offset::Utc;
 use futures::TryFutureExt;
+use jatsl::TaskManager;
 use lazy_static::lazy_static;
 use log::{debug, warn};
 use rand::seq::SliceRandom;

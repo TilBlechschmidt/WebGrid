@@ -1,7 +1,7 @@
 use super::super::Context;
-use crate::libraries::scheduling::{Job, TaskManager};
 use anyhow::Result;
 use async_trait::async_trait;
+use jatsl::{Job, TaskManager};
 use log::{debug, info};
 use std::{net::SocketAddr, path::PathBuf};
 use warp::{reply::Reply, Filter};

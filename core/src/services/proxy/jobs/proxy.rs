@@ -1,8 +1,5 @@
 use super::super::{routing_info::RoutingInfo, Context};
-use crate::libraries::{
-    metrics::MetricsEntry,
-    scheduling::{Job, TaskManager},
-};
+use crate::libraries::metrics::MetricsEntry;
 use anyhow::Result;
 use async_trait::async_trait;
 use hyper::{
@@ -10,6 +7,7 @@ use hyper::{
     service::{make_service_fn, service_fn},
 };
 use hyper::{client::HttpConnector, Body, Client, Method, Request, Response, Server, StatusCode};
+use jatsl::{Job, TaskManager};
 use lazy_static::lazy_static;
 use log::{debug, error, info};
 use regex::Regex;

@@ -5,9 +5,9 @@ use super::super::{
 use crate::libraries::helpers::keys;
 use crate::libraries::lifecycle::logging::{LogCode, SessionLogger};
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
-use crate::libraries::scheduling::TaskManager;
 use crate::with_redis_resource;
 use hyper::{body, Body, Client as HttpClient, Method, Request};
+use jatsl::TaskManager;
 use log::{debug, error, info};
 use redis::{aio::ConnectionLike, AsyncCommands};
 use std::{net::SocketAddr, process::Command};

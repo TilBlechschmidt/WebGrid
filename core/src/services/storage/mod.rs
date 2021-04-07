@@ -3,10 +3,9 @@
 use super::SharedOptions;
 use crate::libraries::helpers::constants;
 use crate::libraries::lifecycle::Heart;
-use crate::libraries::scheduling::{JobScheduler, StatusServer};
 use crate::libraries::storage::StorageHandler;
-use crate::schedule;
 use anyhow::Result;
+use jatsl::{schedule, JobScheduler, StatusServer};
 use log::{debug, info};
 use std::path::PathBuf;
 use structopt::StructOpt;

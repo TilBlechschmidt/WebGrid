@@ -1,7 +1,7 @@
-use crate::libraries::scheduling::TaskResourceHandle;
 use async_trait::async_trait;
 use core::pin::Pin;
 use futures::Stream;
+use jatsl::TaskResourceHandle;
 use redis::{aio::ConnectionLike, Msg, RedisError, RedisResult};
 use thiserror::Error;
 

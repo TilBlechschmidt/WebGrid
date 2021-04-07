@@ -2,12 +2,12 @@ use super::super::Context;
 use crate::libraries::recording::SequentialWebVTTWriter;
 use crate::libraries::recording::VideoRecorder;
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
-use crate::libraries::scheduling::{Job, TaskManager};
 use crate::libraries::storage::StorageHandler;
 use crate::with_shared_redis_resource;
 use anyhow::{bail, Result};
 use async_trait::async_trait;
 use chrono::Utc;
+use jatsl::{Job, TaskManager};
 use log::warn;
 use tokio::{fs::File, task};
 

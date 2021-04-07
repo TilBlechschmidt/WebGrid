@@ -1,18 +1,16 @@
 //! Structures for database heartbeats
 
+use crate::libraries::resources::ResourceManagerProvider;
 use crate::libraries::{
     helpers::keys,
     resources::{PubSub, ResourceManager},
-};
-use crate::libraries::{
-    resources::ResourceManagerProvider,
-    scheduling::{Job, TaskManager},
 };
 use crate::{with_redis_resource, with_shared_redis_resource};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use chrono::Utc;
 use futures::{lock::Mutex, StreamExt};
+use jatsl::{Job, TaskManager};
 use log::debug;
 use redis::AsyncCommands;
 use std::{collections::HashMap, marker::PhantomData, sync::Arc, time::Duration};

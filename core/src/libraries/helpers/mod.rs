@@ -2,7 +2,6 @@
 //!
 //! This module contains small helper functions that don't belong to a specific area but are still used by multiple services.
 
-mod backoff;
 mod capabilities;
 mod healthcheck;
 mod timeout;
@@ -11,7 +10,6 @@ pub mod constants;
 pub mod keys;
 pub mod lua;
 
-pub use backoff::Backoff;
 pub use capabilities::*;
 pub use healthcheck::{wait_for, wait_for_key};
 pub use timeout::Timeout;

@@ -1,5 +1,4 @@
 use super::{PubSubResource, PubSubResourceError};
-use crate::libraries::scheduling::TaskResourceHandle;
 use async_trait::async_trait;
 use core::pin::Pin;
 use futures::{
@@ -7,6 +6,7 @@ use futures::{
     lock::{Mutex, MutexGuard},
     stream::{once, Stream, StreamExt},
 };
+use jatsl::TaskResourceHandle;
 use lazy_static::lazy_static;
 use log::{debug, warn};
 use redis::{

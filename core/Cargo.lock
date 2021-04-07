@@ -932,6 +932,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dd25036021b0de88a0aff6b850051563c6516d0bf53f8638938edbb9de732736"
 
 [[package]]
+name = "jatsl"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6f7ecb26676d003608a5b7700eac8a85e76c6bd585cd6eaf1f648a5de352233"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "futures",
+ "hyper",
+ "log",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "jobserver"
 version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2702,6 +2718,7 @@ dependencies = [
  "futures",
  "git2",
  "hyper",
+ "jatsl",
  "juniper",
  "juniper_warp",
  "k8s-openapi",

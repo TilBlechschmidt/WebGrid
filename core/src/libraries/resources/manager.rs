@@ -2,8 +2,8 @@ use super::{
     RedisResource, ResourceManager, ResourceManagerResult, SharedRedisResource,
     StandaloneRedisResource,
 };
-use crate::libraries::scheduling::TaskResourceHandle;
 use async_trait::async_trait;
+use jatsl::TaskResourceHandle;
 
 /// Production resource manager
 ///

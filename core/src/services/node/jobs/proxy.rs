@@ -1,7 +1,6 @@
 use super::super::Context;
 use crate::libraries::helpers::keys;
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
-use crate::libraries::scheduling::{Job, TaskManager};
 use crate::libraries::{lifecycle::HeartStone, resources::RedisResource};
 use crate::with_shared_redis_resource;
 use anyhow::Result;
@@ -13,6 +12,7 @@ use hyper::{
     service::{make_service_fn, service_fn},
     Body, Client as HttpClient, Error as HyperError, Method, Request, Response, Server, Version,
 };
+use jatsl::{Job, TaskManager};
 use lazy_static::lazy_static;
 use log::{info, trace, warn};
 use redis::{aio::MultiplexedConnection, AsyncCommands};

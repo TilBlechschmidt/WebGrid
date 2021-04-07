@@ -1,6 +1,5 @@
 use super::super::Context;
 use crate::libraries::helpers::keys;
-use crate::libraries::scheduling::{Job, TaskManager};
 use crate::libraries::storage::FileMetadata;
 use crate::{
     libraries::resources::{ResourceManager, ResourceManagerProvider},
@@ -8,6 +7,7 @@ use crate::{
 };
 use anyhow::Result;
 use async_trait::async_trait;
+use jatsl::{Job, TaskManager};
 use log::debug;
 use redis::AsyncCommands;
 

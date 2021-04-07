@@ -1,11 +1,11 @@
 use super::super::{routing_info::RoutingInfo, Context};
 use crate::libraries::helpers::keys;
 use crate::libraries::resources::{PubSub, ResourceManager, ResourceManagerProvider};
-use crate::libraries::scheduling::{Job, TaskManager};
 use crate::with_redis_resource;
 use anyhow::{bail, Context as AnyhowContext, Result};
 use async_trait::async_trait;
 use futures::stream::TryStreamExt;
+use jatsl::{Job, TaskManager};
 use lazy_static::lazy_static;
 use log::{error, info};
 use redis::{aio::ConnectionLike, cmd, AsyncCommands, Msg, RedisError};

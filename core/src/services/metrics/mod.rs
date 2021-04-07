@@ -3,9 +3,8 @@
 use super::SharedOptions;
 use crate::libraries::helpers::constants;
 use crate::libraries::lifecycle::Heart;
-use crate::libraries::scheduling::{JobScheduler, StatusServer};
-use crate::schedule;
 use context::Context;
+use jatsl::{schedule, JobScheduler, StatusServer};
 use jobs::MetricHandlerJob;
 use log::info;
 use structopt::StructOpt;

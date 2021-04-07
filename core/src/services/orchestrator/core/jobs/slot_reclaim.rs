@@ -1,11 +1,11 @@
 use super::super::Context;
 use crate::libraries::helpers::{lua::terminate_session, Timeout};
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
-use crate::libraries::scheduling::{Job, TaskManager};
 use crate::with_shared_redis_resource;
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::offset::Utc;
+use jatsl::{Job, TaskManager};
 use log::{error, info};
 use redis::{aio::ConnectionLike, RedisResult, Script};
 use std::time::Duration;

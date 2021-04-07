@@ -1,13 +1,13 @@
 use super::entry::MetricsEntry;
 use super::SESSION_STARTUP_HISTOGRAM_BUCKETS;
 use crate::libraries::helpers::keys;
-use crate::libraries::scheduling::{Job, TaskManager};
 use crate::{
     libraries::resources::{ResourceManager, ResourceManagerProvider},
     with_shared_redis_resource,
 };
 use anyhow::Result;
 use async_trait::async_trait;
+use jatsl::{Job, TaskManager};
 use log::warn;
 use redis::{aio::ConnectionLike, AsyncCommands, RedisResult};
 use std::{marker::PhantomData, sync::Arc};
