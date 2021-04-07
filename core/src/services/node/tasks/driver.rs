@@ -36,7 +36,7 @@ pub async fn start_driver(manager: TaskManager<Context>) -> Result<(), NodeError
 
     let mut logger = SessionLogger::new(con, "node".to_string(), manager.context.id.clone());
 
-    logger.log(LogCode::DSTART, None).await.ok();
+    logger.log(LogCode::DStart, None).await.ok();
 
     // Spawn the driver
     let child = subtasks::launch_driver(&mut logger, driver, browser).await?;
@@ -44,7 +44,7 @@ pub async fn start_driver(manager: TaskManager<Context>) -> Result<(), NodeError
 
     // Await its startup
     subtasks::await_driver_startup(startup_timeout, driver_port, &mut logger).await?;
-    logger.log(LogCode::DALIVE, None).await.ok();
+    logger.log(LogCode::DAlive, None).await.ok();
 
     Ok(())
 }
@@ -89,7 +89,7 @@ mod subtasks {
             Ok(child) => Ok(child),
             Err(e) => {
                 logger
-                    .log(LogCode::DFAILURE, Some(format!("{}", e)))
+                    .log(LogCode::DFailure, Some(format!("{}", e)))
                     .await
                     .ok();
 
@@ -116,7 +116,7 @@ mod subtasks {
             }
             Err(_) => {
                 error!("Timeout waiting for driver startup");
-                logger.log(LogCode::DTIMEOUT, None).await.ok();
+                logger.log(LogCode::DTimeout, None).await.ok();
 
                 Err(NodeError::NoDriverResponse)
             }

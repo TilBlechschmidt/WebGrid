@@ -35,7 +35,7 @@ pub async fn initialize_service(
 
     let external_session_id: String = manager.context.id.clone();
     let mut logger = SessionLogger::new(con, "node".to_string(), external_session_id.clone());
-    logger.log(LogCode::BOOT, None).await.ok();
+    logger.log(LogCode::Boot, None).await.ok();
 
     Ok((heart, heart_stone))
 }

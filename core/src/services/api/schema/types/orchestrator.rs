@@ -1,4 +1,4 @@
-use super::super::GQLContext;
+use super::super::GqlContext;
 use crate::libraries::helpers::keys;
 use juniper::{graphql_object, FieldResult, GraphQLObject};
 use redis::AsyncCommands;
@@ -13,13 +13,13 @@ impl Orchestrator {
     }
 }
 
-#[graphql_object(context = GQLContext)]
+#[graphql_object(context = GqlContext)]
 impl Orchestrator {
     pub fn id(&self) -> String {
         self.id.to_owned()
     }
 
-    pub async fn alive(&self, context: &GQLContext) -> FieldResult<bool> {
+    pub async fn alive(&self, context: &GqlContext) -> FieldResult<bool> {
         Ok(context
             .redis
             .lock()
@@ -28,7 +28,7 @@ impl Orchestrator {
             .await?)
     }
 
-    pub async fn backlog(&self, context: &GQLContext) -> FieldResult<Vec<String>> {
+    pub async fn backlog(&self, context: &GqlContext) -> FieldResult<Vec<String>> {
         Ok(context
             .redis
             .lock()
@@ -37,7 +37,7 @@ impl Orchestrator {
             .await?)
     }
 
-    pub async fn pending(&self, context: &GQLContext) -> FieldResult<Vec<String>> {
+    pub async fn pending(&self, context: &GqlContext) -> FieldResult<Vec<String>> {
         Ok(context
             .redis
             .lock()
@@ -63,9 +63,9 @@ pub struct OrchestratorSlots {
     orchestrator_id: String,
 }
 
-#[graphql_object(context = GQLContext)]
+#[graphql_object(context = GqlContext)]
 impl OrchestratorSlots {
-    pub async fn allocated(&self, context: &GQLContext) -> FieldResult<Vec<String>> {
+    pub async fn allocated(&self, context: &GqlContext) -> FieldResult<Vec<String>> {
         Ok(context
             .redis
             .lock()
@@ -74,7 +74,7 @@ impl OrchestratorSlots {
             .await?)
     }
 
-    pub async fn available(&self, context: &GQLContext) -> FieldResult<Vec<String>> {
+    pub async fn available(&self, context: &GqlContext) -> FieldResult<Vec<String>> {
         Ok(context
             .redis
             .lock()
@@ -87,7 +87,7 @@ impl OrchestratorSlots {
             .await?)
     }
 
-    pub async fn reclaimed(&self, context: &GQLContext) -> FieldResult<Vec<String>> {
+    pub async fn reclaimed(&self, context: &GqlContext) -> FieldResult<Vec<String>> {
         Ok(context
             .redis
             .lock()
@@ -105,9 +105,9 @@ pub struct OrchestratorCapabilities {
     orchestrator_id: String,
 }
 
-#[graphql_object(context = GQLContext)]
+#[graphql_object(context = GqlContext)]
 impl OrchestratorCapabilities {
-    pub async fn platformName(&self, context: &GQLContext) -> FieldResult<String> {
+    pub async fn platformName(&self, context: &GqlContext) -> FieldResult<String> {
         Ok(context
             .redis
             .lock()
@@ -118,7 +118,7 @@ impl OrchestratorCapabilities {
             .await?)
     }
 
-    pub async fn browsers(&self, context: &GQLContext) -> FieldResult<Vec<Browser>> {
+    pub async fn browsers(&self, context: &GqlContext) -> FieldResult<Vec<Browser>> {
         let raw_browsers: Vec<String> = context
             .redis
             .lock()

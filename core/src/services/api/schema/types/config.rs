@@ -1,4 +1,4 @@
-use super::super::GQLContext;
+use super::super::GqlContext;
 use crate::libraries::helpers::Timeout;
 use juniper::graphql_object;
 
@@ -10,37 +10,37 @@ impl Timeouts {
     }
 }
 
-#[graphql_object(context = GQLContext)]
+#[graphql_object(context = GqlContext)]
 impl Timeouts {
-    pub async fn queue(context: &GQLContext) -> i32 {
+    pub async fn queue(context: &GqlContext) -> i32 {
         Timeout::Queue.get(&mut *context.redis.lock().await).await as i32
     }
 
-    pub async fn scheduling(context: &GQLContext) -> i32 {
+    pub async fn scheduling(context: &GqlContext) -> i32 {
         Timeout::Scheduling
             .get(&mut *context.redis.lock().await)
             .await as i32
     }
 
-    pub async fn nodeStartup(context: &GQLContext) -> i32 {
+    pub async fn nodeStartup(context: &GqlContext) -> i32 {
         Timeout::NodeStartup
             .get(&mut *context.redis.lock().await)
             .await as i32
     }
 
-    pub async fn driverStartup(context: &GQLContext) -> i32 {
+    pub async fn driverStartup(context: &GqlContext) -> i32 {
         Timeout::DriverStartup
             .get(&mut *context.redis.lock().await)
             .await as i32
     }
 
-    pub async fn sessionTermination(context: &GQLContext) -> i32 {
+    pub async fn sessionTermination(context: &GqlContext) -> i32 {
         Timeout::SessionTermination
             .get(&mut *context.redis.lock().await)
             .await as i32
     }
 
-    pub async fn slotReclaimInterval(context: &GQLContext) -> i32 {
+    pub async fn slotReclaimInterval(context: &GqlContext) -> i32 {
         Timeout::SlotReclaimInterval
             .get(&mut *context.redis.lock().await)
             .await as i32

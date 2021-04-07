@@ -87,9 +87,9 @@ impl<C: ConnectionLike + AsyncCommands> SessionLogger<C> {
 /// - **FAIL** used for unrecoverable errors
 #[derive(Debug)]
 pub enum LogLevel {
-    INFO,
-    WARN,
-    FAIL,
+    Info,
+    Warn,
+    Fail,
 }
 
 impl fmt::Display for LogLevel {
@@ -103,64 +103,64 @@ impl fmt::Display for LogLevel {
 pub enum LogCode {
     // Generic
     // -- Fail
-    FAILURE,
+    Failure,
 
     // Node
     // -- Info
     /// node has become active
-    BOOT,
+    Boot,
     /// driver in startup
-    DSTART,
+    DStart,
     /// driver has become responsive
-    DALIVE,
+    DAlive,
     /// local session created
-    LSINIT,
+    LsInit,
     /// session closed by downstream client
-    CLOSED,
+    Closed,
     /// node enters shutdown
-    HALT,
+    Halt,
     // -- Fail
     /// driver has not become responsive
-    DTIMEOUT,
+    DTimeout,
     /// driver process reported an error
-    DFAILURE,
+    DFailure,
     /// session has been inactive too long
-    STIMEOUT,
+    STimeout,
     /// node terminates due to fault condition
-    TERM,
+    Term,
 
     // Orchestrator
     // -- Info
     /// node is being scheduled for startup
-    SCHED,
+    Sched,
     // -- Fail
     /// creation/startup failure
-    STARTFAIL,
+    StartFail,
 
     // Manager
     // -- Info
     /// session has been queued at orchestrators
-    QUEUED,
+    Queued,
     /// node slot has been allocated
-    NALLOC,
+    NAlloc,
     /// awaiting node startup
-    PENDING,
+    Pending,
     /// node has become responsive, client served
-    NALIVE,
+    NAlive,
     // -- Warn
     /// client left before scheduling completed
-    CLEFT,
+    CLeft,
     // -- Fail
     /// invalid capabilities requested
-    INVALIDCAP,
+    InvalidCap,
     /// no orchestrator can satisfy the capabilities
-    QUNAVAILABLE,
+    QUnavailable,
     /// timed out waiting in queue
-    QTIMEOUT,
+    QTimeout,
     /// timed out waiting for orchestrator to schedule node
-    OTIMEOUT,
+    OTimeout,
     /// timed out waiting for node to become responsive
-    NTIMEOUT,
+    NTimeout,
     // Proxy
 }
 
@@ -169,38 +169,38 @@ impl LogCode {
     pub fn level(&self) -> LogLevel {
         match self {
             // Generic
-            LogCode::FAILURE => LogLevel::FAIL,
+            LogCode::Failure => LogLevel::Fail,
 
             // Node
-            LogCode::BOOT => LogLevel::INFO,
-            LogCode::DSTART => LogLevel::INFO,
-            LogCode::DALIVE => LogLevel::INFO,
-            LogCode::LSINIT => LogLevel::INFO,
-            LogCode::CLOSED => LogLevel::INFO,
-            LogCode::HALT => LogLevel::INFO,
+            LogCode::Boot => LogLevel::Info,
+            LogCode::DStart => LogLevel::Info,
+            LogCode::DAlive => LogLevel::Info,
+            LogCode::LsInit => LogLevel::Info,
+            LogCode::Closed => LogLevel::Info,
+            LogCode::Halt => LogLevel::Info,
 
-            LogCode::DTIMEOUT => LogLevel::FAIL,
-            LogCode::DFAILURE => LogLevel::FAIL,
-            LogCode::STIMEOUT => LogLevel::FAIL,
-            LogCode::TERM => LogLevel::FAIL,
+            LogCode::DTimeout => LogLevel::Fail,
+            LogCode::DFailure => LogLevel::Fail,
+            LogCode::STimeout => LogLevel::Fail,
+            LogCode::Term => LogLevel::Fail,
 
             // Orchestrator
-            LogCode::SCHED => LogLevel::INFO,
-            LogCode::STARTFAIL => LogLevel::FAIL,
+            LogCode::Sched => LogLevel::Info,
+            LogCode::StartFail => LogLevel::Fail,
 
             // Manager
-            LogCode::INVALIDCAP => LogLevel::FAIL,
-            LogCode::QUNAVAILABLE => LogLevel::FAIL,
-            LogCode::QUEUED => LogLevel::INFO,
-            LogCode::NALLOC => LogLevel::INFO,
-            LogCode::PENDING => LogLevel::INFO,
-            LogCode::NALIVE => LogLevel::INFO,
+            LogCode::InvalidCap => LogLevel::Fail,
+            LogCode::QUnavailable => LogLevel::Fail,
+            LogCode::Queued => LogLevel::Info,
+            LogCode::NAlloc => LogLevel::Info,
+            LogCode::Pending => LogLevel::Info,
+            LogCode::NAlive => LogLevel::Info,
 
-            LogCode::CLEFT => LogLevel::WARN,
+            LogCode::CLeft => LogLevel::Warn,
 
-            LogCode::QTIMEOUT => LogLevel::FAIL,
-            LogCode::OTIMEOUT => LogLevel::FAIL,
-            LogCode::NTIMEOUT => LogLevel::FAIL,
+            LogCode::QTimeout => LogLevel::Fail,
+            LogCode::OTimeout => LogLevel::Fail,
+            LogCode::NTimeout => LogLevel::Fail,
         }
     }
 }

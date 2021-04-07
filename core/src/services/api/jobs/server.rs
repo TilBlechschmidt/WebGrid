@@ -1,4 +1,4 @@
-use super::super::schema::{schema, GQLContext};
+use super::super::schema::{schema, GqlContext};
 use super::super::Context;
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
 use crate::with_shared_redis_resource;
@@ -28,7 +28,7 @@ impl Job for ServerJob {
 
         // Define GraphQL filters
         let redis = Arc::new(Mutex::new(with_shared_redis_resource!(manager)));
-        let state = warp::any().map(move || GQLContext {
+        let state = warp::any().map(move || GqlContext {
             redis: redis.clone(),
         });
         let graphql_filter = juniper_warp::make_graphql_filter(schema(), state.boxed());

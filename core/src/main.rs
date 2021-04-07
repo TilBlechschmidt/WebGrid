@@ -39,10 +39,10 @@ enum Command {
     Orchestrator(orchestrator::Options),
 
     #[cfg(feature = "gc")]
-    GC(gc::Options),
+    Gc(gc::Options),
 
     #[cfg(feature = "api")]
-    API(api::Options),
+    Api(api::Options),
 }
 
 #[tokio::main]
@@ -86,10 +86,10 @@ async fn main() -> Result<()> {
         },
 
         #[cfg(feature = "gc")]
-        Command::GC(options) => gc::run(shared_options, options).await?,
+        Command::Gc(options) => gc::run(shared_options, options).await?,
 
         #[cfg(feature = "api")]
-        Command::API(options) => api::run(shared_options, options).await?,
+        Command::Api(options) => api::run(shared_options, options).await?,
     }
 
     Ok(())

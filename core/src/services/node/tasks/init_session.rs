@@ -88,7 +88,7 @@ mod subtasks {
         let capabilities = serde_json::to_string(&response.value.capabilities)
             .map_err(|_| NodeError::LocalSessionCreationError)?;
 
-        logger.log(LogCode::LSINIT, None).await.ok();
+        logger.log(LogCode::LsInit, None).await.ok();
 
         // Upload the resulting internal session ID and actual capabilities to the database
         con.hset(

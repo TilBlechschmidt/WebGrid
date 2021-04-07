@@ -78,7 +78,7 @@ impl Job for ProcessorJob {
 
                 if result.is_err() {
                     debug!("Failed to provision node {} {:?}", session_id, result);
-                    logger.log(&session_id, LogCode::STARTFAIL, None).await.ok();
+                    logger.log(&session_id, LogCode::StartFail, None).await.ok();
                     manager
                         .context
                         .provisioner
@@ -86,7 +86,7 @@ impl Job for ProcessorJob {
                         .await;
                 } else {
                     debug!("Provisioned node {} {:?}", session_id, node_info);
-                    logger.log(&session_id, LogCode::SCHED, None).await.ok();
+                    logger.log(&session_id, LogCode::Sched, None).await.ok();
                 }
             }
 

@@ -20,9 +20,9 @@ pub fn log_exit(
                 SessionLogger::new(con, "node".to_string(), manager.context.id.to_owned());
 
             let log_code = match death_reason {
-                DeathReason::LifetimeExceeded => LogCode::STIMEOUT,
-                DeathReason::Terminated => LogCode::CLOSED,
-                DeathReason::Killed(_) => LogCode::CLOSED,
+                DeathReason::LifetimeExceeded => LogCode::STimeout,
+                DeathReason::Terminated => LogCode::Closed,
+                DeathReason::Killed(_) => LogCode::Closed,
             };
 
             logger.log(log_code, None).await.ok();

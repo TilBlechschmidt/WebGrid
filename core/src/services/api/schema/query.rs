@@ -1,6 +1,6 @@
 use super::{
     types::{InputDictionaryEntry, Orchestrator, Session, SessionState, Timeouts},
-    GQLContext,
+    GqlContext,
 };
 use crate::libraries::helpers::keys;
 use juniper::{graphql_object, FieldResult};
@@ -11,7 +11,7 @@ pub struct Query;
 impl Query {
     async fn sessions_with_state(
         state: SessionState,
-        context: &GQLContext,
+        context: &GqlContext,
     ) -> FieldResult<Vec<Session>> {
         let key = match state {
             SessionState::Active => &*keys::session::LIST_ACTIVE,
@@ -24,7 +24,7 @@ impl Query {
     }
 }
 
-#[graphql_object(context = GQLContext)]
+#[graphql_object(context = GqlContext)]
 impl Query {
     fn timeouts() -> Timeouts {
         Timeouts::new()
@@ -34,7 +34,7 @@ impl Query {
         &self,
         state: Option<SessionState>,
         metadata: Option<Vec<InputDictionaryEntry>>,
-        context: &GQLContext,
+        context: &GqlContext,
     ) -> FieldResult<Vec<Session>> {
         let sessions = if let Some(state) = state {
             Query::sessions_with_state(state, context).await?
@@ -77,7 +77,7 @@ impl Query {
         }
     }
 
-    async fn session(id: String, context: &GQLContext) -> FieldResult<Option<Session>> {
+    async fn session(id: String, context: &GqlContext) -> FieldResult<Option<Session>> {
         let is_active: bool = context
             .redis
             .lock()
@@ -99,7 +99,7 @@ impl Query {
         }
     }
 
-    async fn orchestrators(context: &GQLContext) -> FieldResult<Vec<Orchestrator>> {
+    async fn orchestrators(context: &GqlContext) -> FieldResult<Vec<Orchestrator>> {
         let orchestrator_ids: Vec<String> = context
             .redis
             .lock()
@@ -113,7 +113,7 @@ impl Query {
             .collect())
     }
 
-    async fn orchestrator(id: String, context: &GQLContext) -> FieldResult<Option<Orchestrator>> {
+    async fn orchestrator(id: String, context: &GqlContext) -> FieldResult<Option<Orchestrator>> {
         let exists: bool = context
             .redis
             .lock()

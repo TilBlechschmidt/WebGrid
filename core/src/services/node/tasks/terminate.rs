@@ -31,7 +31,7 @@ pub async fn terminate(manager: TaskManager<Context>) -> Result<(), NodeError> {
         .await
         .ok();
 
-    logger.log(LogCode::HALT, None).await.ok();
+    logger.log(LogCode::Halt, None).await.ok();
 
     Ok(())
 }

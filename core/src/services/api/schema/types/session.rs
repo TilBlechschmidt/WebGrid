@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::{super::GQLContext, Orchestrator};
+use super::{super::GqlContext, Orchestrator};
 use crate::libraries::helpers::keys;
 use juniper::{
     graphql_object, FieldResult, GraphQLEnum, GraphQLInputObject, GraphQLObject, GraphQLScalarValue,
@@ -38,7 +38,7 @@ pub struct SessionStatusTransitions {
 }
 
 impl SessionStatusTransitions {
-    pub async fn new(session_id: &str, context: &GQLContext) -> FieldResult<Self> {
+    pub async fn new(session_id: &str, context: &GqlContext) -> FieldResult<Self> {
         let metadata: HashMap<String, String> = context
             .redis
             .lock()
@@ -62,7 +62,7 @@ pub struct SessionCapabilities {
 }
 
 impl SessionCapabilities {
-    pub async fn new(session_id: &str, context: &GQLContext) -> FieldResult<Self> {
+    pub async fn new(session_id: &str, context: &GqlContext) -> FieldResult<Self> {
         let metadata: HashMap<String, String> = context
             .redis
             .lock()
@@ -86,7 +86,7 @@ pub struct SessionUpstream {
 }
 
 impl SessionUpstream {
-    pub async fn new(session_id: &str, context: &GQLContext) -> FieldResult<Self> {
+    pub async fn new(session_id: &str, context: &GqlContext) -> FieldResult<Self> {
         let metadata: HashMap<String, String> = context
             .redis
             .lock()
@@ -110,7 +110,7 @@ pub struct SessionDownstream {
 }
 
 impl SessionDownstream {
-    pub async fn new(session_id: &str, context: &GQLContext) -> FieldResult<Self> {
+    pub async fn new(session_id: &str, context: &GqlContext) -> FieldResult<Self> {
         let metadata: HashMap<String, String> = context
             .redis
             .lock()
@@ -135,7 +135,7 @@ impl Session {
         Self { id: session_id }
     }
 
-    async fn storage_id(&self, context: &GQLContext) -> FieldResult<Option<String>> {
+    async fn storage_id(&self, context: &GqlContext) -> FieldResult<Option<String>> {
         Ok(context
             .redis
             .lock()
@@ -144,7 +144,7 @@ impl Session {
             .await?)
     }
 
-    pub async fn metadata(&self, context: &GQLContext) -> FieldResult<Vec<DictionaryEntry>> {
+    pub async fn metadata(&self, context: &GqlContext) -> FieldResult<Vec<DictionaryEntry>> {
         let dictionary: Vec<(String, String)> = context
             .redis
             .lock()
@@ -159,33 +159,33 @@ impl Session {
     }
 }
 
-#[graphql_object(context = GQLContext)]
+#[graphql_object(context = GqlContext)]
 impl Session {
     fn id(&self) -> &str {
         self.id.as_str()
     }
 
-    async fn status(&self, context: &GQLContext) -> FieldResult<SessionStatusTransitions> {
+    async fn status(&self, context: &GqlContext) -> FieldResult<SessionStatusTransitions> {
         SessionStatusTransitions::new(&self.id, context).await
     }
 
-    async fn capabilities(&self, context: &GQLContext) -> FieldResult<SessionCapabilities> {
+    async fn capabilities(&self, context: &GqlContext) -> FieldResult<SessionCapabilities> {
         SessionCapabilities::new(&self.id, context).await
     }
 
-    async fn upstream(&self, context: &GQLContext) -> FieldResult<SessionUpstream> {
+    async fn upstream(&self, context: &GqlContext) -> FieldResult<SessionUpstream> {
         SessionUpstream::new(&self.id, context).await
     }
 
-    async fn downstream(&self, context: &GQLContext) -> FieldResult<SessionDownstream> {
+    async fn downstream(&self, context: &GqlContext) -> FieldResult<SessionDownstream> {
         SessionDownstream::new(&self.id, context).await
     }
 
-    async fn metadata(&self, context: &GQLContext) -> FieldResult<Vec<DictionaryEntry>> {
+    async fn metadata(&self, context: &GqlContext) -> FieldResult<Vec<DictionaryEntry>> {
         self.metadata(context).await
     }
 
-    async fn alive(&self, context: &GQLContext) -> FieldResult<bool> {
+    async fn alive(&self, context: &GqlContext) -> FieldResult<bool> {
         Ok(context
             .redis
             .lock()
@@ -194,7 +194,7 @@ impl Session {
             .await?)
     }
 
-    async fn slot(&self, context: &GQLContext) -> FieldResult<Option<String>> {
+    async fn slot(&self, context: &GqlContext) -> FieldResult<Option<String>> {
         Ok(context
             .redis
             .lock()
@@ -203,7 +203,7 @@ impl Session {
             .await?)
     }
 
-    async fn orchestrator(&self, context: &GQLContext) -> FieldResult<Option<Orchestrator>> {
+    async fn orchestrator(&self, context: &GqlContext) -> FieldResult<Option<Orchestrator>> {
         let key = keys::session::orchestrator(&self.id);
         let orchestrator_id: Option<String> =
             context.redis.lock().await.rpoplpush(&key, &key).await?;
@@ -211,11 +211,11 @@ impl Session {
         Ok(orchestrator_id.map(Orchestrator::new))
     }
 
-    async fn storage(&self, context: &GQLContext) -> FieldResult<Option<String>> {
+    async fn storage(&self, context: &GqlContext) -> FieldResult<Option<String>> {
         self.storage_id(context).await
     }
 
-    async fn videoURL(&self, context: &GQLContext) -> FieldResult<Option<String>> {
+    async fn videoURL(&self, context: &GqlContext) -> FieldResult<Option<String>> {
         Ok(self
             .storage_id(context)
             .await?

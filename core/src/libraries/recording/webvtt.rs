@@ -21,13 +21,13 @@ fn format_webvtt_duration(duration: Duration) -> String {
     )
 }
 
-pub struct SequentialWebVTTWriter<F> {
+pub struct SequentialWebVttWriter<F> {
     output: F,
     start_time: DateTime<Utc>,
     current_content: Option<(Duration, String)>,
 }
 
-impl<F: AsyncWrite + Unpin> SequentialWebVTTWriter<F> {
+impl<F: AsyncWrite + Unpin> SequentialWebVttWriter<F> {
     pub async fn new(mut writable: F, start_time: DateTime<Utc>) -> Result<Self, std::io::Error> {
         writable.write_all("WEBVTT\n".as_bytes()).await?;
 

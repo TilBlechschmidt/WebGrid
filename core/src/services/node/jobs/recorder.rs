@@ -1,5 +1,5 @@
 use super::super::Context;
-use crate::libraries::recording::SequentialWebVTTWriter;
+use crate::libraries::recording::SequentialWebVttWriter;
 use crate::libraries::recording::VideoRecorder;
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
 use crate::libraries::storage::StorageHandler;
@@ -55,7 +55,7 @@ impl Job for RecorderJob {
         // Create a WebVTT output and store it in the service context
         let webvtt_path = storage.join(format!("{}.vtt", prefix));
         let webvtt_file = File::create(&webvtt_path).await?;
-        let webvtt = SequentialWebVTTWriter::new(webvtt_file, recording_start).await?;
+        let webvtt = SequentialWebVttWriter::new(webvtt_file, recording_start).await?;
         *(manager.context.webvtt.lock().await) = Some(webvtt);
 
         // Register the files

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{pool::PoolConnection, Executor, Sqlite, SqlitePool};
 use std::{
     fs,
-    io::{Error as IOError, ErrorKind},
+    io::{Error as IoError, ErrorKind},
     path::{Path, PathBuf, StripPrefixError},
 };
 use thiserror::Error;
@@ -95,13 +95,13 @@ pub enum StorageError {
     #[error("Unable to enqueue metadata")]
     RedisError(#[from] redis::RedisError),
     #[error("Error reading from disk")]
-    IOError(#[from] IOError),
+    IoError(#[from] IoError),
 }
 
 impl StorageHandler {
     /// Fetches the storage ID of the given directory. If the directory has not previously been used
     /// as a storage a new identifier will be created and written to disk.
-    pub async fn storage_id(directory: &PathBuf) -> Result<String, StorageError> {
+    pub async fn storage_id(directory: &Path) -> Result<String, StorageError> {
         let id_path = directory.join(".webgrid-storage");
         debug!("Attempting to read storage ID from {}", id_path.display());
 
@@ -123,14 +123,14 @@ impl StorageHandler {
                 // If we get any other error (e.g. PermissionDenied) bail
                 _ => {
                     warn!("Unable to access storage identifier file: {:?}", e);
-                    Err(StorageError::IOError(e))
+                    Err(StorageError::IoError(e))
                 }
             },
         }
     }
 
     pub async fn queue_file_metadata<C: ConnectionLike + AsyncCommands>(
-        path: &PathBuf,
+        path: &Path,
         storage_id: &str,
         redis: &mut C,
     ) -> Result<(), StorageError> {
@@ -166,7 +166,7 @@ impl StorageHandler {
         })
     }
 
-    async fn create_db_if_not_exists(path: &PathBuf) -> Result<(), std::io::Error> {
+    async fn create_db_if_not_exists(path: &Path) -> Result<(), std::io::Error> {
         if !path.exists() {
             tokio::fs::File::create(path).await?;
         }

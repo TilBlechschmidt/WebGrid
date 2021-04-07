@@ -59,20 +59,20 @@ pub async fn create_session(
     // Create startup routine
     let startup = async {
         // Request a slot
-        logger.log(LogCode::QUEUED, None).await.ok();
+        logger.log(LogCode::Queued, None).await.ok();
         subtasks::request_slot(&mut con, &session_id, &manager.context.capabilities).await?;
 
         // Await scheduling
-        logger.log(LogCode::NALLOC, None).await.ok();
+        logger.log(LogCode::NAlloc, None).await.ok();
         subtasks::await_scheduling(&mut con, &session_id).await?;
 
         // Await node startup
-        logger.log(LogCode::PENDING, None).await.ok();
+        logger.log(LogCode::Pending, None).await.ok();
         subtasks::await_healthcheck(&mut con, &session_id).await?;
 
         // Hand off responsibility
         debug!("Session {} setup completed", &session_id);
-        logger.log(LogCode::NALIVE, None).await.ok();
+        logger.log(LogCode::NAlive, None).await.ok();
 
         let now = Utc::now().to_rfc3339();
         con.hset::<_, _, _, ()>(keys::session::status(&session_id), "aliveAt", &now)
@@ -102,14 +102,14 @@ pub async fn create_session(
             warn!("Failed to setup session {} {:?}", session_id, e);
 
             let log_code = match e {
-                RequestError::ParseError => LogCode::FAILURE,
-                RequestError::RedisError(_) => LogCode::FAILURE,
-                RequestError::QueueTimeout => LogCode::QTIMEOUT,
-                RequestError::SchedulingTimeout => LogCode::OTIMEOUT,
-                RequestError::HealthCheckTimeout => LogCode::NTIMEOUT,
-                RequestError::NoOrchestratorAvailable => LogCode::QUNAVAILABLE,
-                RequestError::InvalidCapabilities(_) => LogCode::INVALIDCAP,
-                RequestError::ResourceUnavailable => LogCode::FAILURE,
+                RequestError::ParseError => LogCode::Failure,
+                RequestError::RedisError(_) => LogCode::Failure,
+                RequestError::QueueTimeout => LogCode::QTimeout,
+                RequestError::SchedulingTimeout => LogCode::OTimeout,
+                RequestError::HealthCheckTimeout => LogCode::NTimeout,
+                RequestError::NoOrchestratorAvailable => LogCode::QUnavailable,
+                RequestError::InvalidCapabilities(_) => LogCode::InvalidCap,
+                RequestError::ResourceUnavailable => LogCode::Failure,
             };
 
             logger.log(log_code, None).await.ok();
