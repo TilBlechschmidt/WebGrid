@@ -1,8 +1,12 @@
 //! Unified grid entrypoint provider
 
 use super::SharedOptions;
-use crate::libraries::helpers::constants;
 use crate::libraries::lifecycle::Heart;
+use crate::libraries::{
+    helpers::constants,
+    tracing::{self, constants::service},
+};
+use anyhow::Result;
 use jatsl::{schedule, JobScheduler, StatusServer};
 use log::info;
 use structopt::StructOpt;
@@ -24,7 +28,9 @@ pub struct Options {
     port: u16,
 }
 
-pub async fn run(shared_options: SharedOptions, options: Options) {
+pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> {
+    tracing::init(&shared_options.trace_endpoint, service::PROXY, None)?;
+
     let (mut heart, _) = Heart::new();
 
     let context = Context::new(shared_options.redis);
@@ -46,4 +52,6 @@ pub async fn run(shared_options: SharedOptions, options: Options) {
     info!("Heart died: {}", death_reason);
 
     scheduler.terminate_jobs().await;
+
+    Ok(())
 }

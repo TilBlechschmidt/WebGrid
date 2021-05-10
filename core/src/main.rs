@@ -68,7 +68,7 @@ async fn main() -> Result<()> {
         Command::Node(options) => node::run(shared_options, options).await?,
 
         #[cfg(feature = "proxy")]
-        Command::Proxy(options) => proxy::run(shared_options, options).await,
+        Command::Proxy(options) => proxy::run(shared_options, options).await?,
 
         #[cfg(feature = "storage")]
         Command::Storage(options) => storage::run(shared_options, options).await?,
