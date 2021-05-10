@@ -38,6 +38,7 @@ pub async fn run(
     let provisioner = DockerProvisioner::new(
         options.node_port,
         images,
+        shared_options.trace_endpoint.clone(),
         options.disable_recording,
     )?;
 

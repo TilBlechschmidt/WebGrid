@@ -1,5 +1,8 @@
 use super::super::SharedOptions;
-use crate::libraries::lifecycle::Heart;
+use crate::libraries::{
+    lifecycle::Heart,
+    tracing::{self, constants::service},
+};
 use anyhow::Result;
 use jatsl::{schedule, JobScheduler, StatusServer};
 use log::info;
@@ -22,11 +25,11 @@ pub struct Options {
     ///
     /// Used to recover previously allocated slots after a restart.
     #[structopt(env)]
-    id: String,
+    pub id: String,
 
     /// Number of concurrent sessions
     #[structopt(long, env)]
-    slot_count: usize,
+    pub slot_count: usize,
 }
 
 pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
@@ -35,6 +38,12 @@ pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
     options: Options,
     shared_options: SharedOptions,
 ) -> Result<()> {
+    tracing::init(
+        &shared_options.trace_endpoint,
+        service::ORCHESTRATOR,
+        Some(&options.id),
+    )?;
+
     let (mut heart, _) = Heart::new();
 
     let context = Context::new(
