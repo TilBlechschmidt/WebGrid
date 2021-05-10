@@ -62,6 +62,8 @@ pub fn delete_session() -> String {
     redis.call('DEL', 'session:' .. sessionID .. ':downstream')
     
     redis.call('DEL', 'session:' .. sessionID .. ':storage')
+
+    redis.call('DEL', 'session:' .. sessionID .. ':telemetry.creation')
     "
     .to_string()
 }

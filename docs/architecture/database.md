@@ -91,6 +91,11 @@ To optimise storage performance and reduce the need for database synchronization
 }
 
 `session:${ID}:storage` = string                    // storage ID
+
+`session:${ID}:telemetry.creation` = Hashes {
+	traceID = string								// root span / trace ID
+	context = string								// serialized span context
+}
 ```
 
 #### Log event codes
