@@ -1,5 +1,8 @@
 use super::super::{routing_info::RoutingInfo, Context};
-use crate::libraries::metrics::MetricsEntry;
+use crate::libraries::{
+    metrics::MetricsEntry,
+    tracing::{self, constants::service},
+};
 use anyhow::Result;
 use async_trait::async_trait;
 use hyper::{
@@ -10,6 +13,13 @@ use hyper::{client::HttpConnector, Body, Client, Method, Request, Response, Serv
 use jatsl::{Job, TaskManager};
 use lazy_static::lazy_static;
 use log::{debug, error, info};
+use opentelemetry::{
+    global,
+    trace::{TraceContextExt, Tracer},
+    Context as TelemetryContext,
+};
+use opentelemetry_http::HeaderInjector;
+use opentelemetry_semantic_conventions as semcov;
 use regex::Regex;
 use std::{convert::Infallible, time::Duration};
 
@@ -42,7 +52,12 @@ impl Job for ProxyJob {
                 Ok::<_, Infallible>(service_fn(move |req| {
                     let p = p.clone();
                     let ctx = ctx.clone();
-                    async move { p.handle(ctx, req).await }
+                    let tracer = tracing::global_tracer();
+
+                    tracer.in_span(
+                        "Serve request",
+                        |cx| async move { p.handle(ctx, cx, req).await },
+                    )
                 }))
             }
         });
@@ -69,20 +84,42 @@ impl ProxyJob {
         Self { client, port }
     }
 
-    async fn forward(&self, mut req: Request<Body>, upstream: String) -> Result<Response<Body>> {
+    async fn forward(
+        &self,
+        mut req: Request<Body>,
+        upstream: String,
+        telemetry_context: &TelemetryContext,
+    ) -> Result<Response<Body>> {
+        let span = telemetry_context.span();
+        span.set_attribute(tracing::constants::trace::NET_UPSTREAM_NAME.string(upstream.clone()));
+
+        global::get_text_map_propagator(|propagator| {
+            propagator.inject_context(
+                &telemetry_context,
+                &mut HeaderInjector(&mut req.headers_mut()),
+            )
+        });
+
         let path = req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("");
 
         debug!("{} {} -> {}", req.method(), path, upstream);
 
         *req.uri_mut() = format!("http://{}{}", upstream, path).parse().unwrap();
 
+        span.add_event("Sending request".to_string(), vec![]);
         let result = self.client.request(req).await;
+        span.add_event("Received response".to_string(), vec![]);
 
         match result {
             Ok(res) => Ok(res),
             Err(e) => {
                 error!("Failed to fulfill request to '{}': {}", upstream, e);
                 let error_message = format!("Unable to forward request to {}: {}", upstream, e);
+
+                span.set_status(
+                    opentelemetry::trace::StatusCode::Error,
+                    error_message.clone(),
+                );
 
                 Ok(Response::builder()
                     .status(StatusCode::BAD_GATEWAY)
@@ -97,9 +134,10 @@ impl ProxyJob {
         req: Request<Body>,
         session_id: &str,
         info: &RoutingInfo,
+        telemetry_context: &TelemetryContext,
     ) -> Result<Response<Body>> {
         match info.get_session_upstream(session_id).await {
-            Some(upstream) => self.forward(req, upstream).await,
+            Some(upstream) => self.forward(req, upstream, telemetry_context).await,
             None => {
                 let path = req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("");
                 debug!("{} {} -> BAD GATEWAY (session request)", req.method(), path);
@@ -116,9 +154,10 @@ impl ProxyJob {
         &self,
         req: Request<Body>,
         info: &RoutingInfo,
+        telemetry_context: &TelemetryContext,
     ) -> Result<Response<Body>> {
         match info.get_manager_upstream().await {
-            Some(upstream) => self.forward(req, upstream).await,
+            Some(upstream) => self.forward(req, upstream, telemetry_context).await,
             None => {
                 let path = req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("");
                 debug!("{} {} -> BAD GATEWAY (manager request)", req.method(), path);
@@ -135,9 +174,10 @@ impl ProxyJob {
         &self,
         req: Request<Body>,
         info: &RoutingInfo,
+        telemetry_context: &TelemetryContext,
     ) -> Result<Response<Body>> {
         match info.get_api_upstream().await {
-            Some(upstream) => self.forward(req, upstream).await,
+            Some(upstream) => self.forward(req, upstream, telemetry_context).await,
             None => {
                 let path = req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("");
                 debug!("{} {} -> BAD GATEWAY (api request)", req.method(), path);
@@ -155,9 +195,10 @@ impl ProxyJob {
         req: Request<Body>,
         storage_id: &str,
         info: &RoutingInfo,
+        telemetry_context: &TelemetryContext,
     ) -> Result<Response<Body>> {
         match info.get_storage_upstream(storage_id).await {
-            Some(upstream) => self.forward(req, upstream).await,
+            Some(upstream) => self.forward(req, upstream, telemetry_context).await,
             None => {
                 let path = req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("");
                 debug!("{} {} -> BAD GATEWAY (storage request)", req.method(), path);
@@ -170,7 +211,12 @@ impl ProxyJob {
         }
     }
 
-    async fn handle(&self, context: Context, req: Request<Body>) -> Result<Response<Body>> {
+    async fn handle(
+        &self,
+        context: Context,
+        telemetry_context: TelemetryContext,
+        req: Request<Body>,
+    ) -> Result<Response<Body>> {
         let info = context.routing_info;
         let req_method = req.method().clone();
         let req_size = req.body().size_hint().lower();
@@ -185,11 +231,29 @@ impl ProxyJob {
             .map(|x| x.to_string())
             .unwrap_or_else(|| "".to_string());
 
+        let span = telemetry_context.span();
+        span.set_attribute(
+            semcov::trace::HTTP_FLAVOR.string(format!("{:?}", req.version()).replace("HTTP/", "")),
+        );
+        span.set_attribute(semcov::trace::HTTP_METHOD.string(req_method.to_string()));
+        span.set_attribute(semcov::trace::HTTP_REQUEST_CONTENT_LENGTH.string(req_size.to_string()));
+        span.set_attribute(semcov::trace::HTTP_TARGET.string(path.clone()));
+
         let result = if req.method() == Method::POST && path == "/session" {
-            self.handle_manager_request(req, &info).await
+            span.set_attribute(semcov::trace::HTTP_ROUTE.string("/session"));
+            span.set_attribute(semcov::trace::PEER_SERVICE.string(service::MANAGER));
+            span.update_name("/session".to_string());
+            self.handle_manager_request(req, &info, &telemetry_context)
+                .await
         } else if path.starts_with("/storage/") {
             match REGEX_STORAGE_PATH.captures(&path) {
-                Some(caps) => self.handle_storage_request(req, &caps["sid"], &info).await,
+                Some(caps) => {
+                    span.set_attribute(semcov::trace::HTTP_ROUTE.string("/storage/:storage_id/*"));
+                    span.set_attribute(semcov::trace::PEER_SERVICE.string(service::STORAGE));
+                    span.update_name("/storage/:storage_id/*".to_string());
+                    self.handle_storage_request(req, &caps["sid"], &info, &telemetry_context)
+                        .await
+                }
                 None => {
                     debug!("{} {} -> NOT FOUND", req.method(), path);
 
@@ -201,7 +265,13 @@ impl ProxyJob {
             }
         } else if path.starts_with("/session/") {
             match REGEX_SESSION_PATH.captures(&path) {
-                Some(caps) => self.handle_session_request(req, &caps["sid"], &info).await,
+                Some(caps) => {
+                    span.set_attribute(semcov::trace::HTTP_ROUTE.string("/session/:session_id/*"));
+                    span.set_attribute(semcov::trace::PEER_SERVICE.string(service::NODE));
+                    span.update_name("/session/:session_id/*".to_string());
+                    self.handle_session_request(req, &caps["sid"], &info, &telemetry_context)
+                        .await
+                }
                 None => {
                     debug!("{} {} -> NOT FOUND", req.method(), path);
 
@@ -214,12 +284,23 @@ impl ProxyJob {
         } else {
             // Send all unmatched requests to the API since it serves the
             // dashboard which might cover some paths we don't know about.
-            self.handle_api_request(req, &info).await
+            span.set_attribute(semcov::trace::HTTP_ROUTE.string("*"));
+            span.set_attribute(semcov::trace::PEER_SERVICE.string(service::API));
+            span.update_name("/*".to_string());
+            self.handle_api_request(req, &info, &telemetry_context)
+                .await
         };
 
         if let Ok(response) = &result {
             let status_code = response.status();
             let res_size = response.body().size_hint().lower();
+
+            span.set_attribute(
+                semcov::trace::HTTP_STATUS_CODE.string(status_code.as_u16().to_string()),
+            );
+            span.set_attribute(
+                semcov::trace::HTTP_RESPONSE_CONTENT_LENGTH.string(res_size.to_string()),
+            );
 
             context
                 .metrics
