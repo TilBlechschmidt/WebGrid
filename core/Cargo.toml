@@ -26,6 +26,12 @@ chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "0.8", features = ["v4"] }
 jatsl = "0.1.0"
 
+# Tracing
+opentelemetry = { version = "0.13.0", features = ["rt-tokio"] }
+opentelemetry-otlp = "0.6.0"
+opentelemetry-semantic-conventions = "0.5.0"
+opentelemetry-http = "0.2.0"
+
 # API
 juniper = { git = "https://github.com/TilBlechschmidt/juniper", branch = "patch-1", optional = true, features = ["expose-test-schema"] }
 juniper_warp = { git = "https://github.com/TilBlechschmidt/juniper", branch = "patch-1", optional = true }
