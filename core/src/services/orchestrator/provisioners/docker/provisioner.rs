@@ -1,7 +1,10 @@
 use super::super::super::core::provisioner::{
     match_image_from_capabilities, NodeInfo, Provisioner, ProvisionerCapabilities,
 };
-use crate::libraries::helpers::CapabilitiesRequest;
+use crate::libraries::{
+    helpers::CapabilitiesRequest,
+    tracing::{constants::trace, global_tracer},
+};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use bollard::{
@@ -10,6 +13,10 @@ use bollard::{
     Docker,
 };
 use log::{debug, warn};
+use opentelemetry::{
+    trace::{Span, StatusCode, TraceContextExt, Tracer},
+    Context as TelemetryContext,
+};
 use std::default::Default;
 
 #[derive(Clone)]
@@ -17,6 +24,7 @@ pub struct DockerProvisioner {
     docker: Docker,
     images: Vec<(String, String)>,
     node_port: u16,
+    trace_endpoint: Option<String>,
     disable_recording: bool,
 }
 
@@ -24,6 +32,7 @@ impl DockerProvisioner {
     pub fn new(
         node_port: u16,
         images: Vec<(String, String)>,
+        trace_endpoint: Option<String>,
         disable_recording: bool,
     ) -> Result<Self> {
         if images.is_empty() {
@@ -36,6 +45,7 @@ impl DockerProvisioner {
             docker: connection,
             images,
             node_port,
+            trace_endpoint,
             disable_recording,
         })
     }
@@ -59,10 +69,16 @@ impl Provisioner for DockerProvisioner {
         session_id: &str,
         capabilities: CapabilitiesRequest,
     ) -> Result<NodeInfo> {
+        let telemetry_context = TelemetryContext::current();
+        let span = telemetry_context.span();
+
         let image = match_image_from_capabilities(capabilities, &self.images)
             .ok_or_else(|| anyhow!("No matching image found!"))?;
 
         let name = format!("webgrid-session-{}", session_id);
+
+        span.set_attribute(trace::SESSION_CONTAINER_IMAGE.string(image.clone()));
+        span.set_attribute(trace::SESSION_CONTAINER_NAME.string(name.clone()));
 
         let options = Some(CreateContainerOptions { name: &name });
 
@@ -74,6 +90,10 @@ impl Provisioner for DockerProvisioner {
 
         if !self.disable_recording {
             env.push("STORAGE_DIRECTORY=/storage".to_string());
+        }
+
+        if let Some(trace_endpoint) = &self.trace_endpoint {
+            env.push(format!("TRACE_ENDPOINT={}", trace_endpoint));
         }
 
         let host_config = HostConfig {
@@ -94,18 +114,26 @@ impl Provisioner for DockerProvisioner {
 
         debug!("Creating docker container {}", name);
 
+        let create_span =
+            global_tracer().start_with_context("Create container", telemetry_context.clone());
         self.docker
             .create_container(options, config)
             .await
             .map_err(|e| {
+                create_span.set_status(StatusCode::Error, e.to_string());
                 e
             })?;
+        create_span.end();
+
+        let start_span = global_tracer().start_with_context("Start container", telemetry_context);
         self.docker
             .start_container(&name, None::<StartContainerOptions<String>>)
             .await
             .map_err(|e| {
+                start_span.set_status(StatusCode::Error, e.to_string());
                 e
             })?;
+        start_span.end();
 
         Ok(NodeInfo {
             host: name,

@@ -1,7 +1,10 @@
 use super::super::super::core::provisioner::{
     match_image_from_capabilities, NodeInfo, Provisioner, ProvisionerCapabilities,
 };
-use crate::libraries::helpers::{load_config, replace_config_variable, CapabilitiesRequest};
+use crate::libraries::{
+    helpers::{load_config, replace_config_variable, CapabilitiesRequest},
+    tracing::{constants::trace, global_tracer},
+};
 use anyhow::{bail, Result};
 use async_trait::async_trait;
 use k8s_openapi::{
@@ -14,6 +17,10 @@ use kube::{
     Client,
 };
 use log::{error, info, trace, warn};
+use opentelemetry::{
+    trace::{FutureExt, TraceContextExt, Tracer},
+    Context as TelemetryContext,
+};
 use serde::{de::DeserializeOwned, ser::Serialize};
 
 #[derive(Clone)]
@@ -99,6 +106,7 @@ impl K8sProvisioner {
 
     async fn create_job(&self, session_id: &str, image: &str) -> Result<String, KubeError> {
         let name = K8sProvisioner::generate_name(&session_id);
+        let span = global_tracer().start("Create job");
 
         let mut job_yaml = load_config("job.yaml");
         job_yaml = replace_config_variable(job_yaml, "job_name", &name);
@@ -108,13 +116,15 @@ impl K8sProvisioner {
         trace!("Job YAML {}", job_yaml);
 
         let job: Job = serde_yaml::from_str(&job_yaml).unwrap();
-        let resource = self.create_resource(&job).await?;
+        let context = TelemetryContext::current_with_span(span);
+        let resource = self.create_resource(&job).with_context(context).await?;
 
         Ok(self.unwrap_uid(resource).unwrap_or_default())
     }
 
     async fn create_service(&self, session_id: &str, job_uid: &str) -> Result<String, KubeError> {
         let name = K8sProvisioner::generate_name(&session_id);
+        let span = global_tracer().start("Create service");
 
         let mut service_yaml = load_config("service.yaml");
         service_yaml = replace_config_variable(service_yaml, "job_name", &name);
@@ -125,7 +135,8 @@ impl K8sProvisioner {
         trace!("Service YAML {}", service_yaml);
 
         let service: Service = serde_yaml::from_str(&service_yaml).unwrap();
-        let resource = self.create_resource(&service).await?;
+        let context = TelemetryContext::current_with_span(span);
+        let resource = self.create_resource(&service).with_context(context).await?;
 
         Ok(self.unwrap_uid(resource).unwrap_or_default())
     }
@@ -159,13 +170,20 @@ impl Provisioner for K8sProvisioner {
         session_id: &str,
         capabilities: CapabilitiesRequest,
     ) -> Result<NodeInfo> {
+        let telemetry_context = TelemetryContext::current();
         let wrapped_image = match_image_from_capabilities(capabilities, &self.images);
 
         if let Some(image) = wrapped_image {
+            telemetry_context
+                .span()
+                .set_attribute(trace::SESSION_CONTAINER_IMAGE.string(image.clone()));
+
             let job_uid = self
                 .create_job(&session_id, &image)
+                .with_context(telemetry_context.clone())
                 .await?;
             self.create_service(&session_id, &job_uid)
+                .with_context(telemetry_context)
                 .await?;
 
             Ok(NodeInfo {
