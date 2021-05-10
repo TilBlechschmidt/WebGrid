@@ -1,6 +1,6 @@
 use super::super::Context;
-use crate::libraries::helpers::keys;
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
+use crate::libraries::{helpers::keys, tracing::global_tracer};
 use crate::libraries::{lifecycle::HeartStone, resources::RedisResource};
 use crate::with_shared_redis_resource;
 use anyhow::Result;
@@ -15,6 +15,12 @@ use hyper::{
 use jatsl::{Job, TaskManager};
 use lazy_static::lazy_static;
 use log::{info, trace, warn};
+use opentelemetry::{
+    global,
+    trace::{Span, StatusCode, TraceContextExt, Tracer},
+    Context as TelemetryContext,
+};
+use opentelemetry_http::HeaderExtractor;
 use redis::{aio::MultiplexedConnection, AsyncCommands};
 use regex::Regex;
 use serde::Deserialize;
@@ -149,10 +155,17 @@ impl ProxyJob {
         mut req: Request<Body>,
         mut ctx: RequestContext,
     ) -> Result<Response<Body>, HyperError> {
+        // Extract tracing context
+        let parent_cx = global::get_text_map_propagator(|propagator| {
+            propagator.extract(&HeaderExtractor(req.headers()))
+        });
+        let span = global_tracer().start_with_context("Forward to driver", parent_cx);
+
         // Reset the lifetime
         ctx.heart_stone.reset_lifetime().await;
 
         // Translate the request path
+        span.add_event("Translating request path".to_string(), vec![]);
         let req_path = req
             .uri()
             .path_and_query()
@@ -190,6 +203,7 @@ impl ProxyJob {
         *req.version_mut() = Version::HTTP_11;
 
         // Split the request body apart and read it for logging and intercepting
+        span.add_event("Interpreting request body".to_string(), vec![]);
         let (req_parts, req_body) = req.into_parts();
         let req_body = match body::to_bytes(req_body).await {
             Ok(bytes) => String::from_utf8(bytes.to_vec()).unwrap_or_else(|_| "".to_string()),
@@ -205,6 +219,7 @@ impl ProxyJob {
         );
 
         // Run any special handling for the request (e.g. WebVTT cookies)
+        span.add_event("Running local intercepts".to_string(), vec![]);
         ProxyJob::run_local_intercepts(&req_parts, &path, &req_body, &ctx).await;
 
         // Rebuild the request and create a request object
@@ -212,11 +227,16 @@ impl ProxyJob {
         let proxy_request = ctx.client.request(rebuild_req);
 
         // Dispatch the request
+        let telemetry_context = TelemetryContext::current_with_span(span);
+        let driver_span =
+            global_tracer().start_with_context("WebDriver internal", telemetry_context.clone());
         match proxy_request.await {
             Ok(driver_response) => {
+                driver_span.end();
                 ProxyJob::handle_driver_response(driver_response, req_path, req_method, ctx).await
             }
             Err(driver_response) => {
+                driver_span.set_status(StatusCode::Error, driver_response.to_string());
                 warn!("Upstream error {}", driver_response);
                 Err(driver_response)
             }

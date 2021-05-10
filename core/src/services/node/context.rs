@@ -2,6 +2,8 @@ use super::{tasks::DriverReference, Options};
 use crate::libraries::resources::DefaultResourceManager;
 use crate::libraries::{helpers::keys, resources::ResourceManagerProvider};
 use crate::libraries::{lifecycle::HeartBeat, recording::SequentialWebVttWriter};
+use opentelemetry::Context as TelemetryContext;
+use std::ops::Deref;
 use std::sync::Arc;
 use tokio::{fs::File, sync::Mutex};
 
@@ -33,10 +35,37 @@ impl Context {
             webvtt: Arc::new(Mutex::new(None)),
         }
     }
+
+    pub fn with_telemetry_context(self, telemetry_context: TelemetryContext) -> StartupContext {
+        StartupContext::new(self, telemetry_context)
+    }
 }
 
 impl ResourceManagerProvider<DefaultResourceManager> for Context {
     fn resource_manager(&self) -> DefaultResourceManager {
         self.resource_manager.clone()
+    }
+}
+
+#[derive(Clone)]
+pub struct StartupContext {
+    context: Context,
+    pub telemetry_context: TelemetryContext,
+}
+
+impl StartupContext {
+    fn new(context: Context, telemetry_context: TelemetryContext) -> Self {
+        Self {
+            context,
+            telemetry_context,
+        }
+    }
+}
+
+impl Deref for StartupContext {
+    type Target = Context;
+
+    fn deref(&self) -> &Self::Target {
+        &self.context
     }
 }

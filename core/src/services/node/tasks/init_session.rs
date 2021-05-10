@@ -1,18 +1,28 @@
-use super::super::{
-    structs::{NodeError, SessionCreateResponse},
-    Context,
-};
-use crate::libraries::helpers::keys;
-use crate::libraries::lifecycle::logging::{LogCode, SessionLogger};
+use super::super::structs::{NodeError, SessionCreateResponse};
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
+use crate::libraries::{
+    lifecycle::logging::{LogCode, SessionLogger},
+    tracing::global_tracer,
+};
 use crate::with_redis_resource;
+use crate::{libraries::helpers::keys, services::node::context::StartupContext};
 use hyper::{body, Body, Client as HttpClient, Method, Request};
 use jatsl::TaskManager;
 use log::{debug, error, info};
+use opentelemetry::{
+    trace::{FutureExt, TraceContextExt, Tracer},
+    Context as TelemetryContext,
+};
 use redis::{aio::ConnectionLike, AsyncCommands};
 use std::{net::SocketAddr, process::Command};
 
-pub async fn initialize_session(manager: TaskManager<Context>) -> Result<String, NodeError> {
+pub async fn initialize_session(manager: TaskManager<StartupContext>) -> Result<String, NodeError> {
+    let span = global_tracer().start_with_context(
+        "Configure local session",
+        manager.context.telemetry_context.clone(),
+    );
+    let telemetry_context = TelemetryContext::current_with_span(span);
+
     let external_session_id: String = manager.context.id.clone();
     let driver_port = manager.context.options.driver_port;
     let on_session_create = manager.context.options.on_session_create.clone();
@@ -20,11 +30,18 @@ pub async fn initialize_session(manager: TaskManager<Context>) -> Result<String,
     let log_con = with_redis_resource!(manager);
     let mut logger = SessionLogger::new(log_con, "node".to_string(), external_session_id.clone());
 
-    let internal_session_id = subtasks::create_local_session(manager, &mut logger).await?;
+    let internal_session_id = subtasks::create_local_session(manager, &mut logger)
+        .with_context(telemetry_context.clone())
+        .await?;
 
-    subtasks::resize_window(&internal_session_id, driver_port).await?;
+    subtasks::resize_window(&internal_session_id, driver_port)
+        .with_context(telemetry_context.clone())
+        .await?;
 
     if let Some(ref script) = on_session_create {
+        telemetry_context
+            .span()
+            .add_event("Calling on_create_script".to_string(), vec![]);
         subtasks::call_on_create_script(&script);
     }
 
@@ -32,12 +49,18 @@ pub async fn initialize_session(manager: TaskManager<Context>) -> Result<String,
 }
 
 mod subtasks {
+    use opentelemetry::trace::Span;
+
+    use crate::libraries::tracing::constants::trace;
+
     use super::*;
 
     pub async fn create_local_session<C: ConnectionLike + AsyncCommands>(
-        manager: TaskManager<Context>,
+        manager: TaskManager<StartupContext>,
         logger: &mut SessionLogger<C>,
     ) -> Result<String, NodeError> {
+        let span = global_tracer().start("Create session");
+
         let external_session_id: String = manager.context.id.clone();
         let driver_port = manager.context.options.driver_port;
         let mut con = with_redis_resource!(manager);
@@ -70,6 +93,7 @@ mod subtasks {
             .map_err(|_| NodeError::LocalSessionCreationError)?;
 
         // Send the request and deconstruct the response body
+        span.add_event("Sending request".to_string(), vec![]);
         let res = client
             .request(req)
             .await
@@ -81,6 +105,7 @@ mod subtasks {
             String::from_utf8(bytes.to_vec()).map_err(|_| NodeError::LocalSessionCreationError)?;
 
         debug!("Session creation response: {}", body.replace("\n", ""));
+        span.add_event("Received response".to_string(), vec![]);
 
         let response: SessionCreateResponse =
             serde_json::from_str(&body).map_err(|_| NodeError::LocalSessionCreationError)?;
@@ -108,11 +133,14 @@ mod subtasks {
         .map_err(|_| NodeError::LocalSessionCreationError)?;
 
         info!("Created local session {}", internal_session_id);
+        span.set_attribute(trace::SESSION_ID_INTERNAL.string(internal_session_id.clone()));
 
         Ok(internal_session_id)
     }
 
     pub async fn resize_window(session_id: &str, driver_port: u16) -> Result<(), NodeError> {
+        let span = global_tracer().start("Resize window");
+
         let socket_addr: SocketAddr = ([127, 0, 0, 1], driver_port).into();
         let url = format!("http://{}/session/{}/window/rect", socket_addr, session_id);
         let body_string = "{\"x\": 0, \"y\": 0, \"width\": 1920, \"height\": 1080}";
@@ -124,6 +152,7 @@ mod subtasks {
             .body(Body::from(body_string))
             .map_err(|_| NodeError::LocalSessionCreationError)?;
 
+        span.add_event("Sending request".to_string(), vec![]);
         client
             .request(req)
             .await
