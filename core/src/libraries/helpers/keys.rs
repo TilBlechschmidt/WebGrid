@@ -135,6 +135,14 @@ pub mod session {
         format!("{}:storage", session_prefix(session_id))
     }
 
+    pub mod telemetry {
+        use super::session_prefix;
+
+        pub fn creation(session_id: &str) -> String {
+            format!("{}:telemetry.creation", session_prefix(session_id))
+        }
+    }
+
     pub mod heartbeat {
         use super::session_prefix;
 
