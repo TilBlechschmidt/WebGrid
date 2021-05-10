@@ -1,5 +1,6 @@
 use super::super::super::SharedOptions;
 use crate::libraries::helpers::constants;
+use anyhow::Result;
 use structopt::StructOpt;
 
 mod provisioner;
@@ -21,11 +22,26 @@ pub struct Options {
     /// Example: "webgrid-node-firefox=firefox::68.7.0esr,webgrid-node-chrome=chrome::81.0.4044.122"
     #[structopt(long, env)]
     images: String,
+
+    /// Do not enable video recordings for spawned sessions
+    #[structopt(long, env)]
+    disable_recording: bool,
 }
 
-pub async fn run(shared_options: SharedOptions, core_options: CoreOptions, options: Options) {
+pub async fn run(
+    shared_options: SharedOptions,
+    core_options: CoreOptions,
+    options: Options,
+) -> Result<()> {
     let images = parse_images_string(options.images);
 
-    let provisioner = DockerProvisioner::new(options.node_port, images);
-    start(Type::Docker, provisioner, core_options, shared_options).await;
+    let provisioner = DockerProvisioner::new(
+        options.node_port,
+        images,
+        options.disable_recording,
+    )?;
+
+    start(Type::Docker, provisioner, core_options, shared_options).await?;
+
+    Ok(())
 }

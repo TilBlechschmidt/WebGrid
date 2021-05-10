@@ -1,5 +1,6 @@
 use super::super::super::SharedOptions;
 use crate::libraries::helpers::constants;
+use anyhow::Result;
 use structopt::StructOpt;
 
 mod provisioner;
@@ -23,9 +24,15 @@ pub struct Options {
     images: String,
 }
 
-pub async fn run(shared_options: SharedOptions, core_options: CoreOptions, options: Options) {
+pub async fn run(
+    shared_options: SharedOptions,
+    core_options: CoreOptions,
+    options: Options,
+) -> Result<()> {
     let images = parse_images_string(options.images);
 
     let provisioner = K8sProvisioner::new(options.node_port, images).await;
-    start(Type::K8s, provisioner, core_options, shared_options).await;
+    start(Type::K8s, provisioner, core_options, shared_options).await?;
+
+    Ok(())
 }
