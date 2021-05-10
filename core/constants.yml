@@ -8,3 +8,4 @@ ports:
     proxy: 4
     storage: 5
     api: 6
+    localdriver: 7

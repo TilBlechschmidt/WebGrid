@@ -11,6 +11,9 @@ use provisioners::docker::Options as DockerOptions;
 #[cfg(feature = "kubernetes")]
 use provisioners::kubernetes::Options as K8sOptions;
 
+#[cfg(feature = "local")]
+use provisioners::local::Options as LocalOptions;
+
 #[derive(Debug, StructOpt)]
 // TODO Give it some reasonable description (the one from orchestrator_core won't work :C)
 pub struct Options {
@@ -28,4 +31,6 @@ pub enum Provisioner {
     Docker(DockerOptions),
     #[cfg(feature = "kubernetes")]
     Kubernetes(K8sOptions),
+    #[cfg(feature = "local")]
+    Local(LocalOptions),
 }

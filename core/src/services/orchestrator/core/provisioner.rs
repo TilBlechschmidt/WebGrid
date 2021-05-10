@@ -27,6 +27,7 @@ pub trait Provisioner {
 
 #[derive(Debug, Clone)]
 pub enum Type {
+    Local,
     Docker,
     K8s,
 }

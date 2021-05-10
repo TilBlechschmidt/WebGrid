@@ -54,7 +54,7 @@ tokio = { version = "1.2", features = ["full"] }
 git2 = "0.13"
 
 [features]
-default = ["gc", "api", "proxy", "manager", "node", "metrics", "storage", "docker", "kubernetes"]
+default = ["gc", "api", "proxy", "manager", "node", "metrics", "storage", "docker", "kubernetes", "local"]
 gc = []
 api = ["juniper", "juniper_warp"]
 proxy = []
@@ -65,6 +65,7 @@ storage = []
 orchestrator = []
 kubernetes = ["orchestrator", "time", "kube", "kube-derive", "k8s-openapi", "serde_yaml"]
 docker = ["orchestrator", "bollard"]
+local = ["orchestrator"]
 
 [profile.release]
 lto = true

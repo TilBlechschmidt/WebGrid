@@ -84,6 +84,11 @@ async fn main() -> Result<()> {
             Provisioner::Kubernetes(options) => {
                 provisioners::kubernetes::run(shared_options, core_options.core, options).await?
             }
+
+            #[cfg(feature = "local")]
+            Provisioner::Local(options) => {
+                provisioners::local::run(shared_options, core_options.core, options).await?
+            }
         },
 
         #[cfg(feature = "gc")]

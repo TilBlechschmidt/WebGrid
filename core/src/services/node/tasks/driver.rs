@@ -79,6 +79,7 @@ pub async fn stop_driver(manager: TaskManager<Context>) -> Result<(), IOError> {
 }
 
 mod subtasks {
+    use crate::libraries::helpers::constants;
     use opentelemetry::trace::StatusCode;
 
     use super::*;
@@ -98,6 +99,8 @@ mod subtasks {
             "safari" => Command::new(driver)
                 .arg("--diagnose")
                 .arg("-p")
+                .arg("9998")
+                .arg(constants::PORT_LOCALDRIVER)
                 .stdout(Stdio::inherit())
                 .spawn(),
             _ => Command::new(driver).stdout(Stdio::inherit()).spawn(),
