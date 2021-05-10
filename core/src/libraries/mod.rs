@@ -10,6 +10,7 @@ pub mod metrics;
 pub mod recording;
 pub mod resources;
 pub mod storage;
+pub mod tracing;
 
 // TODO: Implement proper testing :)
 // #[cfg(test)]

@@ -31,4 +31,10 @@ pub struct SharedOptions {
         value_name = "level"
     )]
     pub log: String,
+
+    /// OpenTelemetry collector endpoint
+    ///
+    /// Omitting it disables tracing
+    #[structopt(long, global = true, env)]
+    pub trace_endpoint: Option<String>,
 }
