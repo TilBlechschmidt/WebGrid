@@ -1,6 +1,7 @@
 use crate::libraries::{helpers::keys, lifecycle::BeatValue};
 use crate::libraries::{lifecycle::HeartBeat, resources::ResourceManagerProvider};
 use crate::libraries::{metrics::MetricsProcessor, resources::DefaultResourceManager};
+use opentelemetry::Context as TelemetryContext;
 use std::ops::Deref;
 
 #[derive(Clone)]
@@ -34,6 +35,7 @@ pub struct SessionCreationContext {
     pub remote_addr: String,
     pub user_agent: String,
     pub capabilities: String,
+    pub telemetry_context: TelemetryContext,
 }
 
 impl SessionCreationContext {
@@ -42,12 +44,14 @@ impl SessionCreationContext {
         remote_addr: String,
         user_agent: String,
         capabilities: String,
+        telemetry_context: TelemetryContext,
     ) -> Self {
         Self {
             context,
             remote_addr,
             user_agent,
             capabilities,
+            telemetry_context,
         }
     }
 }
