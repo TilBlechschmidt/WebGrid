@@ -1,10 +1,18 @@
 //! Session provider and driver manager
 
 use super::SharedOptions;
-use crate::libraries::{helpers::constants, recording::VideoQualityPreset};
+use crate::{
+    libraries::{
+        helpers::constants,
+        recording::VideoQualityPreset,
+        tracing::{self, constants::service},
+    },
+    services::node::tasks::initialize_tracing,
+};
 use anyhow::Result;
 use jatsl::{schedule, JobScheduler, StatusServer};
 use log::{info, warn};
+use opentelemetry::trace::TraceContextExt;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -110,12 +118,24 @@ async fn launch_session(
 ) -> Result<()> {
     let scheduler = JobScheduler::default();
 
+    let telemetry_context =
+        JobScheduler::spawn_task(&initialize_tracing, context.clone()).await???;
+
+    let startup_context = context
+        .clone()
+        .with_telemetry_context(telemetry_context.clone());
+
     // TODO Handle error and go straight to cleanup jobs + make a serial-task-execution macro
     let (mut heart, heart_stone) =
-        JobScheduler::spawn_task(&initialize_service, context.clone()).await???;
-    JobScheduler::spawn_task(&start_driver, context.clone()).await???;
+        JobScheduler::spawn_task(&initialize_service, startup_context.clone()).await???;
+
+    JobScheduler::spawn_task(&start_driver, startup_context.clone()).await???;
+
     let internal_session_id =
-        JobScheduler::spawn_task(&initialize_session, context.clone()).await???;
+        JobScheduler::spawn_task(&initialize_session, startup_context.clone()).await???;
+
+    // End the startup trace
+    telemetry_context.span().end();
 
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);
     let heart_beat_job = context.heart_beat.clone();
@@ -141,6 +161,12 @@ async fn launch_session(
 
 pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> {
     let context = Context::new(shared_options.redis.clone(), options.clone()).await;
+
+    tracing::init(
+        &shared_options.trace_endpoint,
+        service::NODE,
+        Some(&options.id),
+    )?;
 
     if let Err(e) = launch_session(shared_options, options, &context).await {
         warn!("Encountered error while launching session: {:?}", e);
