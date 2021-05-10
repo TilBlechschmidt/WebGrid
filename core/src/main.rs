@@ -1,4 +1,5 @@
 use anyhow::Result;
+use opentelemetry::global;
 use structopt::StructOpt;
 
 #[cfg(feature = "orchestrator")]
@@ -91,6 +92,8 @@ async fn main() -> Result<()> {
         #[cfg(feature = "api")]
         Command::Api(options) => api::run(shared_options, options).await?,
     }
+
+    global::shutdown_tracer_provider();
 
     Ok(())
 }
