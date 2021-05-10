@@ -1,14 +1,14 @@
 use super::super::Context;
-use crate::libraries::helpers::keys;
 use crate::libraries::lifecycle::logging::{LogCode, Logger};
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
+use crate::libraries::{helpers::keys, resources::RedisResource};
 use crate::with_redis_resource;
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::offset::Utc;
 use jatsl::{Job, TaskManager};
 use log::{debug, info};
-use redis::{AsyncCommands, RedisResult};
+use redis::{aio::Connection, AsyncCommands, RedisResult};
 
 #[derive(Clone)]
 pub struct ProcessorJob {}
@@ -30,64 +30,31 @@ impl Job for ProcessorJob {
         loop {
             // While loop first to process leftover tasks from prior instance
             while let Ok(session_id) = con
-                .lindex(keys::orchestrator::pending(&orchestrator_id), -1)
+                .lindex::<_, String>(keys::orchestrator::pending(&orchestrator_id), -1)
                 .await
             {
-                let session_id: String = session_id;
-                info!("Starting job {}", session_id);
-
-                // TODO Look if the job is too old
-
-                // TODO Proper error handling, remove unwrap
-                let raw_capabilities_request: String = con
-                    .hget(format!("session:{}:capabilities", session_id), "requested")
+                // Run the scheduling process
+                match ProcessorJob::schedule_session(session_id.clone(), &mut con, &manager.context)
                     .await
-                    .unwrap();
-                let capabilities_request = serde_json::from_str(&raw_capabilities_request).unwrap();
-
-                let info_future = manager
-                    .context
-                    .provisioner
-                    .provision_node(&session_id, capabilities_request);
-                let node_info = info_future.await;
-
-                let status_key = format!("session:{}:status", session_id);
-                let orchestrator_key = format!("session:{}:orchestrator", session_id);
-                let upstream_key = format!("session:{}:upstream", session_id);
-                let timestamp = Utc::now().to_rfc3339();
-
-                let result: RedisResult<()> = redis::pipe()
-                    .atomic()
-                    .cmd("RPOP")
-                    .arg(keys::orchestrator::pending(&orchestrator_id))
-                    .cmd("HSETNX")
-                    .arg(status_key)
-                    .arg("pendingAt")
-                    .arg(timestamp)
-                    .cmd("RPUSH")
-                    .arg(orchestrator_key)
-                    .arg(&orchestrator_id)
-                    .cmd("HMSET")
-                    .arg(upstream_key)
-                    .arg("host")
-                    .arg(&node_info.host)
-                    .arg("port")
-                    .arg(&node_info.port)
-                    .query_async(&mut con)
-                    .await;
-
-                if result.is_err() {
-                    debug!("Failed to provision node {} {:?}", session_id, result);
-                    logger.log(&session_id, LogCode::StartFail, None).await.ok();
-                    manager
-                        .context
-                        .provisioner
-                        .terminate_node(&session_id)
-                        .await;
-                } else {
-                    debug!("Provisioned node {} {:?}", session_id, node_info);
-                    logger.log(&session_id, LogCode::Sched, None).await.ok();
+                {
+                    Ok(node_info) => {
+                        debug!("Provisioned node {} {:?}", session_id, node_info);
+                        logger.log(&session_id, LogCode::Sched, None).await.ok();
+                    }
+                    Err(e) => {
+                        debug!("Failed to provision node {} {:?}", session_id, e);
+                        logger.log(&session_id, LogCode::StartFail, None).await.ok();
+                        manager
+                            .context
+                            .provisioner
+                            .terminate_node(&session_id)
+                            .await;
+                    }
                 }
+
+                // Remove the item from the list of pending items
+                con.rpop::<_, ()>(keys::orchestrator::pending(&orchestrator_id))
+                    .await?;
             }
 
             let _: RedisResult<()> = con
@@ -104,5 +71,49 @@ impl Job for ProcessorJob {
 impl ProcessorJob {
     pub fn new() -> Self {
         Self {}
+    }
+
+    async fn schedule_session(
+        session_id: String,
+        con: &mut RedisResource<Connection>,
+        context: &Context,
+    ) -> Result<()> {
+        let orchestrator_id = context.id.clone();
+        info!("Starting job {}", session_id);
+
+        // TODO Look if the job is too old
+
+        // TODO Proper error handling, remove unwrap
+        let raw_capabilities_request: String = con
+            .hget(format!("session:{}:capabilities", session_id), "requested")
+            .await
+            .unwrap();
+        let capabilities_request = serde_json::from_str(&raw_capabilities_request).unwrap();
+
+        // TODO Add possible failure path to provisioner
+        let info_future = context
+            .provisioner
+            .provision_node(&session_id, capabilities_request);
+        let node_info = info_future.await?;
+
+        redis::pipe()
+            .atomic()
+            .cmd("HSETNX")
+            .arg(keys::session::status(&session_id))
+            .arg("pendingAt")
+            .arg(Utc::now().to_rfc3339())
+            .cmd("RPUSH")
+            .arg(keys::session::orchestrator(&session_id))
+            .arg(&orchestrator_id)
+            .cmd("HMSET")
+            .arg(keys::session::upstream(&session_id))
+            .arg("host")
+            .arg(&node_info.host)
+            .arg("port")
+            .arg(&node_info.port)
+            .query_async(con)
+            .await?;
+
+        Ok(())
     }
 }

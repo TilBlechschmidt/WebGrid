@@ -1,5 +1,5 @@
 use crate::libraries::helpers::{parse_browser_string, split_into_two, CapabilitiesRequest};
-
+use anyhow::Result;
 pub use async_trait::async_trait;
 use std::fmt;
 
@@ -17,8 +17,11 @@ pub struct ProvisionerCapabilities {
 #[async_trait]
 pub trait Provisioner {
     fn capabilities(&self) -> ProvisionerCapabilities;
-    async fn provision_node(&self, session_id: &str, capabilities: CapabilitiesRequest)
-        -> NodeInfo;
+    async fn provision_node(
+        &self,
+        session_id: &str,
+        capabilities: CapabilitiesRequest,
+    ) -> Result<NodeInfo>;
     async fn terminate_node(&self, session_id: &str);
 }
 

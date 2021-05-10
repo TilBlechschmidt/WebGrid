@@ -2,6 +2,7 @@ use super::super::super::core::provisioner::{
     match_image_from_capabilities, NodeInfo, Provisioner, ProvisionerCapabilities,
 };
 use crate::libraries::helpers::{load_config, replace_config_variable, CapabilitiesRequest};
+use anyhow::{bail, Result};
 use async_trait::async_trait;
 use k8s_openapi::{
     api::{batch::v1::Job, core::v1::Service},
@@ -157,24 +158,22 @@ impl Provisioner for K8sProvisioner {
         &self,
         session_id: &str,
         capabilities: CapabilitiesRequest,
-    ) -> NodeInfo {
+    ) -> Result<NodeInfo> {
         let wrapped_image = match_image_from_capabilities(capabilities, &self.images);
 
-        // TODO Remove this very crude "error handling" with some proper Result<NodeInfo>!
         if let Some(image) = wrapped_image {
-            if let Ok(job_uid) = self.create_job(&session_id, &image).await {
-                self.create_service(&session_id, &job_uid).await.ok();
-            }
+            let job_uid = self
+                .create_job(&session_id, &image)
+                .await?;
+            self.create_service(&session_id, &job_uid)
+                .await?;
 
-            NodeInfo {
+            Ok(NodeInfo {
                 host: K8sProvisioner::generate_name(&session_id),
                 port: self.node_port.to_string(),
-            }
+            })
         } else {
-            NodeInfo {
-                host: "NO_IMAGE_FOUND".to_string(),
-                port: "1337".to_string(),
-            }
+            bail!("No matching image found!")
         }
     }
 
