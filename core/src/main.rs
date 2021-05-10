@@ -76,12 +76,12 @@ async fn main() -> Result<()> {
         Command::Orchestrator(core_options) => match core_options.provisioner {
             #[cfg(feature = "docker")]
             Provisioner::Docker(options) => {
-                provisioners::docker::run(shared_options, core_options.core, options).await
+                provisioners::docker::run(shared_options, core_options.core, options).await?
             }
 
             #[cfg(feature = "kubernetes")]
             Provisioner::Kubernetes(options) => {
-                provisioners::kubernetes::run(shared_options, core_options.core, options).await
+                provisioners::kubernetes::run(shared_options, core_options.core, options).await?
             }
         },
 

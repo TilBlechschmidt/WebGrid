@@ -1,5 +1,6 @@
 use super::super::SharedOptions;
 use crate::libraries::lifecycle::Heart;
+use anyhow::Result;
 use jatsl::{schedule, JobScheduler, StatusServer};
 use log::info;
 use structopt::StructOpt;
@@ -33,7 +34,7 @@ pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
     provisioner: P,
     options: Options,
     shared_options: SharedOptions,
-) {
+) -> Result<()> {
     let (mut heart, _) = Heart::new();
 
     let context = Context::new(
@@ -69,4 +70,6 @@ pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
     info!("Heart died: {}", death_reason);
 
     scheduler.terminate_jobs().await;
+
+    Ok(())
 }

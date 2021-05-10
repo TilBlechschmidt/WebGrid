@@ -2,6 +2,7 @@ use super::super::super::core::provisioner::{
     match_image_from_capabilities, NodeInfo, Provisioner, ProvisionerCapabilities,
 };
 use crate::libraries::helpers::CapabilitiesRequest;
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use bollard::{
     container::{Config, CreateContainerOptions, KillContainerOptions, StartContainerOptions},
@@ -16,22 +17,27 @@ pub struct DockerProvisioner {
     docker: Docker,
     images: Vec<(String, String)>,
     node_port: u16,
+    disable_recording: bool,
 }
 
 impl DockerProvisioner {
-    pub fn new(node_port: u16, images: Vec<(String, String)>) -> Self {
+    pub fn new(
+        node_port: u16,
+        images: Vec<(String, String)>,
+        disable_recording: bool,
+    ) -> Result<Self> {
         if images.is_empty() {
             warn!("No images provided! Orchestrator won't be able to schedule nodes.");
         }
 
-        // TODO Remove unwrap
-        let connection = Docker::connect_with_local_defaults().unwrap();
+        let connection = Docker::connect_with_local_defaults()?;
 
-        Self {
+        Ok(Self {
             docker: connection,
             images,
             node_port,
-        }
+            disable_recording,
+        })
     }
 }
 
@@ -52,21 +58,23 @@ impl Provisioner for DockerProvisioner {
         &self,
         session_id: &str,
         capabilities: CapabilitiesRequest,
-    ) -> NodeInfo {
-        let wrapped_image = match_image_from_capabilities(capabilities, &self.images);
-        // TODO Remove unwrap
-        let image = wrapped_image.unwrap();
+    ) -> Result<NodeInfo> {
+        let image = match_image_from_capabilities(capabilities, &self.images)
+            .ok_or_else(|| anyhow!("No matching image found!"))?;
 
         let name = format!("webgrid-session-{}", session_id);
 
         let options = Some(CreateContainerOptions { name: &name });
 
-        let env: Vec<String> = vec![
+        let mut env: Vec<String> = vec![
             "REDIS=redis://webgrid-redis/".to_string(),
             format!("ID={}", session_id),
-            "STORAGE_DIRECTORY=/storage".to_string(),
-            "RUST_LOG=trace,tokio=warn,hyper=warn,mio=warn,want=warn".to_string(),
+            "RUST_LOG=debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn".to_string(),
         ];
+
+        if !self.disable_recording {
+            env.push("STORAGE_DIRECTORY=/storage".to_string());
+        }
 
         let host_config = HostConfig {
             auto_remove: Some(true),
@@ -86,17 +94,23 @@ impl Provisioner for DockerProvisioner {
 
         debug!("Creating docker container {}", name);
 
-        // TODO Remove unwrap
-        self.docker.create_container(options, config).await.unwrap();
+        self.docker
+            .create_container(options, config)
+            .await
+            .map_err(|e| {
+                e
+            })?;
         self.docker
             .start_container(&name, None::<StartContainerOptions<String>>)
             .await
-            .unwrap();
+            .map_err(|e| {
+                e
+            })?;
 
-        NodeInfo {
+        Ok(NodeInfo {
             host: name,
             port: self.node_port.to_string(),
-        }
+        })
     }
 
     async fn terminate_node(&self, session_id: &str) {
