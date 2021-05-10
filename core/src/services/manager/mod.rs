@@ -1,8 +1,12 @@
 //! Endpoint for handling session creation
 
 use super::SharedOptions;
-use crate::libraries::helpers::constants;
 use crate::libraries::lifecycle::Heart;
+use crate::libraries::{
+    helpers::constants,
+    tracing::{self, constants::service},
+};
+use anyhow::Result;
 use jatsl::{schedule, JobScheduler, StatusServer};
 use log::info;
 use structopt::StructOpt;
@@ -34,7 +38,13 @@ pub struct Options {
     port: u16,
 }
 
-pub async fn run(shared_options: SharedOptions, options: Options) {
+pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> {
+    tracing::init(
+        &shared_options.trace_endpoint,
+        service::MANAGER,
+        Some(&options.id),
+    )?;
+
     let (mut heart, _) = Heart::new();
 
     let host = format!("{}:{}", options.host, options.port);
@@ -57,4 +67,6 @@ pub async fn run(shared_options: SharedOptions, options: Options) {
     info!("Heart died: {}", death_reason);
 
     scheduler.terminate_jobs().await;
+
+    Ok(())
 }

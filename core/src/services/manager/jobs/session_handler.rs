@@ -1,11 +1,20 @@
+use crate::libraries::tracing::global_tracer;
+
 use super::super::{
     context::SessionCreationContext, tasks, Context, RequestError, SessionReply, SessionReplyError,
     SessionRequest,
 };
 use anyhow::Result;
 use async_trait::async_trait;
+use hyper::HeaderMap;
 use jatsl::{Job, JobScheduler, TaskManager};
 use log::{debug, info, warn};
+use opentelemetry::{
+    global::{self, BoxedSpan},
+    trace::Tracer,
+    Context as TelemetryContext,
+};
+use opentelemetry_http::HeaderExtractor;
 use serde_json::json;
 use std::net::SocketAddr;
 use warp::{http::StatusCode, reply, Filter};
@@ -49,17 +58,50 @@ impl SessionHandlerJob {
     ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
         let with_manager = warp::any().map(move || manager.clone());
 
+        let with_telemetry_context =
+            warp::any()
+                .and(warp::header::headers_cloned())
+                .map(move |headers: HeaderMap| {
+                    let parent_cx = global::get_text_map_propagator(|propagator| {
+                        propagator.extract(&HeaderExtractor(&headers))
+                    });
+
+                    global_tracer().start_with_context("Dispatch session", parent_cx)
+                });
+
         warp::post()
             .and(warp::path("session"))
             .and(with_manager)
+            .and(with_telemetry_context)
             .and(warp::body::json())
             .and(warp::header::<String>("user-agent"))
             .and(warp::addr::remote())
-            .and_then(SessionHandlerJob::handle_post)
+            .and_then(SessionHandlerJob::handle_post_with_telemetry)
+    }
+
+    async fn handle_post_with_telemetry(
+        manager: TaskManager<Context>,
+        span: BoxedSpan,
+        request: SessionRequest,
+        user_agent: String,
+        remote_sock_addr: Option<SocketAddr>,
+    ) -> Result<impl warp::Reply, warp::Rejection> {
+        global_tracer()
+            .with_span(span, |telemetry_context| {
+                SessionHandlerJob::handle_post(
+                    manager,
+                    telemetry_context,
+                    request,
+                    user_agent,
+                    remote_sock_addr,
+                )
+            })
+            .await
     }
 
     async fn handle_post(
         manager: TaskManager<Context>,
+        telemetry_context: TelemetryContext,
         request: SessionRequest,
         user_agent: String,
         remote_sock_addr: Option<SocketAddr>,
@@ -80,6 +122,7 @@ impl SessionHandlerJob {
             remote_addr,
             user_agent,
             capabilities,
+            telemetry_context,
         );
 
         let task = JobScheduler::spawn_task(&tasks::create_session, session_creation_context);

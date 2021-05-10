@@ -4,10 +4,18 @@
 
 use hyper::{body, Client, Uri};
 use log::{debug, trace};
+use opentelemetry::{
+    global,
+    trace::{TraceContextExt, Tracer},
+    Context as TelemetryContext,
+};
+use opentelemetry_http::HeaderInjector;
 use redis::{aio::ConnectionLike, AsyncCommands, RedisResult};
 use std::time::Duration;
 use tokio::time::sleep;
 use tokio::time::timeout;
+
+use crate::libraries::tracing::global_tracer;
 
 /// Sends HTTP requests to the specified URL until either a 200 OK response is received or the timeout is reached
 pub async fn wait_for(url: &str, timeout_duration: Duration) -> Result<String, ()> {
@@ -15,14 +23,27 @@ pub async fn wait_for(url: &str, timeout_duration: Duration) -> Result<String, (
 
     let url = url.parse::<Uri>().unwrap();
 
-    let check_interval = Duration::from_millis(250);
+    let check_interval = Duration::from_millis(150);
     let request_timeout = Duration::from_millis(1000);
     let mut remaining_duration = timeout_duration;
 
     debug!("Awaiting 200 OK response from {}", url);
 
     loop {
-        let request = client.get(url.clone());
+        let span = global_tracer().start("Sending healthcheck request");
+        let telemetry_context = TelemetryContext::current_with_span(span);
+
+        let mut req = hyper::Request::new(hyper::Body::default());
+        *req.uri_mut() = url.clone();
+
+        global::get_text_map_propagator(|propagator| {
+            propagator.inject_context(
+                &telemetry_context,
+                &mut HeaderInjector(&mut req.headers_mut()),
+            )
+        });
+
+        let request = client.request(req);
 
         trace!("Sending health-check request");
         let response = timeout(request_timeout, request).await;
@@ -48,6 +69,7 @@ pub async fn wait_for(url: &str, timeout_duration: Duration) -> Result<String, (
             return Err(());
         }
 
+        telemetry_context.span().end();
         sleep(check_interval).await;
         remaining_duration -= check_interval;
     }

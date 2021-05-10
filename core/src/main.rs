@@ -62,7 +62,7 @@ async fn main() -> Result<()> {
         Command::Metrics(options) => metrics::run(shared_options, options).await,
 
         #[cfg(feature = "manager")]
-        Command::Manager(options) => manager::run(shared_options, options).await,
+        Command::Manager(options) => manager::run(shared_options, options).await?,
 
         #[cfg(feature = "node")]
         Command::Node(options) => node::run(shared_options, options).await?,

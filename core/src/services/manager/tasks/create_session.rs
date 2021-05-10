@@ -1,16 +1,24 @@
 use super::super::{context::SessionCreationContext, RequestError, SessionReplyValue};
-use crate::libraries::helpers::{
-    keys, parse_browser_string, wait_for, wait_for_key, CapabilitiesRequest, Timeout,
-};
-use crate::libraries::lifecycle::logging::{LogCode, SessionLogger};
 use crate::libraries::metrics::MetricsEntry;
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
+use crate::libraries::{
+    helpers::{keys, parse_browser_string, wait_for, wait_for_key, CapabilitiesRequest, Timeout},
+    tracing::global_tracer,
+};
+use crate::libraries::{
+    lifecycle::logging::{LogCode, SessionLogger},
+    tracing::StringPropagator,
+};
 use crate::with_redis_resource;
 use chrono::offset::Utc;
 use futures::TryFutureExt;
 use jatsl::TaskManager;
 use lazy_static::lazy_static;
 use log::{debug, warn};
+use opentelemetry::{
+    trace::{FutureExt, Span, StatusCode as TelemetryStatusCode, Tracer},
+    Context as TelemetryContext,
+};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use redis::{aio::ConnectionLike, pipe, AsyncCommands};
@@ -24,10 +32,15 @@ pub async fn create_session(
 ) -> Result<SessionReplyValue, RequestError> {
     let mut con = with_redis_resource!(manager);
     let log_con = with_redis_resource!(manager);
+    let telemetry_context = &manager.context.telemetry_context;
 
     // Allocate a session ID
     let session_creation_start = Instant::now();
-    let session_id = subtasks::create_new_session(&mut con, &manager.context).await?;
+    let serialized_telemetry_context = StringPropagator::serialize(&telemetry_context).ok();
+    let session_id =
+        subtasks::create_new_session(&mut con, &manager.context, serialized_telemetry_context)
+            .with_context(telemetry_context.clone())
+            .await?;
     let mut logger = SessionLogger::new(log_con, "manager".to_owned(), session_id.clone());
 
     debug!("Created session object {}", session_id);
@@ -60,15 +73,21 @@ pub async fn create_session(
     let startup = async {
         // Request a slot
         logger.log(LogCode::Queued, None).await.ok();
-        subtasks::request_slot(&mut con, &session_id, &manager.context.capabilities).await?;
+        subtasks::request_slot(&mut con, &session_id, &manager.context.capabilities)
+            .with_context(telemetry_context.clone())
+            .await?;
 
         // Await scheduling
         logger.log(LogCode::NAlloc, None).await.ok();
-        subtasks::await_scheduling(&mut con, &session_id).await?;
+        subtasks::await_scheduling(&mut con, &session_id)
+            .with_context(telemetry_context.clone())
+            .await?;
 
         // Await node startup
         logger.log(LogCode::Pending, None).await.ok();
-        subtasks::await_healthcheck(&mut con, &session_id).await?;
+        subtasks::await_healthcheck(&mut con, &session_id)
+            .with_context(telemetry_context.clone())
+            .await?;
 
         // Hand off responsibility
         debug!("Session {} setup completed", &session_id);
@@ -123,12 +142,20 @@ pub async fn create_session(
 mod subtasks {
     use std::collections::HashMap;
 
+    use opentelemetry::trace::TraceContextExt;
+
+    use crate::libraries::tracing::constants::trace;
+
     use super::*;
 
     pub async fn create_new_session<C: ConnectionLike + AsyncCommands>(
         con: &mut C,
         context: &SessionCreationContext,
+        serialized_telemetry_context: Option<String>,
     ) -> Result<String, RequestError> {
+        let tracer = global_tracer();
+        let span = tracer.start("Create session object");
+
         let session_id = Uuid::new_v4().to_hyphenated().to_string();
         let now = Utc::now().to_rfc3339();
 
@@ -151,6 +178,13 @@ mod subtasks {
         pipe()
             .atomic()
             .hset(keys::session::status(&session_id), "queuedAt", &now)
+            .hset_multiple(
+                keys::session::telemetry::creation(&session_id),
+                &[
+                    ("traceID", span.span_context().trace_id().to_hex()),
+                    ("context", serialized_telemetry_context.unwrap_or_default()),
+                ],
+            )
             .hset(
                 keys::session::capabilities(&session_id),
                 "requested",
@@ -178,6 +212,8 @@ mod subtasks {
             .await?;
         }
 
+        span.set_attribute(trace::SESSION_ID.string(session_id.clone()));
+
         Ok(session_id)
     }
 
@@ -186,6 +222,8 @@ mod subtasks {
         session_id: &str,
         capabilities: &str,
     ) -> Result<(), RequestError> {
+        let tracer = global_tracer();
+        let span = tracer.start("Request slot");
         let queue_timeout = Timeout::Queue.get(con).await;
 
         let mut queues: Vec<String> = helpers::match_orchestrators(con, capabilities)
@@ -195,16 +233,24 @@ mod subtasks {
             .collect();
 
         if queues.is_empty() {
+            span.set_status(
+                TelemetryStatusCode::Error,
+                "No matching orchestrator available".to_string(),
+            );
             return Err(RequestError::NoOrchestratorAvailable);
         }
 
         // Ensure some degree of load balancing for orchestrators
         queues.shuffle(&mut thread_rng());
 
+        span.add_event("Entering queue".to_string(), vec![]);
+
         let response: Option<(String, String)> = con
             .blpop(queues, queue_timeout)
             .map_err(RequestError::RedisError)
             .await?;
+
+        span.add_event("Received response".to_string(), vec![]);
 
         match response {
             Some((queue, slot)) => {
@@ -218,6 +264,10 @@ mod subtasks {
                     Some(groups) => {
                         let orchestrator = groups["orchestrator"].to_string();
 
+                        span.set_attribute(
+                            trace::SESSION_ORCHESTRATOR.string(orchestrator.clone()),
+                        );
+
                         con.set(keys::session::slot(session_id), &slot)
                             .map_err(RequestError::RedisError)
                             .await?;
@@ -227,10 +277,22 @@ mod subtasks {
 
                         Ok(())
                     }
-                    None => Err(RequestError::ParseError),
+                    None => {
+                        span.set_status(
+                            TelemetryStatusCode::Error,
+                            "Unable to parse redis response".to_string(),
+                        );
+                        Err(RequestError::ParseError)
+                    }
                 }
             }
-            None => Err(RequestError::QueueTimeout),
+            None => {
+                span.set_status(
+                    TelemetryStatusCode::Error,
+                    "Timed out waiting for slot".to_string(),
+                );
+                Err(RequestError::QueueTimeout)
+            }
         }
     }
 
@@ -238,6 +300,9 @@ mod subtasks {
         con: &mut C,
         session_id: &str,
     ) -> Result<(), RequestError> {
+        let tracer = global_tracer();
+        let span = tracer.start("Await scheduling");
+
         let scheduling_timeout = Timeout::Scheduling.get(con).await;
         let scheduling_key = keys::session::orchestrator(session_id);
 
@@ -248,7 +313,13 @@ mod subtasks {
 
         match res {
             Some(_) => Ok(()),
-            None => Err(RequestError::SchedulingTimeout),
+            None => {
+                span.set_status(
+                    TelemetryStatusCode::Error,
+                    "Timed out waiting for orchestrator to respond".to_string(),
+                );
+                Err(RequestError::SchedulingTimeout)
+            }
         }
     }
 
@@ -256,15 +327,22 @@ mod subtasks {
         con: &mut C,
         session_id: &str,
     ) -> Result<(), RequestError> {
+        let tracer = global_tracer();
+        let span = tracer.start("Await session startup");
+
         let (host, port): (String, String) = con
             .hget(keys::session::upstream(session_id), &["host", "port"])
             .map_err(RequestError::RedisError)
             .await?;
 
+        span.set_attribute(trace::SESSION_HOST.string(format!("{}:{}", host, port)));
+
         let url = format!("http://{}:{}/status", host, port);
         let timeout = Timeout::NodeStartup.get(con).await as u64;
         let timeout_duration = Duration::from_secs(timeout);
         let healthcheck_start = Instant::now();
+
+        span.add_event("Waiting for heartbeat".to_string(), vec![]);
 
         // Wait for the node heartbeat in redis first to save some HTTP calls
         wait_for_key(
@@ -272,15 +350,31 @@ mod subtasks {
             timeout_duration,
             con,
         )
-        .map_err(|_| RequestError::HealthCheckTimeout)
+        .map_err(|_| {
+            span.set_status(
+                TelemetryStatusCode::Error,
+                "Timed out waiting for heartbeat".to_string(),
+            );
+            RequestError::HealthCheckTimeout
+        })
         .await?;
 
+        span.add_event("Waiting for status endpoint".to_string(), vec![]);
+
         // Spend the remaining timeout duration HTTP polling the webdrivers status endpoint
+        let telemetry_context = TelemetryContext::current_with_span(span);
         let remaining_duration =
             timeout_duration - Instant::now().duration_since(healthcheck_start);
 
         wait_for(&url, remaining_duration)
-            .map_err(|_| RequestError::HealthCheckTimeout)
+            .with_context(telemetry_context.clone())
+            .map_err(|_| {
+                telemetry_context.span().set_status(
+                    TelemetryStatusCode::Error,
+                    "Timed out waiting for status endpoint".to_string(),
+                );
+                RequestError::HealthCheckTimeout
+            })
             .await?;
 
         Ok(())
