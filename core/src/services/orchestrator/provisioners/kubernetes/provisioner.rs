@@ -7,20 +7,25 @@ use crate::libraries::{
 };
 use anyhow::{bail, Result};
 use async_trait::async_trait;
+use futures::{StreamExt, TryStreamExt};
 use k8s_openapi::{
-    api::{batch::v1::Job, core::v1::Service},
+    api::{
+        batch::v1::Job,
+        core::v1::{Pod, PodStatus},
+    },
     Resource,
 };
 use kube::{
-    api::{Api, DeleteParams, Meta, PostParams, PropagationPolicy},
+    api::{Api, DeleteParams, ListParams, Meta, PostParams, PropagationPolicy, WatchEvent},
     error::Error as KubeError,
     Client,
 };
 use log::{error, info, trace, warn};
 use opentelemetry::{
-    trace::{FutureExt, TraceContextExt, Tracer},
+    trace::{FutureExt, Span, TraceContextExt, Tracer},
     Context as TelemetryContext,
 };
+use opentelemetry_semantic_conventions as semcov;
 use serde::{de::DeserializeOwned, ser::Serialize};
 
 #[derive(Clone)]
@@ -104,7 +109,7 @@ impl K8sProvisioner {
         };
     }
 
-    async fn create_job(&self, session_id: &str, image: &str) -> Result<String, KubeError> {
+    async fn create_job(&self, session_id: &str, image: &str) -> Result<String> {
         let name = K8sProvisioner::generate_name(&session_id);
         let span = global_tracer().start("Create job");
 
@@ -122,23 +127,55 @@ impl K8sProvisioner {
         Ok(self.unwrap_uid(resource).unwrap_or_default())
     }
 
-    async fn create_service(&self, session_id: &str, job_uid: &str) -> Result<String, KubeError> {
-        let name = K8sProvisioner::generate_name(&session_id);
-        let span = global_tracer().start("Create service");
+    async fn wait_for_pod(&self, session_id: &str) -> Result<String> {
+        let api = self.get_api::<Pod>().await;
+        let span = global_tracer().start("Kubernetes internal");
 
-        let mut service_yaml = load_config("service.yaml");
-        service_yaml = replace_config_variable(service_yaml, "job_name", &name);
-        service_yaml = replace_config_variable(service_yaml, "service_name", &name);
-        service_yaml = replace_config_variable(service_yaml, "job_uid", job_uid);
-        service_yaml = replace_config_variable(service_yaml, "session_id", session_id);
+        let labels = format!("web-grid/component=node,web-grid/sessionID={}", session_id);
+        let params = ListParams::default().labels(&labels);
 
-        trace!("Service YAML {}", service_yaml);
+        let mut current_state = None;
 
-        let service: Service = serde_yaml::from_str(&service_yaml).unwrap();
-        let context = TelemetryContext::current_with_span(span);
-        let resource = self.create_resource(&service).with_context(context).await?;
+        let mut stream = api.watch(&params, "0").await?.boxed();
+        while let Some(status) = stream.try_next().await? {
+            match status {
+                WatchEvent::Modified(s) => {
+                    let pod_name = Pod::name(&s);
 
-        Ok(self.unwrap_uid(resource).unwrap_or_default())
+                    if let Some(status) = s.status {
+                        let new_state = container_state(&status);
+
+                        if new_state != current_state {
+                            if let Some(state) = &new_state {
+                                let description = match state {
+                                    ContainerState::Running => "Running".to_string(),
+                                    ContainerState::Unknown => "Unknown".to_string(),
+                                    ContainerState::Terminated => "Terminated".to_string(),
+                                    ContainerState::Waiting(reason) => reason.clone(),
+                                };
+
+                                span.add_event(
+                                    description,
+                                    vec![semcov::resource::K8S_POD_NAME.string(pod_name)],
+                                );
+                            }
+
+                            current_state = new_state;
+                        }
+
+                        if !is_pod_ready(&status) {
+                            continue;
+                        } else if let Some(pod_ip) = status.pod_ip {
+                            return Ok(pod_ip);
+                        }
+                    }
+                }
+                WatchEvent::Error(s) => error!("Error: {}", s),
+                _ => {}
+            }
+        }
+
+        bail!("Timed out waiting for pod to become ready");
     }
 
     fn unwrap_uid<T: Resource + Meta + DeserializeOwned + Serialize + Clone>(
@@ -178,16 +215,14 @@ impl Provisioner for K8sProvisioner {
                 .span()
                 .set_attribute(trace::SESSION_CONTAINER_IMAGE.string(image.clone()));
 
-            let job_uid = self
-                .create_job(&session_id, &image)
+            self.create_job(&session_id, &image)
                 .with_context(telemetry_context.clone())
                 .await?;
-            self.create_service(&session_id, &job_uid)
-                .with_context(telemetry_context)
-                .await?;
+
+            let ip = self.wait_for_pod(&session_id).await?;
 
             Ok(NodeInfo {
-                host: K8sProvisioner::generate_name(&session_id),
+                host: ip,
                 port: self.node_port.to_string(),
             })
         } else {
@@ -201,5 +236,47 @@ impl Provisioner for K8sProvisioner {
         // Service will be auto-deleted by K8s garbage collector
         // This requires the ownerReference to be set in the service yaml!
         self.delete_resource::<Job>(&name).await;
+    }
+}
+
+fn is_pod_ready(status: &PodStatus) -> bool {
+    let mut ready = false;
+
+    if let Some(container_statuses) = &status.container_statuses {
+        ready = container_statuses
+            .iter()
+            .fold(ready, |acc, s| acc || s.ready);
+    }
+
+    ready
+}
+
+#[derive(PartialEq, Eq)]
+enum ContainerState {
+    Waiting(String),
+    Running,
+    Terminated,
+    Unknown,
+}
+
+fn container_state(status: &PodStatus) -> Option<ContainerState> {
+    match &status.container_statuses {
+        Some(statuses) => statuses
+            .first()
+            .map(|s| {
+                s.state.as_ref().map(|state| {
+                    if let Some(_running) = &state.running {
+                        ContainerState::Running
+                    } else if let Some(waiting) = &state.waiting {
+                        ContainerState::Waiting(waiting.reason.clone().unwrap_or_default())
+                    } else if let Some(_terminated) = &state.terminated {
+                        ContainerState::Terminated
+                    } else {
+                        ContainerState::Unknown
+                    }
+                })
+            })
+            .flatten(),
+        None => None,
     }
 }

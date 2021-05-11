@@ -112,24 +112,3 @@ data:
                 {{- end }}
               resources:
                 {{- toYaml .Values.resources.session | nindent 16 }}
-  service.yaml: |
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: {{ "{{service_name}}" }}
-      ownerReferences:
-        - apiVersion: v1
-          controller: true
-          blockOwnerDeletion: false
-          kind: Job
-          name: {{ "{{job_name}}" }}
-          uid: {{ "{{job_uid}}" }}
-    spec:
-      ports:
-        - port: 40003
-          targetPort: http
-          protocol: TCP
-      selector:
-        web-grid/component: node
-        web-grid/sessionID: {{ "{{session_id}}" }}
-        {{- include "web-grid.selectorLabels" . | nindent 8 }}

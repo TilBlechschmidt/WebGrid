@@ -11,8 +11,9 @@ use structopt::StructOpt;
 mod context;
 mod jobs;
 pub mod provisioner;
+mod tasks;
 
-use context::Context;
+use context::{Context, ProvisioningContext};
 use jobs::*;
 use provisioner::{Provisioner, Type as ProvisionerType};
 

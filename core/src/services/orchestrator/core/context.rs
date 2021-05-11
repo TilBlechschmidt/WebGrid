@@ -2,6 +2,8 @@ use super::{Provisioner, ProvisionerType};
 use crate::libraries::lifecycle::HeartBeat;
 use crate::libraries::resources::DefaultResourceManager;
 use crate::libraries::{helpers::keys, resources::ResourceManagerProvider};
+use opentelemetry::Context as TelemetryContext;
+use std::ops::Deref;
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -38,10 +40,43 @@ impl Context {
             id,
         }
     }
+
+    pub fn into_provisioning_context(
+        self,
+        session_id: String,
+        telemetry_context: TelemetryContext,
+    ) -> ProvisioningContext {
+        ProvisioningContext::new(self, session_id, telemetry_context)
+    }
 }
 
 impl ResourceManagerProvider<DefaultResourceManager> for Context {
     fn resource_manager(&self) -> DefaultResourceManager {
         self.resource_manager.clone()
+    }
+}
+
+#[derive(Clone)]
+pub struct ProvisioningContext {
+    context: Context,
+    pub session_id: String,
+    pub telemetry_context: TelemetryContext,
+}
+
+impl ProvisioningContext {
+    fn new(context: Context, session_id: String, telemetry_context: TelemetryContext) -> Self {
+        Self {
+            context,
+            session_id,
+            telemetry_context,
+        }
+    }
+}
+
+impl Deref for ProvisioningContext {
+    type Target = Context;
+
+    fn deref(&self) -> &Self::Target {
+        &self.context
     }
 }
