@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: {{ include "web-grid.fullname" . }}-redis
   labels:
-      web-grid/component: orchestrator
+      web-grid/component: redis
       {{- include "web-grid.labels" . | nindent 6 }}
 data:
   # ------- TODO Replace maxmemory with calculated value! -------
@@ -95,6 +95,10 @@ data:
                 - name: STORAGE_DIRECTORY
                   value: "/storage"
                 {{- end }}
+                {{- if .Values.telemetry.enabled }}
+                - name: TRACE_ENDPOINT
+                  value: {{ include "web-grid.telemetryEndpoint" . }}
+                {{- end}}
                 - name: CRF
                   value: "{{ .Values.recording.quality.crf }}"
                 - name: MAX_BITRATE

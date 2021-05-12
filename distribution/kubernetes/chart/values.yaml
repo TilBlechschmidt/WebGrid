@@ -2,7 +2,11 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-logLevel: debug,hyper=warn,warp=warn,sqlx=warn
+logLevel: debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn
+
+service:
+  type: ClusterIP
+  port: 80
 
 config:
   orchestrator:
@@ -32,6 +36,15 @@ recording:
     #
     # Note: The storage class needs to support concurrent access by multiple pods! (e.g. a hostPath based PV)
     storageClassName: local-path
+
+telemetry:
+  # Whether request traces should be collected
+  enabled: false
+  # OpenTelemetry collector gRPC endpoint where traces are pushed to.
+  endpoint: ""
+  # Whether to deploy a OpenTelemetry collector and Jaeger "all-in-one" demo. Overwrites the endpoint.
+  # NOTE: This is intended for demonstration purposes ONLY and may impact performance when used in production!
+  demo: false
 
 replicaCount:
   proxy: 1
@@ -73,6 +86,7 @@ resources:
     requests:
       cpu: '1'
       memory: 3000Mi
+  telemetryDemo: {}
 
 nodeSelector:
   redis: {}
@@ -83,6 +97,7 @@ nodeSelector:
   session: {}
   storage: {}
   api: {}
+  telemetryDemo: {}
 
 tolerations:
   redis: []
@@ -93,6 +108,7 @@ tolerations:
   session: []
   storage: []
   api: []
+  telemetryDemo: []
 
 affinity:
   redis: {}
@@ -103,7 +119,4 @@ affinity:
   session: {}
   storage: {}
   api: {}
-
-service:
-  type: ClusterIP
-  port: 80
+  telemetryDemo: {}

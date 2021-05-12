@@ -80,6 +80,10 @@ spec:
                   fieldPath: status.podIP
             - name: STORAGE_DIRECTORY
               value: "/storage"
+            {{- if .Values.telemetry.enabled }}
+            - name: TRACE_ENDPOINT
+              value: {{ include "web-grid.telemetryEndpoint" . }}
+            {{- end}}
           livenessProbe:
             tcpSocket:
               port: status

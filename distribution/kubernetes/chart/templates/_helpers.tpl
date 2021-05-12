@@ -89,3 +89,14 @@ Allow customization of the image tag used
 {{- define "web-grid.imageTag" -}}
 {{- default .Chart.AppVersion .Values.image.tag }}
 {{- end }}
+
+{{/*
+Create the name of the telemetry endpoint
+*/}}
+{{- define "web-grid.telemetryEndpoint" -}}
+{{- if .Values.telemetry.demo }}
+{{- printf "https://%s-telemetry:4317" (include "web-grid.fullname" .) }}
+{{- else }}
+{{ .Values.telemetry.endpoint }}
+{{- end }}
+{{- end }}

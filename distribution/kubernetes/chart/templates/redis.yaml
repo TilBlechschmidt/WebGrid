@@ -96,6 +96,10 @@ spec:
               value: {{ .Values.logLevel }}
             - name: SESSION_RETENTION_DURATION
               value: "{{ .Values.config.garbageCollector.retentionDuration }}"
+            {{- if .Values.telemetry.enabled }}
+            - name: TRACE_ENDPOINT
+              value: {{ include "web-grid.telemetryEndpoint" . }}
+            {{- end}}
           livenessProbe:
             tcpSocket:
               port: status
