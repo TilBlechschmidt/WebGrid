@@ -7,7 +7,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 
 /// Timeout values for requests to the browser
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct CapabilityTimeouts {
     /// Determines when to interrupt a script that is being evaluated.
@@ -19,7 +19,7 @@ pub struct CapabilityTimeouts {
 }
 
 /// Describes which DOM event is used to determine whether or not a page has finished loading
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum CapabilityPageLoadStrategy {
     /// Only page download, no parsing or asset loading
@@ -36,7 +36,7 @@ pub enum CapabilityPageLoadStrategy {
 }
 
 /// How popups like alerts or prompts should be handled
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum CapabilityUnhandledPromptBehavior {
     /// All simple dialogs encountered should be dismissed.
@@ -54,7 +54,7 @@ pub enum CapabilityUnhandledPromptBehavior {
 }
 
 /// HTTP proxy settings
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct CapabilitiesProxy {
     /// Indicates the type of proxy configuration.
@@ -75,14 +75,14 @@ pub struct CapabilitiesProxy {
     pub socks_version: Option<u8>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct WebGridOptions {
     /// Arbitrary metadata which can be set by the client and later fetched through the API.
     pub metadata: Option<HashMap<String, String>>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 /// Struct containing information about the browser requested or provided
 pub struct Capabilities {
@@ -199,7 +199,9 @@ impl CapabilitiesRequest {
     /// Converts the request into a set of possible combinations
     pub fn into_sets(self) -> Vec<Capabilities> {
         let always_match = self.always_match.unwrap_or_else(Capabilities::empty);
-        let first_match = self.first_match.unwrap_or_default();
+        let first_match = self
+            .first_match
+            .unwrap_or_else(|| vec![Capabilities::empty()]);
 
         first_match
             .into_iter()
@@ -211,6 +213,30 @@ impl CapabilitiesRequest {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn deserialize_missing_first_match() {
+        let capabilities = r#"{"alwaysMatch":{"browserName":"chrome"}}"#;
+        let parsed: CapabilitiesRequest = serde_json::from_str(&capabilities).unwrap();
+        let sets = parsed.into_sets();
+
+        let mut expected_capabilities = Capabilities::empty();
+        expected_capabilities.browser_name = Some("chrome".to_string());
+
+        assert_eq!(sets, vec![expected_capabilities]);
+    }
+
+    #[test]
+    fn deserialize_missing_always_match() {
+        let capabilities = r#"{"firstMatch":[{"browserName":"chrome"}]}"#;
+        let parsed: CapabilitiesRequest = serde_json::from_str(&capabilities).unwrap();
+        let sets = parsed.into_sets();
+
+        let mut expected_capabilities = Capabilities::empty();
+        expected_capabilities.browser_name = Some("chrome".to_string());
+
+        assert_eq!(sets, vec![expected_capabilities]);
+    }
 
     #[test]
     fn deserialize_real_world_request() {
