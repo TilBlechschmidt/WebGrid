@@ -76,7 +76,7 @@ jobs:
         id: prep
         run: |
           DOCKER_IMAGE=ghcr.io/tilblechschmidt/webgrid/core
-          TAGS="${DOCKER_IMAGE}:sha-${GITHUB_SHA::8}"
+          TAGS="${DOCKER_IMAGE}:sha-${GITHUB_SHA::7}"
           echo "tags=${TAGS}" >> $GITHUB_ENV
           echo "created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
           chmod +x .artifacts/core-executable/webgrid
@@ -115,7 +115,7 @@ jobs:
         id: prep
         run: |
           DOCKER_IMAGE=ghcr.io/tilblechschmidt/webgrid/node-${{ matrix.browser }}
-          TAGS="${DOCKER_IMAGE}:sha-${GITHUB_SHA::8}"
+          TAGS="${DOCKER_IMAGE}:sha-${GITHUB_SHA::7}"
           echo "tags=${TAGS}" >> $GITHUB_ENV
           echo "created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
           chmod +x .artifacts/core-executable/webgrid
@@ -155,7 +155,7 @@ jobs:
       - name: Run integration test in Docker
         run: |
           export REPOSITORY=ghcr.io/tilblechschmidt/webgrid
-          export IMAGE_TAG="sha-${GITHUB_SHA::8}"
+          export IMAGE_TAG="sha-${GITHUB_SHA::7}"
           echo "Using $REPOSITORY/core:$IMAGE_TAG"
 
           pip install selenium
@@ -193,17 +193,9 @@ jobs:
       - name: Run integration test in K8s
         run: |
           kubectl create secret docker-registry regcred --docker-server=ghcr.io --docker-username=${{ github.repository_owner }} --docker-password=${{ secrets.GHCR_TOKEN }}
-          helm install test ./distribution/kubernetes/chart/ --set image.repository=ghcr.io/tilblechschmidt/webgrid,image.tag=sha-${GITHUB_SHA::8},image.pullSecret=regcred
-          kubectl apply -f test/node-port.yml
-
           stern --color always test-webgrid* &
-
-          kubectl rollout status deployment test-webgrid-api --timeout 120s
-          kubectl rollout status deployment test-webgrid-manager --timeout 120s
-          kubectl rollout status deployment test-webgrid-metrics --timeout 120s
-          kubectl rollout status deployment test-webgrid-orchestrator --timeout 120s
-          kubectl rollout status deployment test-webgrid-proxy --timeout 120s
-          kubectl rollout status deployment test-webgrid-redis --timeout 120s
+          helm install test ./distribution/kubernetes/chart/ --wait --set image.repository=ghcr.io/tilblechschmidt/webgrid,image.tag=sha-${GITHUB_SHA::7},image.pullSecret=regcred
+          kubectl apply -f test/node-port.yml
 
           kubectl get pods
           kubectl get services
@@ -229,7 +221,7 @@ jobs:
       - name: Prepare environment
         run: |
           echo "SRC_REPOSITORY=ghcr.io/tilblechschmidt/webgrid" >> $GITHUB_ENV
-          echo "SRC_TAG=sha-${GITHUB_SHA::8}" >> $GITHUB_ENV
+          echo "SRC_TAG=sha-${GITHUB_SHA::7}" >> $GITHUB_ENV
 
           echo "DST_REPOSITORY=webgrid" >> $GITHUB_ENV
           echo "DST_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
