@@ -50,6 +50,10 @@ spec:
               value: "{{ include "web-grid.redisURL" . }}"
             - name: RUST_LOG
               value: {{ .Values.logLevel }}
+            {{- if .Values.telemetry.enabled }}
+            - name: TRACE_ENDPOINT
+              value: {{ include "web-grid.telemetryEndpoint" . }}
+            {{- end}}
           livenessProbe:
             tcpSocket:
               port: status

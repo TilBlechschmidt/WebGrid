@@ -71,6 +71,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+            {{- if .Values.telemetry.enabled }}
+            - name: TRACE_ENDPOINT
+              value: {{ include "web-grid.telemetryEndpoint" . }}
+            {{- end}}
           livenessProbe:
             tcpSocket:
               port: status
