@@ -91,17 +91,15 @@
 <span id="88">88</span>
 <span id="89">89</span>
 <span id="90">90</span>
-<span id="91">91</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Content delivery service</span>
 
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">SharedOptions</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">helpers</span>::<span class="ident">constants</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">lifecycle</span>::<span class="ident">Heart</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">scheduling</span>::{<span class="ident">JobScheduler</span>, <span class="ident">StatusServer</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">storage</span>::<span class="ident">StorageHandler</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">schedule</span>;
 <span class="kw">use</span> <span class="ident">anyhow</span>::<span class="prelude-ty">Result</span>;
+<span class="kw">use</span> <span class="ident">jatsl</span>::{<span class="ident">schedule</span>, <span class="ident">JobScheduler</span>, <span class="ident">StatusServer</span>};
 <span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">debug</span>, <span class="ident">info</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">PathBuf</span>;
 <span class="kw">use</span> <span class="ident">structopt</span>::<span class="ident">StructOpt</span>;

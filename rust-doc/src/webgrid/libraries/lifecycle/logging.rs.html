@@ -303,9 +303,9 @@
 <span class="doccomment">/// - **FAIL** used for unrecoverable errors</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">LogLevel</span> {
-    <span class="ident">INFO</span>,
-    <span class="ident">WARN</span>,
-    <span class="ident">FAIL</span>,
+    <span class="ident">Info</span>,
+    <span class="ident">Warn</span>,
+    <span class="ident">Fail</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">fmt</span>::<span class="ident">Display</span> <span class="kw">for</span> <span class="ident">LogLevel</span> {
@@ -319,64 +319,64 @@
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">LogCode</span> {
     <span class="comment">// Generic</span>
     <span class="comment">// -- Fail</span>
-    <span class="ident">FAILURE</span>,
+    <span class="ident">Failure</span>,
 
     <span class="comment">// Node</span>
     <span class="comment">// -- Info</span>
     <span class="doccomment">/// node has become active</span>
-    <span class="ident">BOOT</span>,
+    <span class="ident">Boot</span>,
     <span class="doccomment">/// driver in startup</span>
-    <span class="ident">DSTART</span>,
+    <span class="ident">DStart</span>,
     <span class="doccomment">/// driver has become responsive</span>
-    <span class="ident">DALIVE</span>,
+    <span class="ident">DAlive</span>,
     <span class="doccomment">/// local session created</span>
-    <span class="ident">LSINIT</span>,
+    <span class="ident">LsInit</span>,
     <span class="doccomment">/// session closed by downstream client</span>
-    <span class="ident">CLOSED</span>,
+    <span class="ident">Closed</span>,
     <span class="doccomment">/// node enters shutdown</span>
-    <span class="ident">HALT</span>,
+    <span class="ident">Halt</span>,
     <span class="comment">// -- Fail</span>
     <span class="doccomment">/// driver has not become responsive</span>
-    <span class="ident">DTIMEOUT</span>,
+    <span class="ident">DTimeout</span>,
     <span class="doccomment">/// driver process reported an error</span>
-    <span class="ident">DFAILURE</span>,
+    <span class="ident">DFailure</span>,
     <span class="doccomment">/// session has been inactive too long</span>
-    <span class="ident">STIMEOUT</span>,
+    <span class="ident">STimeout</span>,
     <span class="doccomment">/// node terminates due to fault condition</span>
-    <span class="ident">TERM</span>,
+    <span class="ident">Term</span>,
 
     <span class="comment">// Orchestrator</span>
     <span class="comment">// -- Info</span>
     <span class="doccomment">/// node is being scheduled for startup</span>
-    <span class="ident">SCHED</span>,
+    <span class="ident">Sched</span>,
     <span class="comment">// -- Fail</span>
     <span class="doccomment">/// creation/startup failure</span>
-    <span class="ident">STARTFAIL</span>,
+    <span class="ident">StartFail</span>,
 
     <span class="comment">// Manager</span>
     <span class="comment">// -- Info</span>
     <span class="doccomment">/// session has been queued at orchestrators</span>
-    <span class="ident">QUEUED</span>,
+    <span class="ident">Queued</span>,
     <span class="doccomment">/// node slot has been allocated</span>
-    <span class="ident">NALLOC</span>,
+    <span class="ident">NAlloc</span>,
     <span class="doccomment">/// awaiting node startup</span>
-    <span class="ident">PENDING</span>,
+    <span class="ident">Pending</span>,
     <span class="doccomment">/// node has become responsive, client served</span>
-    <span class="ident">NALIVE</span>,
+    <span class="ident">NAlive</span>,
     <span class="comment">// -- Warn</span>
     <span class="doccomment">/// client left before scheduling completed</span>
-    <span class="ident">CLEFT</span>,
+    <span class="ident">CLeft</span>,
     <span class="comment">// -- Fail</span>
     <span class="doccomment">/// invalid capabilities requested</span>
-    <span class="ident">INVALIDCAP</span>,
+    <span class="ident">InvalidCap</span>,
     <span class="doccomment">/// no orchestrator can satisfy the capabilities</span>
-    <span class="ident">QUNAVAILABLE</span>,
+    <span class="ident">QUnavailable</span>,
     <span class="doccomment">/// timed out waiting in queue</span>
-    <span class="ident">QTIMEOUT</span>,
+    <span class="ident">QTimeout</span>,
     <span class="doccomment">/// timed out waiting for orchestrator to schedule node</span>
-    <span class="ident">OTIMEOUT</span>,
+    <span class="ident">OTimeout</span>,
     <span class="doccomment">/// timed out waiting for node to become responsive</span>
-    <span class="ident">NTIMEOUT</span>,
+    <span class="ident">NTimeout</span>,
     <span class="comment">// Proxy</span>
 }
 
@@ -385,38 +385,38 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">level</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">LogLevel</span> {
         <span class="kw">match</span> <span class="self">self</span> {
             <span class="comment">// Generic</span>
-            <span class="ident">LogCode</span>::<span class="ident">FAILURE</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">FAIL</span>,
+            <span class="ident">LogCode</span>::<span class="ident">Failure</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Fail</span>,
 
             <span class="comment">// Node</span>
-            <span class="ident">LogCode</span>::<span class="ident">BOOT</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">INFO</span>,
-            <span class="ident">LogCode</span>::<span class="ident">DSTART</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">INFO</span>,
-            <span class="ident">LogCode</span>::<span class="ident">DALIVE</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">INFO</span>,
-            <span class="ident">LogCode</span>::<span class="ident">LSINIT</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">INFO</span>,
-            <span class="ident">LogCode</span>::<span class="ident">CLOSED</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">INFO</span>,
-            <span class="ident">LogCode</span>::<span class="ident">HALT</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">INFO</span>,
+            <span class="ident">LogCode</span>::<span class="ident">Boot</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Info</span>,
+            <span class="ident">LogCode</span>::<span class="ident">DStart</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Info</span>,
+            <span class="ident">LogCode</span>::<span class="ident">DAlive</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Info</span>,
+            <span class="ident">LogCode</span>::<span class="ident">LsInit</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Info</span>,
+            <span class="ident">LogCode</span>::<span class="ident">Closed</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Info</span>,
+            <span class="ident">LogCode</span>::<span class="ident">Halt</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Info</span>,
 
-            <span class="ident">LogCode</span>::<span class="ident">DTIMEOUT</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">FAIL</span>,
-            <span class="ident">LogCode</span>::<span class="ident">DFAILURE</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">FAIL</span>,
-            <span class="ident">LogCode</span>::<span class="ident">STIMEOUT</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">FAIL</span>,
-            <span class="ident">LogCode</span>::<span class="ident">TERM</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">FAIL</span>,
+            <span class="ident">LogCode</span>::<span class="ident">DTimeout</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Fail</span>,
+            <span class="ident">LogCode</span>::<span class="ident">DFailure</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Fail</span>,
+            <span class="ident">LogCode</span>::<span class="ident">STimeout</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Fail</span>,
+            <span class="ident">LogCode</span>::<span class="ident">Term</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Fail</span>,
 
             <span class="comment">// Orchestrator</span>
-            <span class="ident">LogCode</span>::<span class="ident">SCHED</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">INFO</span>,
-            <span class="ident">LogCode</span>::<span class="ident">STARTFAIL</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">FAIL</span>,
+            <span class="ident">LogCode</span>::<span class="ident">Sched</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Info</span>,
+            <span class="ident">LogCode</span>::<span class="ident">StartFail</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Fail</span>,
 
             <span class="comment">// Manager</span>
-            <span class="ident">LogCode</span>::<span class="ident">INVALIDCAP</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">FAIL</span>,
-            <span class="ident">LogCode</span>::<span class="ident">QUNAVAILABLE</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">FAIL</span>,
-            <span class="ident">LogCode</span>::<span class="ident">QUEUED</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">INFO</span>,
-            <span class="ident">LogCode</span>::<span class="ident">NALLOC</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">INFO</span>,
-            <span class="ident">LogCode</span>::<span class="ident">PENDING</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">INFO</span>,
-            <span class="ident">LogCode</span>::<span class="ident">NALIVE</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">INFO</span>,
+            <span class="ident">LogCode</span>::<span class="ident">InvalidCap</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Fail</span>,
+            <span class="ident">LogCode</span>::<span class="ident">QUnavailable</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Fail</span>,
+            <span class="ident">LogCode</span>::<span class="ident">Queued</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Info</span>,
+            <span class="ident">LogCode</span>::<span class="ident">NAlloc</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Info</span>,
+            <span class="ident">LogCode</span>::<span class="ident">Pending</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Info</span>,
+            <span class="ident">LogCode</span>::<span class="ident">NAlive</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Info</span>,
 
-            <span class="ident">LogCode</span>::<span class="ident">CLEFT</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">WARN</span>,
+            <span class="ident">LogCode</span>::<span class="ident">CLeft</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Warn</span>,
 
-            <span class="ident">LogCode</span>::<span class="ident">QTIMEOUT</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">FAIL</span>,
-            <span class="ident">LogCode</span>::<span class="ident">OTIMEOUT</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">FAIL</span>,
-            <span class="ident">LogCode</span>::<span class="ident">NTIMEOUT</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">FAIL</span>,
+            <span class="ident">LogCode</span>::<span class="ident">QTimeout</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Fail</span>,
+            <span class="ident">LogCode</span>::<span class="ident">OTimeout</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Fail</span>,
+            <span class="ident">LogCode</span>::<span class="ident">NTimeout</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">LogLevel</span>::<span class="ident">Fail</span>,
         }
     }
 }

@@ -102,10 +102,10 @@
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::<span class="kw">super</span>::<span class="ident">Context</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">resources</span>::{<span class="ident">ResourceManager</span>, <span class="ident">ResourceManagerProvider</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">scheduling</span>::{<span class="ident">Job</span>, <span class="ident">TaskManager</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">with_shared_redis_resource</span>;
 <span class="kw">use</span> <span class="ident">anyhow</span>::<span class="prelude-ty">Result</span>;
 <span class="kw">use</span> <span class="ident">async_trait</span>::<span class="ident">async_trait</span>;
+<span class="kw">use</span> <span class="ident">jatsl</span>::{<span class="ident">Job</span>, <span class="ident">TaskManager</span>};
 <span class="kw">use</span> <span class="ident">redis</span>::{<span class="ident">aio</span>::<span class="ident">ConnectionLike</span>, <span class="ident">AsyncCommands</span>};
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>

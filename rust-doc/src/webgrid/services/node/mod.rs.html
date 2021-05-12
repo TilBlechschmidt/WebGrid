@@ -155,15 +155,47 @@
 <span id="152">152</span>
 <span id="153">153</span>
 <span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
+<span id="175">175</span>
+<span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Session provider and driver manager</span>
 
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">SharedOptions</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">scheduling</span>::{<span class="ident">JobScheduler</span>, <span class="ident">StatusServer</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::{<span class="ident">helpers</span>::<span class="ident">constants</span>, <span class="ident">recording</span>::<span class="ident">VideoQualityPreset</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">schedule</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">libraries</span>::{
+        <span class="ident">helpers</span>::<span class="ident">constants</span>,
+        <span class="ident">recording</span>::<span class="ident">VideoQualityPreset</span>,
+        <span class="ident">tracing</span>::{<span class="self">self</span>, <span class="ident">constants</span>::<span class="ident">service</span>},
+    },
+    <span class="ident">services</span>::<span class="ident">node</span>::<span class="ident">tasks</span>::<span class="ident">initialize_tracing</span>,
+};
 <span class="kw">use</span> <span class="ident">anyhow</span>::<span class="prelude-ty">Result</span>;
+<span class="kw">use</span> <span class="ident">jatsl</span>::{<span class="ident">schedule</span>, <span class="ident">JobScheduler</span>, <span class="ident">StatusServer</span>};
 <span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">info</span>, <span class="ident">warn</span>};
+<span class="kw">use</span> <span class="ident">opentelemetry</span>::<span class="ident">trace</span>::<span class="ident">TraceContextExt</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">PathBuf</span>;
 <span class="kw">use</span> <span class="ident">structopt</span>::<span class="ident">StructOpt</span>;
 
@@ -269,12 +301,24 @@
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">scheduler</span> <span class="op">=</span> <span class="ident">JobScheduler</span>::<span class="ident">default</span>();
 
+    <span class="kw">let</span> <span class="ident">telemetry_context</span> <span class="op">=</span>
+        <span class="ident">JobScheduler</span>::<span class="ident">spawn_task</span>(<span class="kw-2">&amp;</span><span class="ident">initialize_tracing</span>, <span class="ident">context</span>.<span class="ident">clone</span>()).<span class="kw">await</span><span class="question-mark">?</span><span class="question-mark">?</span><span class="question-mark">?</span>;
+
+    <span class="kw">let</span> <span class="ident">startup_context</span> <span class="op">=</span> <span class="ident">context</span>
+        .<span class="ident">clone</span>()
+        .<span class="ident">with_telemetry_context</span>(<span class="ident">telemetry_context</span>.<span class="ident">clone</span>());
+
     <span class="comment">// TODO Handle error and go straight to cleanup jobs + make a serial-task-execution macro</span>
     <span class="kw">let</span> (<span class="kw-2">mut</span> <span class="ident">heart</span>, <span class="ident">heart_stone</span>) <span class="op">=</span>
-        <span class="ident">JobScheduler</span>::<span class="ident">spawn_task</span>(<span class="kw-2">&amp;</span><span class="ident">initialize_service</span>, <span class="ident">context</span>.<span class="ident">clone</span>()).<span class="kw">await</span><span class="question-mark">?</span><span class="question-mark">?</span><span class="question-mark">?</span>;
-    <span class="ident">JobScheduler</span>::<span class="ident">spawn_task</span>(<span class="kw-2">&amp;</span><span class="ident">start_driver</span>, <span class="ident">context</span>.<span class="ident">clone</span>()).<span class="kw">await</span><span class="question-mark">?</span><span class="question-mark">?</span><span class="question-mark">?</span>;
+        <span class="ident">JobScheduler</span>::<span class="ident">spawn_task</span>(<span class="kw-2">&amp;</span><span class="ident">initialize_service</span>, <span class="ident">startup_context</span>.<span class="ident">clone</span>()).<span class="kw">await</span><span class="question-mark">?</span><span class="question-mark">?</span><span class="question-mark">?</span>;
+
+    <span class="ident">JobScheduler</span>::<span class="ident">spawn_task</span>(<span class="kw-2">&amp;</span><span class="ident">start_driver</span>, <span class="ident">startup_context</span>.<span class="ident">clone</span>()).<span class="kw">await</span><span class="question-mark">?</span><span class="question-mark">?</span><span class="question-mark">?</span>;
+
     <span class="kw">let</span> <span class="ident">internal_session_id</span> <span class="op">=</span>
-        <span class="ident">JobScheduler</span>::<span class="ident">spawn_task</span>(<span class="kw-2">&amp;</span><span class="ident">initialize_session</span>, <span class="ident">context</span>.<span class="ident">clone</span>()).<span class="kw">await</span><span class="question-mark">?</span><span class="question-mark">?</span><span class="question-mark">?</span>;
+        <span class="ident">JobScheduler</span>::<span class="ident">spawn_task</span>(<span class="kw-2">&amp;</span><span class="ident">initialize_session</span>, <span class="ident">startup_context</span>.<span class="ident">clone</span>()).<span class="kw">await</span><span class="question-mark">?</span><span class="question-mark">?</span><span class="question-mark">?</span>;
+
+    <span class="comment">// End the startup trace</span>
+    <span class="ident">telemetry_context</span>.<span class="ident">span</span>().<span class="ident">end</span>();
 
     <span class="kw">let</span> <span class="ident">status_job</span> <span class="op">=</span> <span class="ident">StatusServer</span>::<span class="ident">new</span>(<span class="kw-2">&amp;</span><span class="ident">scheduler</span>, <span class="ident">shared_options</span>.<span class="ident">status_server</span>);
     <span class="kw">let</span> <span class="ident">heart_beat_job</span> <span class="op">=</span> <span class="ident">context</span>.<span class="ident">heart_beat</span>.<span class="ident">clone</span>();
@@ -300,6 +344,12 @@
 
 <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">run</span>(<span class="ident">shared_options</span>: <span class="ident">SharedOptions</span>, <span class="ident">options</span>: <span class="ident">Options</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">context</span> <span class="op">=</span> <span class="ident">Context</span>::<span class="ident">new</span>(<span class="ident">shared_options</span>.<span class="ident">redis</span>.<span class="ident">clone</span>(), <span class="ident">options</span>.<span class="ident">clone</span>()).<span class="kw">await</span>;
+
+    <span class="ident">tracing</span>::<span class="ident">init</span>(
+        <span class="kw-2">&amp;</span><span class="ident">shared_options</span>.<span class="ident">trace_endpoint</span>,
+        <span class="ident">service</span>::<span class="ident">NODE</span>,
+        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">options</span>.<span class="ident">id</span>),
+    )<span class="question-mark">?</span>;
 
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">launch_session</span>(<span class="ident">shared_options</span>, <span class="ident">options</span>, <span class="kw-2">&amp;</span><span class="ident">context</span>).<span class="kw">await</span> {
         <span class="macro">warn</span><span class="macro">!</span>(<span class="string">&quot;Encountered error while launching session: {:?}&quot;</span>, <span class="ident">e</span>);

@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["capabilities",""],["downstream",""],["metadata",""],["orchestrator",""],["slot",""],["status",""],["storage",""],["upstream",""]],"mod":[["heartbeat",""]],"struct":[["LIST_ACTIVE",""],["LIST_TERMINATED",""]]});
+initSidebarItems({"fn":[["capabilities",""],["downstream",""],["metadata",""],["orchestrator",""],["slot",""],["status",""],["storage",""],["upstream",""]],"mod":[["heartbeat",""],["telemetry",""]],"struct":[["LIST_ACTIVE",""],["LIST_TERMINATED",""]]});

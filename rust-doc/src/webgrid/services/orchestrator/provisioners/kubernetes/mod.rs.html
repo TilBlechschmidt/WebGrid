@@ -32,9 +32,17 @@
 <span id="29">29</span>
 <span id="30">30</span>
 <span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::<span class="kw">super</span>::<span class="kw">super</span>::<span class="ident">SharedOptions</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">helpers</span>::<span class="ident">constants</span>;
+<span class="kw">use</span> <span class="ident">anyhow</span>::<span class="prelude-ty">Result</span>;
 <span class="kw">use</span> <span class="ident">structopt</span>::<span class="ident">StructOpt</span>;
 
 <span class="kw">mod</span> <span class="ident">provisioner</span>;
@@ -58,11 +66,17 @@
     <span class="ident">images</span>: <span class="ident">String</span>,
 }
 
-<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">run</span>(<span class="ident">shared_options</span>: <span class="ident">SharedOptions</span>, <span class="ident">core_options</span>: <span class="ident">CoreOptions</span>, <span class="ident">options</span>: <span class="ident">Options</span>) {
+<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">run</span>(
+    <span class="ident">shared_options</span>: <span class="ident">SharedOptions</span>,
+    <span class="ident">core_options</span>: <span class="ident">CoreOptions</span>,
+    <span class="ident">options</span>: <span class="ident">Options</span>,
+) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">images</span> <span class="op">=</span> <span class="ident">parse_images_string</span>(<span class="ident">options</span>.<span class="ident">images</span>);
 
     <span class="kw">let</span> <span class="ident">provisioner</span> <span class="op">=</span> <span class="ident">K8sProvisioner</span>::<span class="ident">new</span>(<span class="ident">options</span>.<span class="ident">node_port</span>, <span class="ident">images</span>).<span class="kw">await</span>;
-    <span class="ident">start</span>(<span class="ident">Type</span>::<span class="ident">K8s</span>, <span class="ident">provisioner</span>, <span class="ident">core_options</span>, <span class="ident">shared_options</span>).<span class="kw">await</span>;
+    <span class="ident">start</span>(<span class="ident">Type</span>::<span class="ident">K8s</span>, <span class="ident">provisioner</span>, <span class="ident">core_options</span>, <span class="ident">shared_options</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>(())
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../../../../../";window.currentCrate = "webgrid";</script><script src="../../../../../../main.js"></script><script src="../../../../../../source-script.js"></script><script src="../../../../../../source-files.js"></script><script defer src="../../../../../../search-index.js"></script></body></html>

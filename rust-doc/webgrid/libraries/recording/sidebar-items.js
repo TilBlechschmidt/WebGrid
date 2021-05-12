@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["RecordingError",""]],"struct":[["SequentialWebVTTWriter",""],["VideoQualityPreset",""],["VideoRecorder",""]]});
+initSidebarItems({"enum":[["RecordingError",""]],"struct":[["SequentialWebVttWriter",""],["VideoQualityPreset",""],["VideoRecorder",""]]});

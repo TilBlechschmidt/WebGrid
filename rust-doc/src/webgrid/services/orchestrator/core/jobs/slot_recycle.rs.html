@@ -50,10 +50,10 @@
 <span class="kw">use</span> <span class="kw">super</span>::<span class="kw">super</span>::<span class="ident">Context</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">helpers</span>::<span class="ident">keys</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">resources</span>::{<span class="ident">ResourceManager</span>, <span class="ident">ResourceManagerProvider</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">scheduling</span>::{<span class="ident">Job</span>, <span class="ident">TaskManager</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">with_redis_resource</span>;
 <span class="kw">use</span> <span class="ident">anyhow</span>::<span class="prelude-ty">Result</span>;
 <span class="kw">use</span> <span class="ident">async_trait</span>::<span class="ident">async_trait</span>;
+<span class="kw">use</span> <span class="ident">jatsl</span>::{<span class="ident">Job</span>, <span class="ident">TaskManager</span>};
 <span class="kw">use</span> <span class="ident">log</span>::<span class="ident">info</span>;
 <span class="kw">use</span> <span class="ident">redis</span>::{<span class="ident">AsyncCommands</span>, <span class="ident">RedisResult</span>};
 

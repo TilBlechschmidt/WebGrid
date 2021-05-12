@@ -35,6 +35,12 @@
 <span id="32">32</span>
 <span id="33">33</span>
 <span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">structopt</span>::<span class="ident">StructOpt</span>;
 
@@ -69,6 +75,12 @@
         <span class="ident">value_name</span> <span class="op">=</span> <span class="string">&quot;level&quot;</span>
     )]</span>
     <span class="kw">pub</span> <span class="ident">log</span>: <span class="ident">String</span>,
+
+    <span class="doccomment">/// OpenTelemetry collector endpoint</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Omitting it disables tracing</span>
+    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span>, <span class="ident">global</span> <span class="op">=</span> <span class="bool-val">true</span>, <span class="ident">env</span>)]</span>
+    <span class="kw">pub</span> <span class="ident">trace_endpoint</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 }
 </pre></div>
 </section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../../";window.currentCrate = "webgrid";</script><script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script><script defer src="../../../search-index.js"></script></body></html>

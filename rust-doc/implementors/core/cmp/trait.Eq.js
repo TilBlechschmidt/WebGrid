@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["webgrid"] = [{"text":"impl Eq for TaskResourceHandle","synthetic":false,"types":[]}];
+implementors["webgrid"] = [{"text":"impl Eq for CapabilityTimeouts","synthetic":false,"types":[]},{"text":"impl Eq for CapabilityPageLoadStrategy","synthetic":false,"types":[]},{"text":"impl Eq for CapabilityUnhandledPromptBehavior","synthetic":false,"types":[]},{"text":"impl Eq for CapabilitiesProxy","synthetic":false,"types":[]},{"text":"impl Eq for WebGridOptions","synthetic":false,"types":[]},{"text":"impl Eq for Capabilities","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

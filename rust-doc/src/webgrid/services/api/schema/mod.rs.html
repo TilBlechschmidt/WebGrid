@@ -39,21 +39,21 @@
 <span class="kw">mod</span> <span class="ident">query</span>;
 <span class="kw">mod</span> <span class="ident">types</span>;
 
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">GQLContext</span> {
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">GqlContext</span> {
     <span class="comment">// TODO Clone the multiplexed connection instead of using a Mutex (it should be more efficient)</span>
     <span class="kw">pub</span> <span class="ident">redis</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">RedisResource</span><span class="op">&lt;</span><span class="ident">MultiplexedConnection</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
-<span class="kw">impl</span> <span class="ident">juniper</span>::<span class="ident">Context</span> <span class="kw">for</span> <span class="ident">GQLContext</span> {}
+<span class="kw">impl</span> <span class="ident">juniper</span>::<span class="ident">Context</span> <span class="kw">for</span> <span class="ident">GqlContext</span> {}
 
 <span class="kw">pub</span> <span class="kw">type</span> <span class="ident">Schema</span> <span class="op">=</span>
-    <span class="ident">RootNode</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, <span class="ident">Query</span>, <span class="ident">EmptyMutation</span><span class="op">&lt;</span><span class="ident">GQLContext</span><span class="op">&gt;</span>, <span class="ident">EmptySubscription</span><span class="op">&lt;</span><span class="ident">GQLContext</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+    <span class="ident">RootNode</span><span class="op">&lt;</span><span class="lifetime">&#39;static</span>, <span class="ident">Query</span>, <span class="ident">EmptyMutation</span><span class="op">&lt;</span><span class="ident">GqlContext</span><span class="op">&gt;</span>, <span class="ident">EmptySubscription</span><span class="op">&lt;</span><span class="ident">GqlContext</span><span class="op">&gt;</span><span class="op">&gt;</span>;
 
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">schema</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Schema</span> {
     <span class="ident">Schema</span>::<span class="ident">new</span>(
         <span class="ident">Query</span>,
-        <span class="ident">EmptyMutation</span>::<span class="op">&lt;</span><span class="ident">GQLContext</span><span class="op">&gt;</span>::<span class="ident">new</span>(),
-        <span class="ident">EmptySubscription</span>::<span class="op">&lt;</span><span class="ident">GQLContext</span><span class="op">&gt;</span>::<span class="ident">new</span>(),
+        <span class="ident">EmptyMutation</span>::<span class="op">&lt;</span><span class="ident">GqlContext</span><span class="op">&gt;</span>::<span class="ident">new</span>(),
+        <span class="ident">EmptySubscription</span>::<span class="op">&lt;</span><span class="ident">GqlContext</span><span class="op">&gt;</span>::<span class="ident">new</span>(),
     )
 }
 </pre></div>

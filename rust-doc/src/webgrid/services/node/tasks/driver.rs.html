@@ -126,18 +126,55 @@
 <span id="123">123</span>
 <span id="124">124</span>
 <span id="125">125</span>
+<span id="126">126</span>
+<span id="127">127</span>
+<span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
+<span id="133">133</span>
+<span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::<span class="kw">super</span>::{<span class="ident">structs</span>::<span class="ident">NodeError</span>, <span class="ident">Context</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">helpers</span>::{<span class="ident">wait_for</span>, <span class="ident">Timeout</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">lifecycle</span>::<span class="ident">logging</span>::{<span class="ident">LogCode</span>, <span class="ident">SessionLogger</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">resources</span>::{<span class="ident">ResourceManager</span>, <span class="ident">ResourceManagerProvider</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">scheduling</span>::<span class="ident">TaskManager</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::{
+    <span class="ident">lifecycle</span>::<span class="ident">logging</span>::{<span class="ident">LogCode</span>, <span class="ident">SessionLogger</span>},
+    <span class="ident">tracing</span>::<span class="ident">global_tracer</span>,
+};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">with_redis_resource</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">libraries</span>::<span class="ident">helpers</span>::{<span class="ident">wait_for</span>, <span class="ident">Timeout</span>},
+    <span class="ident">services</span>::<span class="ident">node</span>::<span class="ident">context</span>::<span class="ident">StartupContext</span>,
+};
+<span class="kw">use</span> <span class="ident">jatsl</span>::<span class="ident">TaskManager</span>;
 <span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">error</span>, <span class="ident">info</span>};
+<span class="kw">use</span> <span class="ident">opentelemetry</span>::{
+    <span class="ident">trace</span>::{<span class="ident">FutureExt</span>, <span class="ident">Span</span>, <span class="ident">TraceContextExt</span>, <span class="ident">Tracer</span>},
+    <span class="ident">Context</span> <span class="kw">as</span> <span class="ident">TelemetryContext</span>,
+};
 <span class="kw">use</span> <span class="ident">redis</span>::{<span class="ident">aio</span>::<span class="ident">ConnectionLike</span>, <span class="ident">AsyncCommands</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">io</span>::<span class="ident">Error</span> <span class="kw">as</span> <span class="ident">IOError</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">net</span>::<span class="ident">SocketAddr</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">PathBuf</span>;
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">Path</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">process</span>::{<span class="ident">Child</span>, <span class="ident">Command</span>, <span class="ident">Stdio</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">Arc</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">time</span>::<span class="ident">Duration</span>;
@@ -156,24 +193,31 @@
     }
 }
 
-<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">start_driver</span>(<span class="ident">manager</span>: <span class="ident">TaskManager</span><span class="op">&lt;</span><span class="ident">Context</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">NodeError</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">start_driver</span>(<span class="ident">manager</span>: <span class="ident">TaskManager</span><span class="op">&lt;</span><span class="ident">StartupContext</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">NodeError</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="ident">global_tracer</span>()
+        .<span class="ident">start_with_context</span>(<span class="string">&quot;Start driver&quot;</span>, <span class="ident">manager</span>.<span class="ident">context</span>.<span class="ident">telemetry_context</span>.<span class="ident">clone</span>());
+
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">con</span> <span class="op">=</span> <span class="macro">with_redis_resource</span><span class="macro">!</span>(<span class="ident">manager</span>);
     <span class="kw">let</span> <span class="ident">startup_timeout</span> <span class="op">=</span> <span class="ident">Timeout</span>::<span class="ident">DriverStartup</span>.<span class="ident">get</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">con</span>).<span class="kw">await</span>;
-    <span class="kw">let</span> <span class="ident">driver</span> <span class="op">=</span> <span class="ident">manager</span>.<span class="ident">context</span>.<span class="ident">options</span>.<span class="ident">driver</span>;
+    <span class="kw">let</span> <span class="ident">driver</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">manager</span>.<span class="ident">context</span>.<span class="ident">options</span>.<span class="ident">driver</span>;
     <span class="kw">let</span> <span class="ident">driver_port</span> <span class="op">=</span> <span class="ident">manager</span>.<span class="ident">context</span>.<span class="ident">options</span>.<span class="ident">driver_port</span>;
-    <span class="kw">let</span> <span class="ident">browser</span> <span class="op">=</span> <span class="ident">manager</span>.<span class="ident">context</span>.<span class="ident">options</span>.<span class="ident">browser</span>;
+    <span class="kw">let</span> <span class="ident">browser</span> <span class="op">=</span> <span class="kw-2">&amp;</span><span class="ident">manager</span>.<span class="ident">context</span>.<span class="ident">options</span>.<span class="ident">browser</span>;
 
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">logger</span> <span class="op">=</span> <span class="ident">SessionLogger</span>::<span class="ident">new</span>(<span class="ident">con</span>, <span class="string">&quot;node&quot;</span>.<span class="ident">to_string</span>(), <span class="ident">manager</span>.<span class="ident">context</span>.<span class="ident">id</span>.<span class="ident">clone</span>());
 
-    <span class="ident">logger</span>.<span class="ident">log</span>(<span class="ident">LogCode</span>::<span class="ident">DSTART</span>, <span class="prelude-val">None</span>).<span class="kw">await</span>.<span class="ident">ok</span>();
+    <span class="ident">logger</span>.<span class="ident">log</span>(<span class="ident">LogCode</span>::<span class="ident">DStart</span>, <span class="prelude-val">None</span>).<span class="kw">await</span>.<span class="ident">ok</span>();
 
     <span class="comment">// Spawn the driver</span>
+    <span class="ident">span</span>.<span class="ident">add_event</span>(<span class="string">&quot;Spawning process&quot;</span>.<span class="ident">to_string</span>(), <span class="macro">vec</span><span class="macro">!</span>[]);
     <span class="kw">let</span> <span class="ident">child</span> <span class="op">=</span> <span class="ident">subtasks</span>::<span class="ident">launch_driver</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">logger</span>, <span class="ident">driver</span>, <span class="ident">browser</span>).<span class="kw">await</span><span class="question-mark">?</span>;
     <span class="kw-2">*</span><span class="ident">manager</span>.<span class="ident">context</span>.<span class="ident">driver_reference</span>.<span class="ident">driver</span>.<span class="ident">lock</span>().<span class="kw">await</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">child</span>);
 
     <span class="comment">// Await its startup</span>
-    <span class="ident">subtasks</span>::<span class="ident">await_driver_startup</span>(<span class="ident">startup_timeout</span>, <span class="ident">driver_port</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">logger</span>).<span class="kw">await</span><span class="question-mark">?</span>;
-    <span class="ident">logger</span>.<span class="ident">log</span>(<span class="ident">LogCode</span>::<span class="ident">DALIVE</span>, <span class="prelude-val">None</span>).<span class="kw">await</span>.<span class="ident">ok</span>();
+    <span class="kw">let</span> <span class="ident">telemetry_context</span> <span class="op">=</span> <span class="ident">TelemetryContext</span>::<span class="ident">current_with_span</span>(<span class="ident">span</span>);
+    <span class="ident">subtasks</span>::<span class="ident">await_driver_startup</span>(<span class="ident">startup_timeout</span>, <span class="ident">driver_port</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">logger</span>)
+        .<span class="ident">with_context</span>(<span class="ident">telemetry_context</span>)
+        .<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="ident">logger</span>.<span class="ident">log</span>(<span class="ident">LogCode</span>::<span class="ident">DAlive</span>, <span class="prelude-val">None</span>).<span class="kw">await</span>.<span class="ident">ok</span>();
 
     <span class="prelude-val">Ok</span>(())
 }
@@ -191,15 +235,17 @@
 }
 
 <span class="kw">mod</span> <span class="ident">subtasks</span> {
+    <span class="kw">use</span> <span class="ident">opentelemetry</span>::<span class="ident">trace</span>::<span class="ident">StatusCode</span>;
+
     <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
 
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">launch_driver</span><span class="op">&lt;</span><span class="ident">C</span>: <span class="ident">ConnectionLike</span> <span class="op">+</span> <span class="ident">AsyncCommands</span><span class="op">&gt;</span>(
         <span class="ident">logger</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SessionLogger</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
-        <span class="ident">driver</span>: <span class="ident">PathBuf</span>,
-        <span class="ident">browser</span>: <span class="ident">String</span>,
+        <span class="ident">driver</span>: <span class="kw-2">&amp;</span><span class="ident">Path</span>,
+        <span class="ident">browser</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Child</span>, <span class="ident">NodeError</span><span class="op">&gt;</span> {
         <span class="comment">// Chrome and safari need some &quot;special handling&quot;</span>
-        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">browser</span>.<span class="ident">as_str</span>() {
+        <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">browser</span> {
             <span class="string">&quot;chrome&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Command</span>::<span class="ident">new</span>(<span class="ident">driver</span>)
                 .<span class="ident">arg</span>(<span class="string">&quot;--whitelisted-ips&quot;</span>)
                 .<span class="ident">arg</span>(<span class="string">&quot;*&quot;</span>)
@@ -208,7 +254,6 @@
             <span class="string">&quot;safari&quot;</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Command</span>::<span class="ident">new</span>(<span class="ident">driver</span>)
                 .<span class="ident">arg</span>(<span class="string">&quot;--diagnose&quot;</span>)
                 .<span class="ident">arg</span>(<span class="string">&quot;-p&quot;</span>)
-                .<span class="ident">arg</span>(<span class="string">&quot;9998&quot;</span>)
                 .<span class="ident">stdout</span>(<span class="ident">Stdio</span>::<span class="ident">inherit</span>())
                 .<span class="ident">spawn</span>(),
             <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="ident">Command</span>::<span class="ident">new</span>(<span class="ident">driver</span>).<span class="ident">stdout</span>(<span class="ident">Stdio</span>::<span class="ident">inherit</span>()).<span class="ident">spawn</span>(),
@@ -218,7 +263,7 @@
             <span class="prelude-val">Ok</span>(<span class="ident">child</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">child</span>),
             <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="ident">logger</span>
-                    .<span class="ident">log</span>(<span class="ident">LogCode</span>::<span class="ident">DFAILURE</span>, <span class="prelude-val">Some</span>(<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">e</span>)))
+                    .<span class="ident">log</span>(<span class="ident">LogCode</span>::<span class="ident">DFailure</span>, <span class="prelude-val">Some</span>(<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">e</span>)))
                     .<span class="kw">await</span>
                     .<span class="ident">ok</span>();
 
@@ -233,19 +278,28 @@
         <span class="ident">driver_port</span>: <span class="ident">u16</span>,
         <span class="ident">logger</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">SessionLogger</span><span class="op">&lt;</span><span class="ident">C</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">NodeError</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="ident">global_tracer</span>().<span class="ident">start</span>(<span class="string">&quot;Awaiting driver startup&quot;</span>);
         <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;Awaiting driver startup&quot;</span>);
 
         <span class="kw">let</span> <span class="ident">socket_addr</span>: <span class="ident">SocketAddr</span> <span class="op">=</span> ([<span class="number">127</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>], <span class="ident">driver_port</span>).<span class="ident">into</span>();
         <span class="kw">let</span> <span class="ident">url</span> <span class="op">=</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;http://{}/status&quot;</span>, <span class="ident">socket_addr</span>);
+        <span class="kw">let</span> <span class="ident">telemetry_context</span> <span class="op">=</span> <span class="ident">TelemetryContext</span>::<span class="ident">current_with_span</span>(<span class="ident">span</span>);
 
-        <span class="kw">match</span> <span class="ident">wait_for</span>(<span class="kw-2">&amp;</span><span class="ident">url</span>, <span class="ident">Duration</span>::<span class="ident">from_secs</span>(<span class="ident">timeout</span> <span class="kw">as</span> <span class="ident">u64</span>)).<span class="kw">await</span> {
+        <span class="kw">match</span> <span class="ident">wait_for</span>(<span class="kw-2">&amp;</span><span class="ident">url</span>, <span class="ident">Duration</span>::<span class="ident">from_secs</span>(<span class="ident">timeout</span> <span class="kw">as</span> <span class="ident">u64</span>))
+            .<span class="ident">with_context</span>(<span class="ident">telemetry_context</span>.<span class="ident">clone</span>())
+            .<span class="kw">await</span>
+        {
             <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;Driver became responsive&quot;</span>);
                 <span class="prelude-val">Ok</span>(())
             }
             <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro">error</span><span class="macro">!</span>(<span class="string">&quot;Timeout waiting for driver startup&quot;</span>);
-                <span class="ident">logger</span>.<span class="ident">log</span>(<span class="ident">LogCode</span>::<span class="ident">DTIMEOUT</span>, <span class="prelude-val">None</span>).<span class="kw">await</span>.<span class="ident">ok</span>();
+                <span class="ident">logger</span>.<span class="ident">log</span>(<span class="ident">LogCode</span>::<span class="ident">DTimeout</span>, <span class="prelude-val">None</span>).<span class="kw">await</span>.<span class="ident">ok</span>();
+                <span class="ident">telemetry_context</span>.<span class="ident">span</span>().<span class="ident">set_status</span>(
+                    <span class="ident">StatusCode</span>::<span class="ident">Error</span>,
+                    <span class="string">&quot;Timeout waiting for driver startup&quot;</span>.<span class="ident">to_string</span>(),
+                );
 
                 <span class="prelude-val">Err</span>(<span class="ident">NodeError</span>::<span class="ident">NoDriverResponse</span>)
             }

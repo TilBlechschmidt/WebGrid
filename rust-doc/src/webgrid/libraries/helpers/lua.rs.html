@@ -94,6 +94,8 @@
 <span id="91">91</span>
 <span id="92">92</span>
 <span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Lua functions used for Redis interaction</span>
 
@@ -159,6 +161,8 @@
     redis.call(&#39;DEL&#39;, &#39;session:&#39; .. sessionID .. &#39;:downstream&#39;)
     
     redis.call(&#39;DEL&#39;, &#39;session:&#39; .. sessionID .. &#39;:storage&#39;)
+
+    redis.call(&#39;DEL&#39;, &#39;session:&#39; .. sessionID .. &#39;:telemetry.creation&#39;)
     &quot;</span>
     .<span class="ident">to_string</span>()
 }

@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["JobScheduler","Job and task lifecycle handler"],["StatusServer","HTTP healthcheck server"],["TaskManager","Manager for tasks and jobs"],["TaskResourceHandle","Notification handle for a resource"]],"trait":[["Job","Persistent execution unit"]]});

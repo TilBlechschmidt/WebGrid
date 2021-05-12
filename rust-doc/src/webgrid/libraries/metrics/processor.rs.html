@@ -145,13 +145,13 @@
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">entry</span>::<span class="ident">MetricsEntry</span>;
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">SESSION_STARTUP_HISTOGRAM_BUCKETS</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">helpers</span>::<span class="ident">keys</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">scheduling</span>::{<span class="ident">Job</span>, <span class="ident">TaskManager</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">libraries</span>::<span class="ident">resources</span>::{<span class="ident">ResourceManager</span>, <span class="ident">ResourceManagerProvider</span>},
     <span class="ident">with_shared_redis_resource</span>,
 };
 <span class="kw">use</span> <span class="ident">anyhow</span>::<span class="prelude-ty">Result</span>;
 <span class="kw">use</span> <span class="ident">async_trait</span>::<span class="ident">async_trait</span>;
+<span class="kw">use</span> <span class="ident">jatsl</span>::{<span class="ident">Job</span>, <span class="ident">TaskManager</span>};
 <span class="kw">use</span> <span class="ident">log</span>::<span class="ident">warn</span>;
 <span class="kw">use</span> <span class="ident">redis</span>::{<span class="ident">aio</span>::<span class="ident">ConnectionLike</span>, <span class="ident">AsyncCommands</span>, <span class="ident">RedisResult</span>};
 <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">marker</span>::<span class="ident">PhantomData</span>, <span class="ident">sync</span>::<span class="ident">Arc</span>};

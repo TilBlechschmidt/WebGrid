@@ -45,16 +45,14 @@
 <span id="42">42</span>
 <span id="43">43</span>
 <span id="44">44</span>
-<span id="45">45</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Prometheus metric provider</span>
 
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">SharedOptions</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">helpers</span>::<span class="ident">constants</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">lifecycle</span>::<span class="ident">Heart</span>;
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">scheduling</span>::{<span class="ident">JobScheduler</span>, <span class="ident">StatusServer</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">schedule</span>;
 <span class="kw">use</span> <span class="ident">context</span>::<span class="ident">Context</span>;
+<span class="kw">use</span> <span class="ident">jatsl</span>::{<span class="ident">schedule</span>, <span class="ident">JobScheduler</span>, <span class="ident">StatusServer</span>};
 <span class="kw">use</span> <span class="ident">jobs</span>::<span class="ident">MetricHandlerJob</span>;
 <span class="kw">use</span> <span class="ident">log</span>::<span class="ident">info</span>;
 <span class="kw">use</span> <span class="ident">structopt</span>::<span class="ident">StructOpt</span>;

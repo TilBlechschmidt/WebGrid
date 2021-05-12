@@ -420,7 +420,6 @@
 <span id="417">417</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">PubSubResource</span>, <span class="ident">PubSubResourceError</span>};
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">scheduling</span>::<span class="ident">TaskResourceHandle</span>;
 <span class="kw">use</span> <span class="ident">async_trait</span>::<span class="ident">async_trait</span>;
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">pin</span>::<span class="ident">Pin</span>;
 <span class="kw">use</span> <span class="ident">futures</span>::{
@@ -428,6 +427,7 @@
     <span class="ident">lock</span>::{<span class="ident">Mutex</span>, <span class="ident">MutexGuard</span>},
     <span class="ident">stream</span>::{<span class="ident">once</span>, <span class="ident">Stream</span>, <span class="ident">StreamExt</span>},
 };
+<span class="kw">use</span> <span class="ident">jatsl</span>::<span class="ident">TaskResourceHandle</span>;
 <span class="kw">use</span> <span class="ident">lazy_static</span>::<span class="ident">lazy_static</span>;
 <span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">debug</span>, <span class="ident">warn</span>};
 <span class="kw">use</span> <span class="ident">redis</span>::{
