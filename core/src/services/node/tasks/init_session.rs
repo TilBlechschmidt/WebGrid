@@ -1,9 +1,6 @@
 use super::super::structs::{NodeError, SessionCreateResponse};
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
-use crate::libraries::{
-    lifecycle::logging::{LogCode, SessionLogger},
-    tracing::global_tracer,
-};
+use crate::libraries::tracing::global_tracer;
 use crate::with_redis_resource;
 use crate::{libraries::helpers::keys, services::node::context::StartupContext};
 use hyper::{body, Body, Client as HttpClient, Method, Request};
@@ -13,7 +10,7 @@ use opentelemetry::{
     trace::{FutureExt, TraceContextExt, Tracer},
     Context as TelemetryContext,
 };
-use redis::{aio::ConnectionLike, AsyncCommands};
+use redis::AsyncCommands;
 use std::{net::SocketAddr, process::Command};
 
 pub async fn initialize_session(manager: TaskManager<StartupContext>) -> Result<String, NodeError> {
@@ -23,14 +20,10 @@ pub async fn initialize_session(manager: TaskManager<StartupContext>) -> Result<
     );
     let telemetry_context = TelemetryContext::current_with_span(span);
 
-    let external_session_id: String = manager.context.id.clone();
     let driver_port = manager.context.options.driver_port;
     let on_session_create = manager.context.options.on_session_create.clone();
 
-    let log_con = with_redis_resource!(manager);
-    let mut logger = SessionLogger::new(log_con, "node".to_string(), external_session_id.clone());
-
-    let internal_session_id = subtasks::create_local_session(manager, &mut logger)
+    let internal_session_id = subtasks::create_local_session(manager)
         .with_context(telemetry_context.clone())
         .await?;
 
@@ -55,9 +48,8 @@ mod subtasks {
 
     use super::*;
 
-    pub async fn create_local_session<C: ConnectionLike + AsyncCommands>(
+    pub async fn create_local_session(
         manager: TaskManager<StartupContext>,
-        logger: &mut SessionLogger<C>,
     ) -> Result<String, NodeError> {
         let span = global_tracer().start("Create session");
 
@@ -112,8 +104,6 @@ mod subtasks {
         let internal_session_id: String = response.value.session_id.clone();
         let capabilities = serde_json::to_string(&response.value.capabilities)
             .map_err(|_| NodeError::LocalSessionCreationError)?;
-
-        logger.log(LogCode::LsInit, None).await.ok();
 
         // Upload the resulting internal session ID and actual capabilities to the database
         con.hset(

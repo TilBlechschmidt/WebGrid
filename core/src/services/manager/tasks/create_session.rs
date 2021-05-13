@@ -1,13 +1,10 @@
 use super::super::{context::SessionCreationContext, RequestError, SessionReplyValue};
 use crate::libraries::metrics::MetricsEntry;
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
+use crate::libraries::tracing::StringPropagator;
 use crate::libraries::{
     helpers::{keys, parse_browser_string, wait_for, wait_for_key, CapabilitiesRequest, Timeout},
     tracing::global_tracer,
-};
-use crate::libraries::{
-    lifecycle::logging::{LogCode, SessionLogger},
-    tracing::StringPropagator,
 };
 use crate::with_redis_resource;
 use chrono::offset::Utc;
@@ -31,7 +28,6 @@ pub async fn create_session(
     manager: TaskManager<SessionCreationContext>,
 ) -> Result<SessionReplyValue, RequestError> {
     let mut con = with_redis_resource!(manager);
-    let log_con = with_redis_resource!(manager);
     let telemetry_context = &manager.context.telemetry_context;
 
     // Allocate a session ID
@@ -41,7 +37,6 @@ pub async fn create_session(
         subtasks::create_new_session(&mut con, &manager.context, serialized_telemetry_context)
             .with_context(telemetry_context.clone())
             .await?;
-    let mut logger = SessionLogger::new(log_con, "manager".to_owned(), session_id.clone());
 
     debug!("Created session object {}", session_id);
 
@@ -72,26 +67,22 @@ pub async fn create_session(
     // Create startup routine
     let startup = async {
         // Request a slot
-        logger.log(LogCode::Queued, None).await.ok();
         subtasks::request_slot(&mut con, &session_id, &manager.context.capabilities)
             .with_context(telemetry_context.clone())
             .await?;
 
         // Await scheduling
-        logger.log(LogCode::NAlloc, None).await.ok();
         subtasks::await_scheduling(&mut con, &session_id)
             .with_context(telemetry_context.clone())
             .await?;
 
         // Await node startup
-        logger.log(LogCode::Pending, None).await.ok();
         subtasks::await_healthcheck(&mut con, &session_id)
             .with_context(telemetry_context.clone())
             .await?;
 
         // Hand off responsibility
         debug!("Session {} setup completed", &session_id);
-        logger.log(LogCode::NAlive, None).await.ok();
 
         let now = Utc::now().to_rfc3339();
         con.hset::<_, _, _, ()>(keys::session::status(&session_id), "aliveAt", &now)
@@ -119,21 +110,7 @@ pub async fn create_session(
         }
         Err(e) => {
             warn!("Failed to setup session {} {:?}", session_id, e);
-
-            let log_code = match e {
-                RequestError::ParseError => LogCode::Failure,
-                RequestError::RedisError(_) => LogCode::Failure,
-                RequestError::QueueTimeout => LogCode::QTimeout,
-                RequestError::SchedulingTimeout => LogCode::OTimeout,
-                RequestError::HealthCheckTimeout => LogCode::NTimeout,
-                RequestError::NoOrchestratorAvailable => LogCode::QUnavailable,
-                RequestError::InvalidCapabilities(_) => LogCode::InvalidCap,
-                RequestError::ResourceUnavailable => LogCode::Failure,
-            };
-
-            logger.log(log_code, None).await.ok();
             deferred.await;
-
             Err(e)
         }
     }

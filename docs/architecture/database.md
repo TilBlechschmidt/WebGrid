@@ -54,13 +54,6 @@ To optimise storage performance and reduce the need for database synchronization
 `session:${ID}:slot` = string                       // slot ID
 `session:${ID}:orchestrator` = List<string>         // orchestrator ID
 
-`session:${ID}:log` = Stream {
-	component = 'node' | 'orchestrator' | 'manager' | 'proxy'
-	level = 'info' | 'warn' | 'fail'
-	code = string                                   // event type, see below
-	meta = string                                   // additional information
-}
-
 `session:${ID}:status` = Hashes {
 	queuedAt = string                               // RFC 3339
 	pendingAt = string                              // RFC 3339
@@ -97,52 +90,6 @@ To optimise storage performance and reduce the need for database synchronization
 	context = string								// serialized span context
 }
 ```
-
-#### Log event codes
-
-During the lifecycle of a session each component generates status codes for tracing purposes.
-
-##### Node
-
-| Level | Code       | Description                            |
-|:------|:-----------|:---------------------------------------|
-| Info  |            |                                        |
-|       | `BOOT`     | node has become active                 |
-|       | `DSTART`   | driver in startup                      |
-|       | `DALIVE`   | driver has become responsive           |
-|       | `LSINIT`   | local session created                  |
-|       | `CLOSED`   | session closed by downstream client    |
-|       | `HALT`     | node enters shutdown                   |
-| Fail  |            |                                        |
-|       | `DTIMEOUT` | driver has not become responsive       |
-|       | `DFAILURE` | driver process reported an error       |
-|       | `STIMEOUT` | session has been inactive too long     |
-|       | `TERM`     | node terminates due to fault condition |
-
-##### Orchestrator
-| Level | Code        | Description                         |
-|:------|:------------|:------------------------------------|
-| Info  |             |                                     |
-|       | `SCHED`     | node is being scheduled for startup |
-| Fail  |             |                                     |
-|       | `STARTFAIL` | creation/startup failure            |
-
-##### Manager
-| Level | Code           | Description                                         |
-|:------|:---------------|:----------------------------------------------------|
-| Info  |                |                                                     |
-|       | `QUEUED`       | session has been queued at orchestrators            |
-|       | `NALLOC`       | node slot has been allocated                        |
-|       | `PENDING`      | awaiting node startup                               |
-|       | `NALIVE`       | node has become responsive, client served           |
-| Warn  |                |                                                     |
-|       | `CLEFT`        | client left before scheduling completed             |
-| Fail  |                |                                                     |
-|       | `INVALIDCAP`   | invalid capabilities requested                      |
-|       | `QUNAVAILABLE` | no orchestrator can satisfy the capabilities        |
-|       | `QTIMEOUT`     | timed out waiting in queue                          |
-|       | `OTIMEOUT`     | timed out waiting for orchestrator to schedule node |
-|       | `NTIMEOUT`     | timed out waiting for node to become responsive     |
 
 ### Orchestrators
 ```javascript

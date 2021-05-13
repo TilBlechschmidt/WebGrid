@@ -2,10 +2,7 @@ use super::super::structs::NodeError;
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
 use crate::libraries::storage::StorageHandler;
 use crate::libraries::{
-    lifecycle::{
-        logging::{LogCode, SessionLogger},
-        Heart, HeartStone,
-    },
+    lifecycle::{Heart, HeartStone},
     tracing::global_tracer,
 };
 use crate::with_redis_resource;
@@ -46,10 +43,6 @@ pub async fn initialize_service(
             .await
             .map_err(|_| NodeError::StorageUnavailable)?;
     }
-
-    let external_session_id: String = manager.context.id.clone();
-    let mut logger = SessionLogger::new(con, "node".to_string(), external_session_id.clone());
-    logger.log(LogCode::Boot, None).await.ok();
 
     Ok((heart, heart_stone))
 }

@@ -23,9 +23,7 @@ mod tasks;
 
 use context::Context;
 use jobs::{ProxyJob, RecorderJob};
-use tasks::{
-    initialize_service, initialize_session, log_exit, start_driver, stop_driver, terminate,
-};
+use tasks::{initialize_service, initialize_session, start_driver, stop_driver, terminate};
 
 #[derive(Debug, StructOpt, Clone)]
 /// Session provider
@@ -151,8 +149,6 @@ async fn launch_session(
 
     let death_reason = heart.death().await;
     info!("Heart died: {}", death_reason);
-
-    JobScheduler::spawn_task(&log_exit(death_reason), context.clone()).await???;
 
     scheduler.terminate_jobs().await;
 

@@ -1,9 +1,6 @@
 use super::super::{structs::NodeError, Context};
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
-use crate::libraries::{
-    lifecycle::logging::{LogCode, SessionLogger},
-    tracing::global_tracer,
-};
+use crate::libraries::tracing::global_tracer;
 use crate::with_redis_resource;
 use crate::{
     libraries::helpers::{wait_for, Timeout},
@@ -11,11 +8,11 @@ use crate::{
 };
 use jatsl::TaskManager;
 use log::{error, info};
+use opentelemetry::trace::StatusCode;
 use opentelemetry::{
     trace::{FutureExt, Span, TraceContextExt, Tracer},
     Context as TelemetryContext,
 };
-use redis::{aio::ConnectionLike, AsyncCommands};
 use std::io::Error as IOError;
 use std::net::SocketAddr;
 use std::path::Path;
@@ -47,21 +44,16 @@ pub async fn start_driver(manager: TaskManager<StartupContext>) -> Result<(), No
     let driver_port = manager.context.options.driver_port;
     let browser = &manager.context.options.browser;
 
-    let mut logger = SessionLogger::new(con, "node".to_string(), manager.context.id.clone());
-
-    logger.log(LogCode::DStart, None).await.ok();
-
     // Spawn the driver
     span.add_event("Spawning process".to_string(), vec![]);
-    let child = subtasks::launch_driver(&mut logger, driver, browser).await?;
+    let child = subtasks::launch_driver(driver, browser).await?;
     *manager.context.driver_reference.driver.lock().await = Some(child);
 
     // Await its startup
     let telemetry_context = TelemetryContext::current_with_span(span);
-    subtasks::await_driver_startup(startup_timeout, driver_port, &mut logger)
+    subtasks::await_driver_startup(startup_timeout, driver_port)
         .with_context(telemetry_context)
         .await?;
-    logger.log(LogCode::DAlive, None).await.ok();
 
     Ok(())
 }
@@ -79,15 +71,9 @@ pub async fn stop_driver(manager: TaskManager<Context>) -> Result<(), IOError> {
 }
 
 mod subtasks {
-    use opentelemetry::trace::StatusCode;
-
     use super::*;
 
-    pub async fn launch_driver<C: ConnectionLike + AsyncCommands>(
-        logger: &mut SessionLogger<C>,
-        driver: &Path,
-        browser: &str,
-    ) -> Result<Child, NodeError> {
+    pub async fn launch_driver(driver: &Path, browser: &str) -> Result<Child, NodeError> {
         // Chrome and safari need some "special handling"
         let res = match browser {
             "chrome" => Command::new(driver)
@@ -106,22 +92,13 @@ mod subtasks {
         match res {
             Ok(child) => Ok(child),
             Err(e) => {
-                logger
-                    .log(LogCode::DFailure, Some(format!("{}", e)))
-                    .await
-                    .ok();
-
                 error!("Failed to start driver {}", e);
                 Err(NodeError::DriverStart(e))
             }
         }
     }
 
-    pub async fn await_driver_startup<C: ConnectionLike + AsyncCommands>(
-        timeout: usize,
-        driver_port: u16,
-        logger: &mut SessionLogger<C>,
-    ) -> Result<(), NodeError> {
+    pub async fn await_driver_startup(timeout: usize, driver_port: u16) -> Result<(), NodeError> {
         let span = global_tracer().start("Awaiting driver startup");
         info!("Awaiting driver startup");
 
@@ -139,7 +116,6 @@ mod subtasks {
             }
             Err(_) => {
                 error!("Timeout waiting for driver startup");
-                logger.log(LogCode::DTimeout, None).await.ok();
                 telemetry_context.span().set_status(
                     StatusCode::Error,
                     "Timeout waiting for driver startup".to_string(),
