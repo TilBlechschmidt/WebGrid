@@ -12,6 +12,5 @@ pub mod resources;
 pub mod storage;
 pub mod tracing;
 
-// TODO: Implement proper testing :)
-// #[cfg(test)]
-// pub mod testing;
+#[cfg(test)]
+pub mod testing;

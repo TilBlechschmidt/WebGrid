@@ -24,7 +24,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "0.8", features = ["v4"] }
-jatsl = "0.1.0"
+jatsl = "0.1.2"
 
 # Tracing
 opentelemetry = { version = "0.13", features = ["rt-tokio"] }

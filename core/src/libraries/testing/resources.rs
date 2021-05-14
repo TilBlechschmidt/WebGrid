@@ -1,8 +1,8 @@
 use crate::libraries::resources::{
     ResourceManager, ResourceManagerResult, StandaloneRedisResource,
 };
-use crate::libraries::scheduling::TaskResourceHandle;
 use async_trait::async_trait;
+use jatsl::TaskResourceHandle;
 use lazy_static::lazy_static;
 use std::{
     process::{Child, Command, Stdio},
@@ -35,6 +35,10 @@ impl TestResourceProvider {
             .arg(PORT.to_string())
             .arg("--databases")
             .arg(DATABASES.to_string())
+            .arg("--save")
+            .arg("")
+            .arg("--appendonly")
+            .arg("no")
             .stdout(Stdio::null())
             .spawn()
             .unwrap();
