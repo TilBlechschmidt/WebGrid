@@ -7,7 +7,6 @@ use log::{debug, info, warn};
 use std::time::Duration;
 use tokio::time::sleep;
 
-#[derive(Clone)]
 pub struct CleanupJob {
     size_threshold: f64,
 }
@@ -23,7 +22,7 @@ impl Job for CleanupJob {
             .context
             .metrics
             .submit(MetricsEntry::StorageCapacityUpdated(
-                manager.context.storage_id.to_owned(),
+                manager.context.storage_id.to_string(),
                 self.size_threshold,
             ))
             .ok();
@@ -58,7 +57,7 @@ impl Job for CleanupJob {
                     .context
                     .metrics
                     .submit(MetricsEntry::StorageUsageUpdated(
-                        manager.context.storage_id.to_owned(),
+                        manager.context.storage_id.to_string(),
                         usage,
                     ))
                     .ok();

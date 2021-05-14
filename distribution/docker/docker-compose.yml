@@ -13,7 +13,7 @@ services:
     image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-latest}
     platform: linux/amd64
     container_name: webgrid-manager
-    command: manager example-manager webgrid-manager --log debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn --trace-endpoint http://webgrid-otelcol:4317
+    command: manager example-manager --host webgrid-manager --log debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn --trace-endpoint http://webgrid-otelcol:4317
     depends_on:
       - redis
   orchestrator:

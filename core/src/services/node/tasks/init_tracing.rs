@@ -16,7 +16,7 @@ pub async fn initialize_tracing(
 
     let raw_telemetry_context: String = con
         .hget(
-            keys::session::telemetry::creation(&manager.context.id),
+            keys::session::telemetry::creation(&manager.context.id.to_string()),
             "context",
         )
         .await

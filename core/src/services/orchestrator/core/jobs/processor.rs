@@ -1,5 +1,6 @@
 use super::super::Context;
 use crate::libraries::{
+    net::discovery::ServiceDiscovery,
     resources::{ResourceManager, ResourceManagerProvider},
     tracing::StringPropagator,
 };
@@ -11,8 +12,9 @@ use jatsl::{Job, JobScheduler, TaskManager};
 use opentelemetry::{trace::TraceContextExt, Context as TelemetryContext};
 use redis::{AsyncCommands, RedisResult};
 
-#[derive(Clone)]
-pub struct ProcessorJob {}
+pub struct ProcessorJob {
+    discovery: ServiceDiscovery,
+}
 
 #[async_trait]
 impl Job for ProcessorJob {
@@ -43,10 +45,11 @@ impl Job for ProcessorJob {
                 );
 
                 // Build a provisioning context
-                let provisioning_context = manager
-                    .context
-                    .clone()
-                    .into_provisioning_context(session_id, telemetry_context);
+                let provisioning_context = manager.context.clone().into_provisioning_context(
+                    session_id,
+                    self.discovery.clone(),
+                    telemetry_context,
+                );
 
                 // Provision and observe asynchronously
                 JobScheduler::spawn_task(&provision_session, provisioning_context);
@@ -68,7 +71,7 @@ impl Job for ProcessorJob {
 }
 
 impl ProcessorJob {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(discovery: ServiceDiscovery) -> Self {
+        Self { discovery }
     }
 }

@@ -2,21 +2,37 @@ use super::super::ProvisioningContext;
 use crate::libraries::resources::RedisResource;
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
 use crate::{libraries::helpers::keys, with_shared_redis_resource};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use chrono::Utc;
 use jatsl::TaskManager;
 use log::{debug, error, info};
-use opentelemetry::trace::{FutureExt, StatusCode, TraceContextExt};
+use opentelemetry::{
+    trace::{FutureExt, StatusCode, TraceContextExt},
+    Context as TelemetryContext,
+};
 use redis::aio::MultiplexedConnection;
 use redis::AsyncCommands;
+use std::str::FromStr;
 
 pub async fn provision_session(manager: TaskManager<ProvisioningContext>) -> Result<()> {
     let mut con = with_shared_redis_resource!(manager);
     let session_id = manager.context.session_id.clone();
 
-    match subtasks::schedule_session(&mut con, &manager.context).await {
+    match subtasks::provision_session(&mut con, &manager.context).await {
         Ok(node_info) => {
             debug!("Provisioned node {} {:?}", session_id, node_info);
+
+            redis::pipe()
+                .atomic()
+                .cmd("HSETNX")
+                .arg(keys::session::status(&session_id))
+                .arg("pendingAt")
+                .arg(Utc::now().to_rfc3339())
+                .cmd("RPUSH")
+                .arg(keys::session::orchestrator(&session_id))
+                .arg(&manager.context.id)
+                .query_async(&mut con)
+                .await?;
         }
         Err(e) => {
             error!("Failed to provision node {} {:?}", session_id, e);
@@ -38,15 +54,23 @@ pub async fn provision_session(manager: TaskManager<ProvisioningContext>) -> Res
 
 mod subtasks {
     use super::*;
+    use crate::libraries::{
+        helpers::{wait_for, wait_for_key, Timeout},
+        net::discovery::ServiceDescriptor,
+        tracing::global_tracer,
+    };
+    use futures::TryFutureExt;
+    use opentelemetry::trace::{Span, Tracer};
+    use std::time::{Duration, Instant};
+    use uuid::Uuid;
 
-    pub async fn schedule_session(
+    pub async fn provision_session(
         con: &mut RedisResource<MultiplexedConnection>,
         context: &ProvisioningContext,
     ) -> Result<()> {
-        let orchestrator_id = context.id.clone();
         let session_id = context.session_id.clone();
         let span = context.telemetry_context.span();
-        info!("Starting job {}", session_id);
+        info!("Provisioning {}", session_id);
 
         // TODO Look if the job is too old
 
@@ -57,33 +81,71 @@ mod subtasks {
 
         span.add_event("Delegating to provisioner".to_string(), vec![]);
 
-        // TODO Add possible failure path to provisioner
-        let info_future = context
+        context
             .provisioner
             .provision_node(&session_id, capabilities_request)
-            .with_context(context.telemetry_context.clone());
-        let node_info = info_future.await?;
+            .with_context(context.telemetry_context.clone())
+            .await?;
 
-        span.add_event("Persist node info".to_string(), vec![]);
+        await_startup(con, context)
+            .with_context(context.telemetry_context.clone())
+            .await?;
 
-        // TODO Add node info to span
+        Ok(())
+    }
 
-        redis::pipe()
-            .atomic()
-            .cmd("HSETNX")
-            .arg(keys::session::status(&session_id))
-            .arg("pendingAt")
-            .arg(Utc::now().to_rfc3339())
-            .cmd("RPUSH")
-            .arg(keys::session::orchestrator(&session_id))
-            .arg(&orchestrator_id)
-            .cmd("HMSET")
-            .arg(keys::session::upstream(&session_id))
-            .arg("host")
-            .arg(&node_info.host)
-            .arg("port")
-            .arg(&node_info.port)
-            .query_async(con)
+    async fn await_startup(
+        con: &mut RedisResource<MultiplexedConnection>,
+        context: &ProvisioningContext,
+    ) -> Result<()> {
+        let tracer = global_tracer();
+        let span = tracer.start("Await session startup");
+        let timeout = Timeout::NodeStartup.get(con).await as u64;
+        let timeout_duration = Duration::from_secs(timeout);
+        let healthcheck_start = Instant::now();
+
+        // Wait for the node to send heart-beats
+        wait_for_key(
+            &keys::session::heartbeat::node(&context.session_id),
+            timeout_duration,
+            con,
+        )
+        .map_err(|_| {
+            span.set_status(
+                StatusCode::Error,
+                "Timed out waiting for heartbeat".to_string(),
+            );
+
+            anyhow!("Timed out waiting for heartbeat")
+        })
+        .await?;
+
+        span.add_event("Waiting for status endpoint".to_string(), vec![]);
+
+        // Wait for the HTTP endpoint to be reachable
+        let session_id = Uuid::from_str(&context.session_id)?;
+        let telemetry_context = TelemetryContext::current_with_span(span);
+        let remaining_duration =
+            timeout_duration - Instant::now().duration_since(healthcheck_start);
+
+        // Discover the endpoint to watch
+        let mut discover = context
+            .discovery
+            .start_discovery(ServiceDescriptor::Node(session_id), 10);
+        let endpoint = discover.discover().await?;
+        let url = format!("http://{}/status", endpoint);
+
+        // Query the HTTP status probe
+        wait_for(&url, remaining_duration)
+            .with_context(telemetry_context.clone())
+            .map_err(|_| {
+                telemetry_context.span().set_status(
+                    StatusCode::Error,
+                    "Timed out waiting for status endpoint".to_string(),
+                );
+
+                anyhow!("Timed out waiting for heartbeat")
+            })
             .await?;
 
         Ok(())

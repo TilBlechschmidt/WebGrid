@@ -1,7 +1,7 @@
 use super::{Provisioner, ProvisionerType};
-use crate::libraries::lifecycle::HeartBeat;
 use crate::libraries::resources::DefaultResourceManager;
 use crate::libraries::{helpers::keys, resources::ResourceManagerProvider};
+use crate::libraries::{lifecycle::HeartBeat, net::discovery::ServiceDiscovery};
 use opentelemetry::Context as TelemetryContext;
 use std::ops::Deref;
 use std::sync::Arc;
@@ -44,9 +44,10 @@ impl Context {
     pub fn into_provisioning_context(
         self,
         session_id: String,
+        discovery: ServiceDiscovery,
         telemetry_context: TelemetryContext,
     ) -> ProvisioningContext {
-        ProvisioningContext::new(self, session_id, telemetry_context)
+        ProvisioningContext::new(self, session_id, discovery, telemetry_context)
     }
 }
 
@@ -59,14 +60,21 @@ impl ResourceManagerProvider<DefaultResourceManager> for Context {
 #[derive(Clone)]
 pub struct ProvisioningContext {
     context: Context,
+    pub discovery: ServiceDiscovery,
     pub session_id: String,
     pub telemetry_context: TelemetryContext,
 }
 
 impl ProvisioningContext {
-    fn new(context: Context, session_id: String, telemetry_context: TelemetryContext) -> Self {
+    fn new(
+        context: Context,
+        session_id: String,
+        discovery: ServiceDiscovery,
+        telemetry_context: TelemetryContext,
+    ) -> Self {
         Self {
             context,
+            discovery,
             session_id,
             telemetry_context,
         }

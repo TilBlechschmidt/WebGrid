@@ -17,7 +17,6 @@ lazy_static! {
         Regex::new(r"__keyspace@0__:session:(?P<sid>[^:]+):heartbeat\.node").unwrap();
 }
 
-#[derive(Clone)]
 pub struct NodeWatcherJob {}
 
 #[async_trait]

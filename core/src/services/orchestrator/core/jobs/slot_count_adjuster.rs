@@ -10,7 +10,6 @@ use redis::{aio::ConnectionLike, AsyncCommands};
 use std::cmp::Ordering;
 use uuid::Uuid;
 
-#[derive(Clone)]
 pub struct SlotCountAdjusterJob {
     slot_count: usize,
 }

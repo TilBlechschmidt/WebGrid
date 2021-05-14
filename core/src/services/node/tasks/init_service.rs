@@ -39,9 +39,12 @@ pub async fn initialize_service(
                 error!("Storage unavailable: {:?}", e);
                 NodeError::StorageUnavailable
             })?;
-        con.set::<_, _, ()>(keys::session::storage(&manager.context.id), storage_id)
-            .await
-            .map_err(|_| NodeError::StorageUnavailable)?;
+        con.set::<_, _, ()>(
+            keys::session::storage(&manager.context.id.to_string()),
+            storage_id.to_string(),
+        )
+        .await
+        .map_err(|_| NodeError::StorageUnavailable)?;
     }
 
     Ok((heart, heart_stone))

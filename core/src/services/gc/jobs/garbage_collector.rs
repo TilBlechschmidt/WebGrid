@@ -14,7 +14,6 @@ use redis::{AsyncCommands, Script};
 use std::time::Duration;
 use tokio::{task::yield_now, time::interval};
 
-#[derive(Clone)]
 pub struct GarbageCollectorJob {
     session_retention_duration: chrono::Duration,
 }

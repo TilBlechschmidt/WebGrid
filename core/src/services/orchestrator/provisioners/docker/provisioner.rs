@@ -1,5 +1,5 @@
 use super::super::super::core::provisioner::{
-    match_image_from_capabilities, NodeInfo, Provisioner, ProvisionerCapabilities,
+    match_image_from_capabilities, Provisioner, ProvisionerCapabilities,
 };
 use crate::libraries::{
     helpers::CapabilitiesRequest,
@@ -68,7 +68,7 @@ impl Provisioner for DockerProvisioner {
         &self,
         session_id: &str,
         capabilities: CapabilitiesRequest,
-    ) -> Result<NodeInfo> {
+    ) -> Result<()> {
         let telemetry_context = TelemetryContext::current();
         let span = telemetry_context.span();
 
@@ -86,6 +86,7 @@ impl Provisioner for DockerProvisioner {
             "REDIS=redis://webgrid-redis/".to_string(),
             format!("ID={}", session_id),
             "RUST_LOG=debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn".to_string(),
+            format!("HOST={}", name),
         ];
 
         if !self.disable_recording {
@@ -135,10 +136,7 @@ impl Provisioner for DockerProvisioner {
             })?;
         start_span.end();
 
-        Ok(NodeInfo {
-            host: name,
-            port: self.node_port.to_string(),
-        })
+        Ok(())
     }
 
     async fn terminate_node(&self, session_id: &str) {

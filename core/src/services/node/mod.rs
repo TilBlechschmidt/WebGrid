@@ -4,6 +4,7 @@ use super::SharedOptions;
 use crate::{
     libraries::{
         helpers::constants,
+        net::{advertise::ServiceAdvertisorJob, discovery::ServiceDescriptor},
         recording::VideoQualityPreset,
         tracing::{self, constants::service},
     },
@@ -15,6 +16,7 @@ use log::{info, warn};
 use opentelemetry::trace::TraceContextExt;
 use std::path::PathBuf;
 use structopt::StructOpt;
+use uuid::Uuid;
 
 mod context;
 mod jobs;
@@ -33,7 +35,11 @@ use tasks::{initialize_service, initialize_session, start_driver, stop_driver, t
 pub struct Options {
     /// Unique instance identifier
     #[structopt(env)]
-    id: String,
+    id: Uuid,
+
+    /// Host under which the node server is reachable by the proxy
+    #[structopt(long, env)]
+    host: String,
 
     /// Port on which the HTTP server will listen
     #[structopt(short, long, default_value = constants::PORT_NODE)]
@@ -115,6 +121,7 @@ async fn launch_session(
     context: &Context,
 ) -> Result<()> {
     let scheduler = JobScheduler::default();
+    let endpoint = format!("{}:{}", options.host, options.port);
 
     let telemetry_context =
         JobScheduler::spawn_task(&initialize_tracing, context.clone()).await???;
@@ -139,12 +146,14 @@ async fn launch_session(
     let heart_beat_job = context.heart_beat.clone();
     let proxy_job = ProxyJob::new(options.port, internal_session_id, heart_stone);
     let recorder_job = RecorderJob::new();
+    let advertise_job = ServiceAdvertisorJob::new(ServiceDescriptor::Node(options.id), endpoint);
 
     schedule!(scheduler, context, {
         status_job,
         heart_beat_job,
         proxy_job,
         recorder_job,
+        advertise_job
     });
 
     let death_reason = heart.death().await;
@@ -161,7 +170,7 @@ pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> 
     tracing::init(
         &shared_options.trace_endpoint,
         service::NODE,
-        Some(&options.id),
+        Some(&options.id.to_string()),
     )?;
 
     if let Err(e) = launch_session(shared_options, options, &context).await {

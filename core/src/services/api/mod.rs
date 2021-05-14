@@ -1,14 +1,16 @@
 //! GraphQL API service
 
-use std::path::PathBuf;
-
 use super::SharedOptions;
-use crate::libraries::helpers::constants;
 use crate::libraries::lifecycle::Heart;
+use crate::libraries::{
+    helpers::constants,
+    net::{advertise::ServiceAdvertisorJob, discovery::ServiceDescriptor},
+};
 use anyhow::Result;
 use jatsl::{schedule, JobScheduler, StatusServer};
 use jobs::ServerJob;
 use log::info;
+use std::path::PathBuf;
 use structopt::StructOpt;
 
 mod context;
@@ -16,17 +18,12 @@ mod jobs;
 mod schema;
 
 use context::Context;
-use uuid::Uuid;
 
 #[derive(Debug, StructOpt)]
 /// GraphQL API service
 ///
 /// Provides an external API that allows external access to the grid status.
 pub struct Options {
-    /// Unique instance identifier
-    #[structopt(env)]
-    id: Option<String>,
-
     /// Host under which the api server is reachable by the proxy
     #[structopt(long, env)]
     host: String,
@@ -42,26 +39,19 @@ pub struct Options {
 
 pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> {
     let (mut heart, _) = Heart::new();
-    let api_id = options
-        .id
-        .clone()
-        .unwrap_or_else(|| Uuid::new_v4().to_string());
+    let endpoint = format!("{}:{}", options.host, options.port);
 
-    if options.id.is_none() {
-        info!("Randomly generated service identifier: {}", api_id);
-    }
-
-    let context = Context::new(&options, shared_options.redis, &api_id).await;
+    let context = Context::new(&options, shared_options.redis).await;
     let scheduler = JobScheduler::default();
 
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);
-    let heart_beat_job = context.heart_beat.clone();
     let server_job = ServerJob::new(options.port);
+    let advertise_job = ServiceAdvertisorJob::new(ServiceDescriptor::Api, endpoint);
 
     schedule!(scheduler, context, {
         status_job,
-        heart_beat_job,
-        server_job
+        server_job,
+        advertise_job
     });
 
     let death_reason = heart.death().await;

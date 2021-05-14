@@ -3,7 +3,7 @@ use crate::libraries::metrics::MetricsEntry;
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
 use crate::libraries::tracing::StringPropagator;
 use crate::libraries::{
-    helpers::{keys, parse_browser_string, wait_for, wait_for_key, CapabilitiesRequest, Timeout},
+    helpers::{keys, parse_browser_string, CapabilitiesRequest, Timeout},
     tracing::global_tracer,
 };
 use crate::with_redis_resource;
@@ -12,15 +12,11 @@ use futures::TryFutureExt;
 use jatsl::TaskManager;
 use lazy_static::lazy_static;
 use log::{debug, warn};
-use opentelemetry::{
-    trace::{FutureExt, Span, StatusCode as TelemetryStatusCode, Tracer},
-    Context as TelemetryContext,
-};
+use opentelemetry::trace::{FutureExt, Span, StatusCode as TelemetryStatusCode, Tracer};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use redis::{aio::ConnectionLike, pipe, AsyncCommands};
 use regex::Regex;
-use std::time::Duration;
 use std::time::Instant;
 use uuid::Uuid;
 
@@ -71,13 +67,8 @@ pub async fn create_session(
             .with_context(telemetry_context.clone())
             .await?;
 
-        // Await scheduling
+        // Await scheduling & startup
         subtasks::await_scheduling(&mut con, &session_id)
-            .with_context(telemetry_context.clone())
-            .await?;
-
-        // Await node startup
-        subtasks::await_healthcheck(&mut con, &session_id)
             .with_context(telemetry_context.clone())
             .await?;
 
@@ -117,13 +108,9 @@ pub async fn create_session(
 }
 
 mod subtasks {
-    use std::collections::HashMap;
-
-    use opentelemetry::trace::TraceContextExt;
-
-    use crate::libraries::tracing::constants::trace;
-
     use super::*;
+    use crate::libraries::tracing::constants::trace;
+    use std::collections::HashMap;
 
     pub async fn create_new_session<C: ConnectionLike + AsyncCommands>(
         con: &mut C,
@@ -166,14 +153,6 @@ mod subtasks {
                 keys::session::capabilities(&session_id),
                 "requested",
                 &context.capabilities,
-            )
-            .hset_multiple(
-                keys::session::downstream(&session_id),
-                &[
-                    ("host", &context.remote_addr),
-                    ("userAgent", &context.user_agent),
-                    ("lastSeen", &now),
-                ],
             )
             .sadd(&(*keys::session::LIST_ACTIVE), &session_id)
             .query_async(con)
@@ -298,63 +277,6 @@ mod subtasks {
                 Err(RequestError::SchedulingTimeout)
             }
         }
-    }
-
-    pub async fn await_healthcheck<C: ConnectionLike + AsyncCommands>(
-        con: &mut C,
-        session_id: &str,
-    ) -> Result<(), RequestError> {
-        let tracer = global_tracer();
-        let span = tracer.start("Await session startup");
-
-        let (host, port): (String, String) = con
-            .hget(keys::session::upstream(session_id), &["host", "port"])
-            .map_err(RequestError::RedisError)
-            .await?;
-
-        span.set_attribute(trace::SESSION_HOST.string(format!("{}:{}", host, port)));
-
-        let url = format!("http://{}:{}/status", host, port);
-        let timeout = Timeout::NodeStartup.get(con).await as u64;
-        let timeout_duration = Duration::from_secs(timeout);
-        let healthcheck_start = Instant::now();
-
-        span.add_event("Waiting for heartbeat".to_string(), vec![]);
-
-        // Wait for the node heartbeat in redis first to save some HTTP calls
-        wait_for_key(
-            &keys::session::heartbeat::node(session_id),
-            timeout_duration,
-            con,
-        )
-        .map_err(|_| {
-            span.set_status(
-                TelemetryStatusCode::Error,
-                "Timed out waiting for heartbeat".to_string(),
-            );
-            RequestError::HealthCheckTimeout
-        })
-        .await?;
-
-        span.add_event("Waiting for status endpoint".to_string(), vec![]);
-
-        // Spend the remaining timeout duration HTTP polling the webdrivers status endpoint
-        let telemetry_context = TelemetryContext::current_with_span(span);
-        let remaining_duration =
-            timeout_duration - Instant::now().duration_since(healthcheck_start);
-
-        wait_for(&url, remaining_duration)
-            .with_context(telemetry_context.clone())
-            .map_err(|_| {
-                telemetry_context.span().set_status(
-                    TelemetryStatusCode::Error,
-                    "Timed out waiting for status endpoint".to_string(),
-                );
-                RequestError::HealthCheckTimeout
-            })
-            .await?;
-
-        Ok(())
     }
 
     mod helpers {

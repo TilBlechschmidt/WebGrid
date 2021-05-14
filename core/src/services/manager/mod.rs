@@ -1,10 +1,13 @@
 //! Endpoint for handling session creation
 
 use super::SharedOptions;
-use crate::libraries::lifecycle::Heart;
 use crate::libraries::{
     helpers::constants,
     tracing::{self, constants::service},
+};
+use crate::libraries::{
+    lifecycle::Heart,
+    net::{advertise::ServiceAdvertisorJob, discovery::ServiceDescriptor},
 };
 use anyhow::Result;
 use jatsl::{schedule, JobScheduler, StatusServer};
@@ -29,8 +32,8 @@ pub struct Options {
     #[structopt(env)]
     id: String,
 
-    /// Host under which the manager is reachable by other services
-    #[structopt(env = "MANAGER_HOST")]
+    /// Host under which the manager server is reachable by the proxy
+    #[structopt(long, env)]
     host: String,
 
     /// Port on which the HTTP server will listen
@@ -47,20 +50,22 @@ pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> 
 
     let (mut heart, _) = Heart::new();
 
-    let host = format!("{}:{}", options.host, options.port);
-    let context = Context::new(shared_options.redis, host, &options.id).await;
+    let endpoint = format!("{}:{}", options.host, options.port);
+    let context = Context::new(shared_options.redis).await;
     let scheduler = JobScheduler::default();
 
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);
     let heart_beat_job = context.heart_beat.clone();
     let metrics_job = context.metrics.clone();
     let session_handler_job = SessionHandlerJob::new(options.port);
+    let advertise_job = ServiceAdvertisorJob::new(ServiceDescriptor::Manager, endpoint);
 
     schedule!(scheduler, context, {
         status_job,
         heart_beat_job,
         metrics_job,
-        session_handler_job
+        session_handler_job,
+        advertise_job
     });
 
     let death_reason = heart.death().await;

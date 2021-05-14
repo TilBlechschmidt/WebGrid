@@ -1,15 +1,17 @@
 //! Content delivery service
 
 use super::SharedOptions;
-use crate::libraries::helpers::constants;
 use crate::libraries::lifecycle::Heart;
 use crate::libraries::storage::StorageHandler;
+use crate::libraries::{
+    helpers::constants,
+    net::{advertise::ServiceAdvertisorJob, discovery::ServiceDescriptor},
+};
 use anyhow::Result;
 use jatsl::{schedule, JobScheduler, StatusServer};
 use log::{debug, info};
 use std::path::PathBuf;
 use structopt::StructOpt;
-use uuid::Uuid;
 
 mod context;
 mod jobs;
@@ -45,9 +47,9 @@ pub struct Options {
 
 pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> {
     let storage_id = StorageHandler::storage_id(&options.storage_directory).await?;
-    let provider_id = Uuid::new_v4().to_string();
     let size_threshold = options.size_limit * 1_000_000_000.0;
     let cleanup_target = size_threshold * (options.cleanup_percentage / 100.0);
+    let endpoint = format!("{}:{}", options.host, options.port);
 
     debug!("Size threshold: {} bytes", size_threshold);
     debug!("Cleanup target: {} bytes", cleanup_target);
@@ -59,26 +61,25 @@ pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> 
         &options,
         shared_options.redis,
         storage_id,
-        provider_id,
         size_threshold,
         cleanup_target,
     )
     .await?;
 
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);
-    let heart_beat_job = context.heart_beat.clone();
     let metrics_job = context.metrics.clone();
     let server_job = ServerJob::new(options.port, options.storage_directory.clone());
     let cleanup_job = CleanupJob::new(size_threshold);
     let metadata_job = MetadataJob::new();
+    let advertise_job = ServiceAdvertisorJob::new(ServiceDescriptor::Storage(storage_id), endpoint);
 
     schedule!(scheduler, context, {
         status_job,
-        heart_beat_job,
         metrics_job,
         server_job,
         cleanup_job,
-        metadata_job
+        metadata_job,
+        advertise_job
     });
 
     let death_reason = heart.death().await;

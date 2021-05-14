@@ -53,7 +53,7 @@ mod subtasks {
     ) -> Result<String, NodeError> {
         let span = global_tracer().start("Create session");
 
-        let external_session_id: String = manager.context.id.clone();
+        let external_session_id: String = manager.context.id.to_string();
         let driver_port = manager.context.options.driver_port;
         let mut con = with_redis_resource!(manager);
 
@@ -105,15 +105,7 @@ mod subtasks {
         let capabilities = serde_json::to_string(&response.value.capabilities)
             .map_err(|_| NodeError::LocalSessionCreationError)?;
 
-        // Upload the resulting internal session ID and actual capabilities to the database
-        con.hset(
-            keys::session::upstream(&external_session_id),
-            "driverSessionID",
-            &external_session_id,
-        )
-        .await
-        .map_err(|_| NodeError::LocalSessionCreationError)?;
-
+        // Upload the actual capabilities to the database
         con.hset(
             keys::session::capabilities(&external_session_id),
             "actual",

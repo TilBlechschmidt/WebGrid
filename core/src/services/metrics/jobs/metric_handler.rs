@@ -9,7 +9,6 @@ use log::info;
 use std::net::SocketAddr;
 use warp::Filter;
 
-#[derive(Clone)]
 pub struct MetricHandlerJob {
     port: u16,
 }

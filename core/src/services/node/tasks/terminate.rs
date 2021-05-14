@@ -22,7 +22,7 @@ pub async fn terminate(manager: TaskManager<Context>) -> Result<(), NodeError> {
 
     let script = Script::new(&script_content);
     let _: Option<()> = script
-        .arg(manager.context.id)
+        .arg(manager.context.id.to_string())
         .arg(Utc::now().to_rfc3339())
         .invoke_async(&mut con)
         .await

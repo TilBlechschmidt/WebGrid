@@ -48,7 +48,7 @@ spec:
           env:
             - name: REDIS
               value: "{{ include "web-grid.redisURL" . }}"
-            - name: MANAGER_HOST
+            - name: HOST
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP

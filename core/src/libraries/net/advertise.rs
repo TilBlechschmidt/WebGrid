@@ -11,10 +11,11 @@ use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use futures::TryStreamExt;
 use jatsl::{Job, TaskManager};
-use redis::AsyncCommands;
+use redis::{aio::ConnectionLike, AsyncCommands};
 use std::marker::PhantomData;
 use tokio::task::yield_now;
 
+#[derive(Clone)]
 pub struct ServiceAdvertisorJob<R, C> {
     response: ServiceDiscoveryResponse,
     phantom_r: PhantomData<R>,
@@ -50,6 +51,10 @@ impl<R: ResourceManager + Send + Sync, C: ResourceManagerProvider<R> + Send + Sy
 
         manager.ready().await;
 
+        // Broadcast once on startup without anybody asking for it
+        // Preemptively fills the caches of proxy servers, speeding up requests
+        self.broadcast(&mut con).await?;
+
         let mut stream = pubsub.on_message();
 
         while let Ok(Some(msg)) = stream.try_next().await {
@@ -58,9 +63,7 @@ impl<R: ResourceManager + Send + Sync, C: ResourceManagerProvider<R> + Send + Sy
                 .context("encountered unexpected message data in discovery channel")?;
 
             if let Message::ServiceDiscoveryRequest = discovery_request {
-                let raw_response = bincode::serialize(&self.response)?;
-                con.publish::<_, _, ()>(&(*keys::DISCOVERY), raw_response)
-                    .await?;
+                self.broadcast(&mut con).await?;
             }
         }
 
@@ -68,5 +71,15 @@ impl<R: ResourceManager + Send + Sync, C: ResourceManagerProvider<R> + Send + Sy
         yield_now().await;
 
         bail!("Service advertising stream unexpectedly crash")
+    }
+}
+
+impl<R, C> ServiceAdvertisorJob<R, C> {
+    async fn broadcast(&self, con: &mut (impl ConnectionLike + AsyncCommands)) -> Result<()> {
+        let raw_response = bincode::serialize(&self.response)?;
+        con.publish::<_, _, ()>(&(*keys::DISCOVERY), raw_response)
+            .await?;
+
+        Ok(())
     }
 }

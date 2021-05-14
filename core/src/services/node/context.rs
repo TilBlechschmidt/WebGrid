@@ -6,24 +6,25 @@ use opentelemetry::Context as TelemetryContext;
 use std::ops::Deref;
 use std::sync::Arc;
 use tokio::{fs::File, sync::Mutex};
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct Context {
     resource_manager: DefaultResourceManager,
     pub driver_reference: DriverReference,
     pub heart_beat: HeartBeat<Self, DefaultResourceManager>,
-    pub id: String,
+    pub id: Uuid,
     pub options: Options,
     pub webvtt: Arc<Mutex<Option<SequentialWebVttWriter<File>>>>,
 }
 
 impl Context {
     pub async fn new(redis_url: String, options: Options) -> Self {
-        let id = options.id.clone();
+        let id = options.id;
         let heart_beat = HeartBeat::new();
 
         heart_beat
-            .add_beat(&keys::session::heartbeat::node(&id), 60, 120)
+            .add_beat(&keys::session::heartbeat::node(&id.to_string()), 60, 120)
             .await;
 
         Self {

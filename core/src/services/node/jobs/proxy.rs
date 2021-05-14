@@ -31,7 +31,6 @@ lazy_static! {
     static ref SESSION_RE: Regex = Regex::new(r"/session/(?P<sid>[^/]*)(?:/(?P<op>.+))?").unwrap();
 }
 
-#[derive(Clone)]
 pub struct ProxyJob {
     client: HttpClient<HttpConnector>,
     internal_session_id: String,
@@ -61,7 +60,7 @@ impl Job for ProxyJob {
         let redis = Arc::new(Mutex::new(with_shared_redis_resource!(manager)));
         let request_context = RequestContext {
             internal_session_id: self.internal_session_id.clone(),
-            external_session_id: manager.context.id.clone(),
+            external_session_id: manager.context.id.to_string(),
             client: self.client.clone(),
             heart_stone: self.heart_stone.clone(),
             context: manager.context.clone(),

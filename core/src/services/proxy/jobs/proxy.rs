@@ -1,7 +1,8 @@
-use super::super::{routing_info::RoutingInfo, Context};
+use super::super::Context;
 use crate::libraries::{
     metrics::MetricsEntry,
-    tracing::{self, constants::service},
+    net::discovery::{ServiceDescriptor, ServiceDiscovery},
+    tracing::{self, constants::service, global_tracer},
 };
 use anyhow::Result;
 use async_trait::async_trait;
@@ -12,16 +13,18 @@ use hyper::{
 use hyper::{client::HttpConnector, Body, Client, Method, Request, Response, Server, StatusCode};
 use jatsl::{Job, TaskManager};
 use lazy_static::lazy_static;
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use opentelemetry::{
     global,
-    trace::{TraceContextExt, Tracer},
+    trace::{FutureExt, TraceContextExt, Tracer},
     Context as TelemetryContext,
 };
 use opentelemetry_http::HeaderInjector;
 use opentelemetry_semantic_conventions as semcov;
 use regex::Regex;
+use std::str::FromStr;
 use std::{convert::Infallible, time::Duration};
+use uuid::Uuid;
 
 static NOTFOUND: &[u8] = b"Not Found";
 static NOGATEWAY: &[u8] = b"No upstream available to handle the request";
@@ -33,8 +36,10 @@ lazy_static! {
 
 #[derive(Clone)]
 pub struct ProxyJob {
+    discovery: ServiceDiscovery,
     client: Client<HttpConnector>,
     port: u16,
+    max_discovery_retries: u8,
 }
 
 #[async_trait]
@@ -75,23 +80,23 @@ impl Job for ProxyJob {
 }
 
 impl ProxyJob {
-    pub fn new(port: u16) -> Self {
+    pub fn new(port: u16, discovery: ServiceDiscovery) -> Self {
         let client = Client::builder()
             .pool_idle_timeout(Duration::from_secs(30))
             .http2_only(true)
             .build_http();
 
-        Self { client, port }
+        Self {
+            client,
+            port,
+            discovery,
+            max_discovery_retries: 3,
+        }
     }
 
-    async fn forward(
-        &self,
-        mut req: Request<Body>,
-        upstream: String,
-        telemetry_context: &TelemetryContext,
-    ) -> Result<Response<Body>> {
-        let span = telemetry_context.span();
-        span.set_attribute(tracing::constants::trace::NET_UPSTREAM_NAME.string(upstream.clone()));
+    async fn forward(&self, mut req: Request<Body>, upstream: String) -> Result<Response<Body>> {
+        let telemetry_context =
+            TelemetryContext::current_with_span(global_tracer().start("Forward request"));
 
         global::get_text_map_propagator(|propagator| {
             propagator.inject_context(
@@ -99,6 +104,9 @@ impl ProxyJob {
                 &mut HeaderInjector(&mut req.headers_mut()),
             )
         });
+
+        let span = telemetry_context.span();
+        span.set_attribute(tracing::constants::trace::NET_UPSTREAM_NAME.string(upstream.clone()));
 
         let path = req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("");
 
@@ -116,99 +124,65 @@ impl ProxyJob {
                 error!("Failed to fulfill request to '{}': {}", upstream, e);
                 let error_message = format!("Unable to forward request to {}: {}", upstream, e);
 
-                span.set_status(
-                    opentelemetry::trace::StatusCode::Error,
-                    error_message.clone(),
-                );
+                span.set_status(opentelemetry::trace::StatusCode::Error, error_message);
 
-                Ok(Response::builder()
-                    .status(StatusCode::BAD_GATEWAY)
-                    .body(error_message.into())
-                    .unwrap())
+                Err(e.into())
             }
         }
     }
 
-    async fn handle_session_request(
+    #[allow(clippy::never_loop)]
+    async fn forward_to_service(
         &self,
+        service: ServiceDescriptor,
         req: Request<Body>,
-        session_id: &str,
-        info: &RoutingInfo,
-        telemetry_context: &TelemetryContext,
     ) -> Result<Response<Body>> {
-        match info.get_session_upstream(session_id).await {
-            Some(upstream) => self.forward(req, upstream, telemetry_context).await,
-            None => {
-                let path = req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("");
-                debug!("{} {} -> BAD GATEWAY (session request)", req.method(), path);
+        let span = global_tracer().start("Forward to service");
+        let telemetry_context = TelemetryContext::current_with_span(span);
 
-                Ok(Response::builder()
-                    .status(StatusCode::BAD_GATEWAY)
-                    .body(NOGATEWAY.into())
-                    .unwrap())
+        let service_string = service.to_string();
+        let mut discoverer = self
+            .discovery
+            .start_discovery(service, self.max_discovery_retries);
+
+        loop {
+            match discoverer
+                .discover()
+                .with_context(telemetry_context.clone())
+                .await
+            {
+                Ok(endpoint) => {
+                    debug!("Attempting connection to {}", endpoint);
+                    match self
+                        .forward(req, endpoint.clone())
+                        .with_context(telemetry_context.clone())
+                        .await
+                    {
+                        Ok(res) => return Ok(res),
+                        Err(_) => {
+                            warn!("Flagging endpoint {} as unreachable", endpoint);
+                            discoverer.flag_stale(&endpoint).await;
+                        }
+                    }
+
+                    // TODO We kinda don't want to break after the first retry.
+                    //      However, req is currently not duplicatable ...
+                    break;
+                }
+                Err(e) => {
+                    error!(
+                        "Failed to fulfill request to service {}: {}",
+                        service_string, e
+                    );
+                    break;
+                }
             }
         }
-    }
 
-    async fn handle_manager_request(
-        &self,
-        req: Request<Body>,
-        info: &RoutingInfo,
-        telemetry_context: &TelemetryContext,
-    ) -> Result<Response<Body>> {
-        match info.get_manager_upstream().await {
-            Some(upstream) => self.forward(req, upstream, telemetry_context).await,
-            None => {
-                let path = req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("");
-                debug!("{} {} -> BAD GATEWAY (manager request)", req.method(), path);
-
-                Ok(Response::builder()
-                    .status(StatusCode::BAD_GATEWAY)
-                    .body(NOGATEWAY.into())
-                    .unwrap())
-            }
-        }
-    }
-
-    async fn handle_api_request(
-        &self,
-        req: Request<Body>,
-        info: &RoutingInfo,
-        telemetry_context: &TelemetryContext,
-    ) -> Result<Response<Body>> {
-        match info.get_api_upstream().await {
-            Some(upstream) => self.forward(req, upstream, telemetry_context).await,
-            None => {
-                let path = req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("");
-                debug!("{} {} -> BAD GATEWAY (api request)", req.method(), path);
-
-                Ok(Response::builder()
-                    .status(StatusCode::BAD_GATEWAY)
-                    .body(NOGATEWAY.into())
-                    .unwrap())
-            }
-        }
-    }
-
-    async fn handle_storage_request(
-        &self,
-        req: Request<Body>,
-        storage_id: &str,
-        info: &RoutingInfo,
-        telemetry_context: &TelemetryContext,
-    ) -> Result<Response<Body>> {
-        match info.get_storage_upstream(storage_id).await {
-            Some(upstream) => self.forward(req, upstream, telemetry_context).await,
-            None => {
-                let path = req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("");
-                debug!("{} {} -> BAD GATEWAY (storage request)", req.method(), path);
-
-                Ok(Response::builder()
-                    .status(StatusCode::BAD_GATEWAY)
-                    .body(NOGATEWAY.into())
-                    .unwrap())
-            }
-        }
+        Ok(Response::builder()
+            .status(StatusCode::BAD_GATEWAY)
+            .body(NOGATEWAY.into())
+            .unwrap())
     }
 
     async fn handle(
@@ -217,7 +191,6 @@ impl ProxyJob {
         telemetry_context: TelemetryContext,
         req: Request<Body>,
     ) -> Result<Response<Body>> {
-        let info = context.routing_info;
         let req_method = req.method().clone();
         let req_size = req.body().size_hint().lower();
         context
@@ -239,11 +212,18 @@ impl ProxyJob {
         span.set_attribute(semcov::trace::HTTP_REQUEST_CONTENT_LENGTH.string(req_size.to_string()));
         span.set_attribute(semcov::trace::HTTP_TARGET.string(path.clone()));
 
+        let not_found_response = Ok(Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(NOTFOUND.into())
+            .unwrap());
+
         let result = if req.method() == Method::POST && path == "/session" {
             span.set_attribute(semcov::trace::HTTP_ROUTE.string("/session"));
             span.set_attribute(semcov::trace::PEER_SERVICE.string(service::MANAGER));
             span.update_name("/session".to_string());
-            self.handle_manager_request(req, &info, &telemetry_context)
+
+            self.forward_to_service(ServiceDescriptor::Manager, req)
+                .with_context(telemetry_context.clone())
                 .await
         } else if path.starts_with("/storage/") {
             match REGEX_STORAGE_PATH.captures(&path) {
@@ -251,16 +231,19 @@ impl ProxyJob {
                     span.set_attribute(semcov::trace::HTTP_ROUTE.string("/storage/:storage_id/*"));
                     span.set_attribute(semcov::trace::PEER_SERVICE.string(service::STORAGE));
                     span.update_name("/storage/:storage_id/*".to_string());
-                    self.handle_storage_request(req, &caps["sid"], &info, &telemetry_context)
-                        .await
+
+                    match Uuid::from_str(&caps["sid"]) {
+                        Ok(id) => {
+                            self.forward_to_service(ServiceDescriptor::Storage(id), req)
+                                .with_context(telemetry_context.clone())
+                                .await
+                        }
+                        _ => not_found_response,
+                    }
                 }
                 None => {
                     debug!("{} {} -> NOT FOUND", req.method(), path);
-
-                    Ok(Response::builder()
-                        .status(StatusCode::NOT_FOUND)
-                        .body(NOTFOUND.into())
-                        .unwrap())
+                    not_found_response
                 }
             }
         } else if path.starts_with("/session/") {
@@ -269,16 +252,19 @@ impl ProxyJob {
                     span.set_attribute(semcov::trace::HTTP_ROUTE.string("/session/:session_id/*"));
                     span.set_attribute(semcov::trace::PEER_SERVICE.string(service::NODE));
                     span.update_name("/session/:session_id/*".to_string());
-                    self.handle_session_request(req, &caps["sid"], &info, &telemetry_context)
-                        .await
+
+                    match Uuid::from_str(&caps["sid"]) {
+                        Ok(id) => {
+                            self.forward_to_service(ServiceDescriptor::Node(id), req)
+                                .with_context(telemetry_context.clone())
+                                .await
+                        }
+                        _ => not_found_response,
+                    }
                 }
                 None => {
                     debug!("{} {} -> NOT FOUND", req.method(), path);
-
-                    Ok(Response::builder()
-                        .status(StatusCode::NOT_FOUND)
-                        .body(NOTFOUND.into())
-                        .unwrap())
+                    not_found_response
                 }
             }
         } else {
@@ -287,7 +273,9 @@ impl ProxyJob {
             span.set_attribute(semcov::trace::HTTP_ROUTE.string("*"));
             span.set_attribute(semcov::trace::PEER_SERVICE.string(service::API));
             span.update_name("/*".to_string());
-            self.handle_api_request(req, &info, &telemetry_context)
+
+            self.forward_to_service(ServiceDescriptor::Api, req)
+                .with_context(telemetry_context.clone())
                 .await
         };
 

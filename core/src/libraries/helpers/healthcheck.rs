@@ -6,7 +6,7 @@ use hyper::{body, Client, Uri};
 use log::{debug, trace};
 use opentelemetry::{
     global,
-    trace::{TraceContextExt, Tracer},
+    trace::{Span, TraceContextExt, Tracer},
     Context as TelemetryContext,
 };
 use opentelemetry_http::HeaderInjector;
@@ -15,7 +15,7 @@ use std::time::Duration;
 use tokio::time::sleep;
 use tokio::time::timeout;
 
-use crate::libraries::tracing::global_tracer;
+use crate::libraries::tracing::{constants::trace, global_tracer};
 
 /// Sends HTTP requests to the specified URL until either a 200 OK response is received or the timeout is reached
 pub async fn wait_for(url: &str, timeout_duration: Duration) -> Result<String, ()> {
@@ -23,7 +23,7 @@ pub async fn wait_for(url: &str, timeout_duration: Duration) -> Result<String, (
 
     let url = url.parse::<Uri>().unwrap();
 
-    let check_interval = Duration::from_millis(150);
+    let check_interval = Duration::from_millis(250);
     let request_timeout = Duration::from_millis(1000);
     let mut remaining_duration = timeout_duration;
 
@@ -31,6 +31,7 @@ pub async fn wait_for(url: &str, timeout_duration: Duration) -> Result<String, (
 
     loop {
         let span = global_tracer().start("Sending healthcheck request");
+        span.set_attribute(trace::NET_UPSTREAM_NAME.string(url.to_string()));
         let telemetry_context = TelemetryContext::current_with_span(span);
 
         let mut req = hyper::Request::new(hyper::Body::default());

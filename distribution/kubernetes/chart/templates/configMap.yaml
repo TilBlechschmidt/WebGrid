@@ -103,6 +103,10 @@ data:
                   value: "{{ .Values.recording.quality.crf }}"
                 - name: MAX_BITRATE
                   value: "{{ .Values.recording.quality.maxBitrate }}"
+                - name: HOST
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: status.podIP
               volumeMounts:
                 - mountPath: /dev/shm
                   name: dshm

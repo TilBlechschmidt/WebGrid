@@ -11,7 +11,6 @@ use jatsl::{Job, TaskManager};
 use log::debug;
 use redis::AsyncCommands;
 
-#[derive(Clone)]
 pub struct MetadataJob {}
 
 #[async_trait]
@@ -29,7 +28,7 @@ impl Job for MetadataJob {
 
         loop {
             let (_, raw_metadata): (String, String) = redis
-                .blpop(keys::storage::metadata::pending(storage_id), 0)
+                .blpop(keys::storage::metadata::pending(&storage_id.to_string()), 0)
                 .await?;
 
             let metadata: FileMetadata = serde_json::from_str(&raw_metadata)?;

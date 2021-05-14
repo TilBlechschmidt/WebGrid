@@ -9,6 +9,7 @@ use std::{
     fs,
     io::{Error as IoError, ErrorKind},
     path::{Path, PathBuf, StripPrefixError},
+    str::FromStr,
 };
 use thiserror::Error;
 use uuid::Uuid;
@@ -96,26 +97,28 @@ pub enum StorageError {
     RedisError(#[from] redis::RedisError),
     #[error("Error reading from disk")]
     IoError(#[from] IoError),
+    #[error("Storage ID is not a valid UUID")]
+    UuidError(#[from] uuid::Error),
 }
 
 impl StorageHandler {
     /// Fetches the storage ID of the given directory. If the directory has not previously been used
     /// as a storage a new identifier will be created and written to disk.
-    pub async fn storage_id(directory: &Path) -> Result<String, StorageError> {
+    pub async fn storage_id(directory: &Path) -> Result<Uuid, StorageError> {
         let id_path = directory.join(".webgrid-storage");
         debug!("Attempting to read storage ID from {}", id_path.display());
 
         // Attempt to read existing identifier
         match fs::read_to_string(&id_path) {
-            Ok(identifier) => Ok(identifier),
+            Ok(identifier) => Uuid::from_str(&identifier).map_err(|e| e.into()),
 
             // Match the kind of error
             Err(e) => match e.kind() {
                 // If the file does not exist, create a new one
                 ErrorKind::NotFound => {
                     debug!("No storage identifier file found, generating new one.");
-                    let identifier = Uuid::new_v4().to_string();
-                    fs::write(id_path, &identifier)?;
+                    let identifier = Uuid::new_v4();
+                    fs::write(id_path, &identifier.to_string())?;
 
                     Ok(identifier)
                 }

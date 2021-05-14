@@ -11,7 +11,6 @@ use redis::{aio::ConnectionLike, RedisResult, Script};
 use std::time::Duration;
 use tokio::time;
 
-#[derive(Clone)]
 pub struct SlotReclaimJob {}
 
 #[async_trait]

@@ -94,16 +94,6 @@ pub mod orchestrator {
     }
 }
 
-pub mod manager {
-    fn manager_prefix(manager_id: &str) -> String {
-        format!("manager:{}", manager_id)
-    }
-
-    pub fn host(manager_id: &str) -> String {
-        format!("{}:host", manager_prefix(manager_id))
-    }
-}
-
 pub mod session {
     static_keys! {
         LIST_ACTIVE = "sessions.active".to_string();
@@ -124,14 +114,6 @@ pub mod session {
 
     pub fn metadata(session_id: &str) -> String {
         format!("{}:metadata", session_prefix(session_id))
-    }
-
-    pub fn upstream(session_id: &str) -> String {
-        format!("{}:upstream", session_prefix(session_id))
-    }
-
-    pub fn downstream(session_id: &str) -> String {
-        format!("{}:downstream", session_prefix(session_id))
     }
 
     pub fn slot(session_id: &str) -> String {
@@ -170,10 +152,6 @@ pub mod session {
 pub mod storage {
     fn storage_prefix(storage_id: &str) -> String {
         format!("storage:{}", storage_id)
-    }
-
-    pub fn host(storage_id: &str, provider_id: &str) -> String {
-        format!("{}:{}:host", storage_prefix(storage_id), provider_id)
     }
 
     pub mod metadata {
@@ -215,15 +193,5 @@ pub mod metrics {
             CAPACITY = "metrics:storage:disk.bytes.total".to_string();
             USAGE = "metrics:storage:disk.bytes.used".to_string();
         }
-    }
-}
-
-pub mod api {
-    fn api_prefix(api_id: &str) -> String {
-        format!("api:{}", api_id)
-    }
-
-    pub fn host(api_id: &str) -> String {
-        format!("{}:host", api_prefix(api_id))
     }
 }

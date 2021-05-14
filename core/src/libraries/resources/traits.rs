@@ -6,7 +6,9 @@ use redis::{aio::ConnectionLike, Msg, RedisError, RedisResult};
 use thiserror::Error;
 
 /// PubSub listening errors
+#[derive(Error, Debug)]
 pub enum PubSubResourceError {
+    #[error("redis stream has been closed")]
     StreamClosed,
 }
 

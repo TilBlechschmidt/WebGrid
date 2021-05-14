@@ -8,7 +8,6 @@ use jatsl::{Job, TaskManager};
 use log::info;
 use redis::{AsyncCommands, RedisResult};
 
-#[derive(Clone)]
 pub struct SlotRecycleJob {}
 
 #[async_trait]

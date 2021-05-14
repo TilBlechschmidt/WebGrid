@@ -22,8 +22,7 @@
 		},
 		"tailwindCSS.includeLanguages": {
 			"svelte": "html"
-		},
-		"rust-analyzer.checkOnSave.command": "clippy"
+		}
 	},
 	"extensions": {
 		"recommendations": [

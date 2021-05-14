@@ -23,27 +23,12 @@ All metadata is stored in a key-value in-memory database called [Redis](https://
 }
 ```
 
-### Manager
-```javascript
-`manager:${ID}:host` = number EX 120s			// (host + port)
-```
-
 ### Storage
 ```javascript
-// SID = storage ID
-// PID = randomly generated ephemeral provider ID
-`storage:${SID}:${PID}:host` = string EX 60s	// (host + port)
-
 `storage:${SID}:metadata.pending` = List<FileMetadata>	// see below
 ```
 
 To optimise storage performance and reduce the need for database synchronization, metadata of newly created and modified files is not written to the storage database by the writing service directly. Instead, the relevant metadata is collected and appended to the `:metadata.pending` list. The corresponding storage service will then update its internal database with this information by continously watching this list and pulling new metadata.
-
-### API
-```javascript
-// AID = randomly generated ephemeral server ID
-`api:${AID}:host` = string EX 60s				// (host + port)
-```
 
 ### Sessions
 ```javascript
@@ -69,18 +54,6 @@ To optimise storage performance and reduce the need for database synchronization
 `session:${ID}:metadata` = Hashes {
 	name = string
 	build = string
-}
-
-`session:${ID}:upstream` = Hashes {
-	host = string
-	port = number
-	driverSessionID = string
-}
-
-`session:${ID}:downstream` = Hashes {
-	host = string
-	userAgent = string
-	lastSeen = string                               // RFC 3339
 }
 
 `session:${ID}:storage` = string                    // storage ID

@@ -6,7 +6,6 @@ use log::{debug, info};
 use std::{net::SocketAddr, path::PathBuf};
 use warp::{reply::Reply, Filter};
 
-#[derive(Clone)]
 pub struct ServerJob {
     port: u16,
     storage_directory: PathBuf,
@@ -29,7 +28,7 @@ impl Job for ServerJob {
             .allow_methods(vec!["OPTIONS", "GET"])
             .allow_headers(vec!["range"]);
 
-        let storage = warp::path(manager.context.storage_id.clone())
+        let storage = warp::path(manager.context.storage_id.to_string())
             .and(warp::fs::dir(self.storage_directory.clone()))
             .map(|reply: warp::filters::fs::File| {
                 debug!("SERVE {}", reply.path().display());

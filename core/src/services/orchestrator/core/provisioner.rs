@@ -21,7 +21,7 @@ pub trait Provisioner {
         &self,
         session_id: &str,
         capabilities: CapabilitiesRequest,
-    ) -> Result<NodeInfo>;
+    ) -> Result<()>;
     async fn terminate_node(&self, session_id: &str);
 }
 

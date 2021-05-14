@@ -6,7 +6,6 @@ use juniper::{
     graphql_object, FieldResult, GraphQLEnum, GraphQLInputObject, GraphQLObject, GraphQLScalarValue,
 };
 use redis::AsyncCommands;
-use serde_json::from_str;
 
 #[derive(GraphQLEnum)]
 pub enum SessionState {
@@ -77,55 +76,6 @@ impl SessionCapabilities {
     }
 }
 
-#[derive(GraphQLObject)]
-pub struct SessionUpstream {
-    host: Option<String>,
-    port: Option<i32>,
-    #[graphql(name = "driverSessionID")]
-    driver_session_id: Option<String>,
-}
-
-impl SessionUpstream {
-    pub async fn new(session_id: &str, context: &GqlContext) -> FieldResult<Self> {
-        let metadata: HashMap<String, String> = context
-            .redis
-            .lock()
-            .await
-            .hgetall(keys::session::upstream(session_id))
-            .await?;
-
-        Ok(Self {
-            host: metadata.get("host").map(|s| s.to_owned()),
-            port: metadata.get("port").map(|s| from_str(s).ok()).flatten(),
-            driver_session_id: metadata.get("driverSessionID").map(|s| s.to_owned()),
-        })
-    }
-}
-
-#[derive(GraphQLObject)]
-pub struct SessionDownstream {
-    host: Option<String>,
-    user_agent: Option<String>,
-    last_seen: Option<Date>,
-}
-
-impl SessionDownstream {
-    pub async fn new(session_id: &str, context: &GqlContext) -> FieldResult<Self> {
-        let metadata: HashMap<String, String> = context
-            .redis
-            .lock()
-            .await
-            .hgetall(keys::session::downstream(session_id))
-            .await?;
-
-        Ok(Self {
-            host: metadata.get("host").map(|s| s.to_owned()),
-            user_agent: metadata.get("userAgent").map(|s| s.to_owned()),
-            last_seen: metadata.get("last_seen").map(|s| Date(s.to_owned())),
-        })
-    }
-}
-
 pub struct Session {
     id: String,
 }
@@ -171,14 +121,6 @@ impl Session {
 
     async fn capabilities(&self, context: &GqlContext) -> FieldResult<SessionCapabilities> {
         SessionCapabilities::new(&self.id, context).await
-    }
-
-    async fn upstream(&self, context: &GqlContext) -> FieldResult<SessionUpstream> {
-        SessionUpstream::new(&self.id, context).await
-    }
-
-    async fn downstream(&self, context: &GqlContext) -> FieldResult<SessionDownstream> {
-        SessionDownstream::new(&self.id, context).await
     }
 
     async fn metadata(&self, context: &GqlContext) -> FieldResult<Vec<DictionaryEntry>> {

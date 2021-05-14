@@ -19,7 +19,6 @@ use serde_json::json;
 use std::net::SocketAddr;
 use warp::{http::StatusCode, reply, Filter};
 
-#[derive(Clone)]
 pub struct SessionHandlerJob {
     port: u16,
 }

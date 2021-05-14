@@ -10,7 +10,6 @@ use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::Mutex;
 use warp::Filter;
 
-#[derive(Clone)]
 pub struct ServerJob {
     port: u16,
 }

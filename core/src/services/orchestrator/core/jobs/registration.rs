@@ -6,7 +6,6 @@ use async_trait::async_trait;
 use jatsl::{Job, TaskManager};
 use redis::{aio::ConnectionLike, AsyncCommands};
 
-#[derive(Clone)]
 pub struct RegistrationJob {}
 
 #[async_trait]

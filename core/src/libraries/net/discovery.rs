@@ -3,27 +3,27 @@ use crate::{
         helpers::keys,
         net::messaging::Message,
         resources::{PubSub, ResourceManager, ResourceManagerProvider},
+        tracing::global_tracer,
     },
-    with_redis_resource,
+    with_redis_resource, with_shared_redis_resource,
 };
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
 use futures::TryStreamExt;
 use jatsl::{Job, TaskManager};
 use lru::LruCache;
-use rand::{
-    prelude::{IteratorRandom, ThreadRng},
-    thread_rng,
-};
+use opentelemetry::trace::{FutureExt, Span, StatusCode, TraceContextExt, Tracer};
+use opentelemetry::Context as TelemetryContext;
+use rand::{prelude::IteratorRandom, thread_rng};
 use redis::{aio::ConnectionLike, AsyncCommands, Msg};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashSet, marker::PhantomData, sync::Arc};
+use std::{collections::HashSet, fmt, marker::PhantomData, sync::Arc};
 use thiserror::Error;
 use tokio::{
     pin, select,
     sync::{
         broadcast::{self, error::RecvError},
-        Mutex,
+        mpsc, Mutex,
     },
     task::yield_now,
     time::{sleep_until, Duration, Instant},
@@ -36,6 +36,12 @@ pub enum ServiceDescriptor {
     Manager,
     Node(Uuid),
     Storage(Uuid),
+}
+
+impl fmt::Display for ServiceDescriptor {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 impl ServiceDescriptor {
@@ -63,8 +69,10 @@ impl ServiceDiscoveryResponse {
 
 type ServiceEndpointCache = Arc<Mutex<LruCache<ServiceDescriptor, HashSet<String>>>>;
 
+#[derive(Clone)]
 pub struct ServiceDiscovery {
     publisher: broadcast::Sender<ServiceDiscoveryResponse>,
+    request_publisher: mpsc::Sender<ServiceDescriptor>,
     cache: ServiceEndpointCache,
 }
 
@@ -74,14 +82,16 @@ impl ServiceDiscovery {
         cache_capacity: usize,
     ) -> (Self, ServiceDiscoveryJob<C, R>) {
         let (publisher, _) = broadcast::channel(channel_capacity);
+        let (request_publisher, request_receiver) = mpsc::channel(channel_capacity);
         let cache = Arc::new(Mutex::new(LruCache::new(cache_capacity)));
 
         (
             Self {
+                request_publisher,
                 publisher: publisher.clone(),
                 cache: cache.clone(),
             },
-            ServiceDiscoveryJob::new(publisher, cache),
+            ServiceDiscoveryJob::new(publisher, request_receiver, cache),
         )
     }
 
@@ -92,6 +102,7 @@ impl ServiceDiscovery {
     ) -> ServiceDiscoverer {
         ServiceDiscoverer::new(
             self.publisher.subscribe(),
+            self.request_publisher.clone(),
             self.cache.clone(),
             service,
             max_retries,
@@ -101,10 +112,10 @@ impl ServiceDiscovery {
 
 pub struct ServiceDiscoverer {
     subscriber: broadcast::Receiver<ServiceDiscoveryResponse>,
+    request_publisher: mpsc::Sender<ServiceDescriptor>,
     cache: ServiceEndpointCache,
     service: ServiceDescriptor,
 
-    rng: ThreadRng,
     retries: u8,
     max_retries: u8,
 }
@@ -121,20 +132,23 @@ pub enum ServiceDiscoveryError {
     Timeout,
     #[error("serialization failed")]
     SerdeFailure(#[from] bincode::Error),
+    #[error("unable to send request")]
+    RequestFailed(#[from] mpsc::error::SendError<ServiceDescriptor>),
 }
 
 impl ServiceDiscoverer {
     fn new(
         subscriber: broadcast::Receiver<ServiceDiscoveryResponse>,
+        request_publisher: mpsc::Sender<ServiceDescriptor>,
         cache: ServiceEndpointCache,
         service: ServiceDescriptor,
         max_retries: u8,
     ) -> Self {
         Self {
             subscriber,
+            request_publisher,
             cache,
             service,
-            rng: thread_rng(),
             retries: 0,
             max_retries,
         }
@@ -156,41 +170,47 @@ impl ServiceDiscoverer {
     /// Note: This function relies on the callee making use of the `flag_stale` function to
     ///       mark endpoints that are non-functional. Not calling it will result in a poisoned cache
     ///       and the same broken endpoints being returned over and over again.
-    pub async fn discover(
-        &mut self,
-        con: &mut (impl ConnectionLike + AsyncCommands),
-    ) -> Result<String, ServiceDiscoveryError> {
+    pub async fn discover(&mut self) -> Result<String, ServiceDiscoveryError> {
+        let span = global_tracer().start("Discover service");
+        let context = TelemetryContext::current_with_span(span);
+
         loop {
             // Bail if the maximum number of discoveries has been reached
             if self.retries > self.max_retries {
+                context
+                    .span()
+                    .set_status(StatusCode::Error, "Retry limit exceeded".to_string());
                 return Err(ServiceDiscoveryError::RetriesExceeded);
             }
 
             // Try discovering a new endpoint, retry when we hit a timeout
             // (but increase the number of retries to set an upper limit)
-            match self.discover_once(con).await {
+            match self.discover_once().with_context(context.clone()).await {
                 Ok(endpoint) => return Ok(endpoint),
                 Err(ServiceDiscoveryError::Timeout) => self.retries += 1,
-                Err(e) => return Err(e),
+                Err(e) => {
+                    context.span().set_status(StatusCode::Error, e.to_string());
+                    return Err(e);
+                }
             }
         }
     }
 
-    async fn discover_once(
-        &mut self,
-        con: &mut (impl ConnectionLike + AsyncCommands),
-    ) -> Result<String, ServiceDiscoveryError> {
+    async fn discover_once(&mut self) -> Result<String, ServiceDiscoveryError> {
+        let span = global_tracer().start("Attempt discovery");
+
         // Try fetching a random element from cache
         if let Some(endpoints) = self.cache.lock().await.get(&self.service) {
-            if let Some(endpoint) = endpoints.iter().choose(&mut self.rng) {
+            let mut rng = thread_rng();
+            if let Some(endpoint) = endpoints.iter().choose(&mut rng) {
+                span.set_status(StatusCode::Ok, "Cache hit".to_string());
                 return Ok(endpoint.clone());
             }
         }
 
         // On cache miss, send out a discovery request
-        let raw_request: Vec<u8> = bincode::serialize(&Message::ServiceDiscoveryRequest)?;
-        con.publish::<_, _, ()>(self.service.discovery_channel(), raw_request)
-            .await?;
+        span.add_event("Cache miss".to_string(), vec![]);
+        self.request_publisher.send(self.service.clone()).await?;
 
         // Wait for a response, but not forever
         let deadline = Instant::now() + Duration::from_millis(500);
@@ -219,6 +239,7 @@ impl ServiceDiscoverer {
 
 pub struct ServiceDiscoveryJob<C, R> {
     cache: ServiceEndpointCache,
+    request_rx: Arc<Mutex<mpsc::Receiver<ServiceDescriptor>>>,
     publisher: broadcast::Sender<ServiceDiscoveryResponse>,
     phantom_c: PhantomData<C>,
     phantom_r: PhantomData<R>,
@@ -228,6 +249,8 @@ pub struct ServiceDiscoveryJob<C, R> {
 enum ServiceDiscoveryJobError {
     #[error("redis notification stream ended unexpectedly")]
     UnexpectedTermination,
+    #[error("all references to request senders have been dropped")]
+    RequestSendersDeallocated,
 }
 
 #[async_trait]
@@ -239,6 +262,7 @@ impl<R: ResourceManager + Send + Sync, C: ResourceManagerProvider<R> + Send + Sy
     const NAME: &'static str = module_path!();
 
     async fn execute(&self, manager: TaskManager<Self::Context>) -> Result<()> {
+        let mut con = with_shared_redis_resource!(manager);
         let mut pubsub: PubSub = with_redis_resource!(manager).into();
 
         pubsub
@@ -250,8 +274,24 @@ impl<R: ResourceManager + Send + Sync, C: ResourceManagerProvider<R> + Send + Sy
 
         let mut stream = pubsub.on_message();
 
-        while let Ok(Some(msg)) = stream.try_next().await {
-            self.process_message(msg).await?;
+        loop {
+            let mut request_rx = self.request_rx.lock().await;
+
+            select! {
+                msg = stream.try_next() => {
+                    match msg {
+                        Ok(Some(msg)) => self.process_message(msg).await?,
+                        Ok(None) => break,
+                        Err(e) => return Err(e.into()),
+                    }
+                }
+                discovery_request = request_rx.recv() => {
+                    match discovery_request {
+                        Some(service) => self.process_request(service, &mut con).await?,
+                        None => bail!(ServiceDiscoveryJobError::RequestSendersDeallocated)
+                    }
+                }
+            }
         }
 
         // Allow the job manager to terminate us so it doesn't count as a crash
@@ -264,14 +304,29 @@ impl<R: ResourceManager + Send + Sync, C: ResourceManagerProvider<R> + Send + Sy
 impl<C, R> ServiceDiscoveryJob<C, R> {
     fn new(
         publisher: broadcast::Sender<ServiceDiscoveryResponse>,
+        request_rx: mpsc::Receiver<ServiceDescriptor>,
         cache: ServiceEndpointCache,
     ) -> Self {
         Self {
             publisher,
+            request_rx: Arc::new(Mutex::new(request_rx)),
             cache,
             phantom_c: PhantomData,
             phantom_r: PhantomData,
         }
+    }
+
+    async fn process_request(
+        &self,
+        service: ServiceDescriptor,
+        con: &mut (impl ConnectionLike + AsyncCommands),
+    ) -> Result<()> {
+        let raw_request: Vec<u8> = bincode::serialize(&Message::ServiceDiscoveryRequest)?;
+        con.publish::<_, _, ()>(service.discovery_channel(), raw_request)
+            .await
+            .context("sending request to discovery channel")?;
+
+        Ok(())
     }
 
     async fn process_message(&self, msg: Msg) -> Result<()> {
@@ -292,7 +347,7 @@ impl<C, R> ServiceDiscoveryJob<C, R> {
         }
 
         // Notify anybody waiting for the response
-        self.publisher.send(discovery_response)?;
+        self.publisher.send(discovery_response).ok();
 
         Ok(())
     }
@@ -301,36 +356,12 @@ impl<C, R> ServiceDiscoveryJob<C, R> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        libraries::{
-            net::advertise::ServiceAdvertisorJob, resources::ResourceManager,
-            testing::resources::TestResourceManager,
-        },
-        with_resource_manager,
-    };
-    use jatsl::{JobScheduler, TaskResourceHandle};
+    use crate::{libraries::net::advertise::ServiceAdvertisorJob, with_resource_manager};
+    use jatsl::JobScheduler;
 
     // TODO Running tests in parallel needs some clever engineering. Redis PubSub is GLOBAL and does not honor SELECT :(
     //      The channels used for the tests need a prefix like unique_identifier!(). Maybe integrate that into
     //      the harness somehow?
-
-    #[test]
-    fn discovery_without_endpoint_fails() {
-        with_resource_manager!(manager, {
-            let mut redis = manager.redis(TaskResourceHandle::stub()).await.unwrap();
-            let (discovery, _) =
-                ServiceDiscovery::new::<TestResourceManager, TestResourceManager>(1, 1);
-            let service = ServiceDescriptor::Api;
-
-            let mut discoverer = discovery.start_discovery(service.clone(), 0);
-            let endpoint = discoverer.discover(&mut redis).await;
-
-            match endpoint {
-                Err(ServiceDiscoveryError::RetriesExceeded) => {}
-                e => panic!("Unexpected condition when discovering endpoint: {:?}", e),
-            }
-        });
-    }
 
     // #[test]
     // fn passive_discovery() {
@@ -369,8 +400,6 @@ mod tests {
         with_resource_manager!(manager, {
             let service = ServiceDescriptor::Api;
             let endpoint = "example.com".to_string();
-
-            let mut redis = manager.redis(TaskResourceHandle::stub()).await.unwrap();
             let (discovery, job) = ServiceDiscovery::new(10, 10);
 
             let advertise_job = ServiceAdvertisorJob::new(service.clone(), endpoint.clone());
@@ -383,7 +412,7 @@ mod tests {
             scheduler.wait_for_ready().await;
 
             let mut discoverer = discovery.start_discovery(service, 0);
-            let discovered_endpoint = discoverer.discover(&mut redis).await.unwrap();
+            let discovered_endpoint = discoverer.discover().await.unwrap();
 
             assert_eq!(endpoint, discovered_endpoint);
         });
