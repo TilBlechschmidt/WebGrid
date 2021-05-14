@@ -5,6 +5,8 @@
 //!
 //! The keys are stored in submodules organised by components.
 
+use uuid::Uuid;
+
 macro_rules! static_keys {
     ($($name:ident = $value:expr;)+) => {
         lazy_static::lazy_static! {
@@ -17,6 +19,15 @@ macro_rules! static_keys {
 
 static_keys! {
     HEARTBEAT_REFRESH_CHANNEL = "heartbeat-refresh".to_string();
+    DISCOVERY = "discovery".to_string();
+}
+
+pub fn discovery(service: &str, id: Option<Uuid>) -> String {
+    if let Some(id) = id {
+        format!("{}.{}:{}", *DISCOVERY, service, id)
+    } else {
+        format!("{}.{}", *DISCOVERY, service)
+    }
 }
 
 pub mod orchestrator {
