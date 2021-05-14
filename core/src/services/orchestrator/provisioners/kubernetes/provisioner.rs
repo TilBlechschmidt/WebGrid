@@ -124,7 +124,11 @@ impl K8sProvisioner {
         let context = TelemetryContext::current_with_span(span);
         let resource = self.create_resource(&job).with_context(context).await?;
 
-        Ok(self.unwrap_uid(resource).unwrap_or_default())
+        Ok(Meta::meta(&resource)
+            .uid
+            .as_ref()
+            .map(|uid| uid.to_owned())
+            .unwrap_or_default())
     }
 
     async fn wait_for_pod(&self, session_id: &str) -> Result<String> {
@@ -176,16 +180,6 @@ impl K8sProvisioner {
         }
 
         bail!("Timed out waiting for pod to become ready");
-    }
-
-    fn unwrap_uid<T: Resource + Meta + DeserializeOwned + Serialize + Clone>(
-        &self,
-        resource: T,
-    ) -> Option<String> {
-        match &Meta::meta(&resource).uid {
-            Some(uid) => Some(uid.to_owned()),
-            None => None,
-        }
     }
 }
 
