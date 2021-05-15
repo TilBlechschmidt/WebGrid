@@ -45,6 +45,7 @@ nav:
       - "architecture/services.md"
       - "architecture/error-handling.md"
       - "architecture/workflows.md"
+      - "architecture/discovery.md"
   - "Issue Tracker":
       - "https://github.com/TilBlechschmidt/WebGrid/issues"
 
