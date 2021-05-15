@@ -1,3 +1,3 @@
 (function() {var implementors = {};
-implementors["webgrid"] = [{"text":"impl Error for RecordingError","synthetic":false,"types":[]},{"text":"impl Error for StorageError","synthetic":false,"types":[]}];
+implementors["webgrid"] = [{"text":"impl Error for ServiceDiscoveryError","synthetic":false,"types":[]},{"text":"impl Error for RecordingError","synthetic":false,"types":[]},{"text":"impl Error for PubSubResourceError","synthetic":false,"types":[]},{"text":"impl Error for StorageError","synthetic":false,"types":[]}];
 if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

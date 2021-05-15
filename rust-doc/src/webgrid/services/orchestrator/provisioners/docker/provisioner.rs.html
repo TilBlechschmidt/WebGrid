@@ -153,10 +153,9 @@
 <span id="150">150</span>
 <span id="151">151</span>
 <span id="152">152</span>
-<span id="153">153</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::<span class="kw">super</span>::<span class="kw">super</span>::<span class="ident">core</span>::<span class="ident">provisioner</span>::{
-    <span class="ident">match_image_from_capabilities</span>, <span class="ident">NodeInfo</span>, <span class="ident">Provisioner</span>, <span class="ident">ProvisionerCapabilities</span>,
+    <span class="ident">match_image_from_capabilities</span>, <span class="ident">Provisioner</span>, <span class="ident">ProvisionerCapabilities</span>,
 };
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::{
     <span class="ident">helpers</span>::<span class="ident">CapabilitiesRequest</span>,
@@ -225,7 +224,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">session_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>,
         <span class="ident">capabilities</span>: <span class="ident">CapabilitiesRequest</span>,
-    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">NodeInfo</span><span class="op">&gt;</span> {
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">telemetry_context</span> <span class="op">=</span> <span class="ident">TelemetryContext</span>::<span class="ident">current</span>();
         <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="ident">telemetry_context</span>.<span class="ident">span</span>();
 
@@ -243,6 +242,7 @@
             <span class="string">&quot;REDIS=redis://webgrid-redis/&quot;</span>.<span class="ident">to_string</span>(),
             <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;ID={}&quot;</span>, <span class="ident">session_id</span>),
             <span class="string">&quot;RUST_LOG=debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn&quot;</span>.<span class="ident">to_string</span>(),
+            <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;HOST={}&quot;</span>, <span class="ident">name</span>),
         ];
 
         <span class="kw">if</span> <span class="op">!</span><span class="self">self</span>.<span class="ident">disable_recording</span> {
@@ -271,7 +271,7 @@
 
         <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;Creating docker container {}&quot;</span>, <span class="ident">name</span>);
 
-        <span class="kw">let</span> <span class="ident">create_span</span> <span class="op">=</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">create_span</span> <span class="op">=</span>
             <span class="ident">global_tracer</span>().<span class="ident">start_with_context</span>(<span class="string">&quot;Create container&quot;</span>, <span class="ident">telemetry_context</span>.<span class="ident">clone</span>());
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">create_container</span>(<span class="ident">options</span>, <span class="ident">config</span>)
@@ -282,7 +282,8 @@
             })<span class="question-mark">?</span>;
         <span class="ident">create_span</span>.<span class="ident">end</span>();
 
-        <span class="kw">let</span> <span class="ident">start_span</span> <span class="op">=</span> <span class="ident">global_tracer</span>().<span class="ident">start_with_context</span>(<span class="string">&quot;Start container&quot;</span>, <span class="ident">telemetry_context</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">start_span</span> <span class="op">=</span>
+            <span class="ident">global_tracer</span>().<span class="ident">start_with_context</span>(<span class="string">&quot;Start container&quot;</span>, <span class="ident">telemetry_context</span>);
         <span class="self">self</span>.<span class="ident">docker</span>
             .<span class="ident">start_container</span>(<span class="kw-2">&amp;</span><span class="ident">name</span>, <span class="prelude-val">None</span>::<span class="op">&lt;</span><span class="ident">StartContainerOptions</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span><span class="op">&gt;</span>)
             .<span class="kw">await</span>
@@ -292,10 +293,7 @@
             })<span class="question-mark">?</span>;
         <span class="ident">start_span</span>.<span class="ident">end</span>();
 
-        <span class="prelude-val">Ok</span>(<span class="ident">NodeInfo</span> {
-            <span class="ident">host</span>: <span class="ident">name</span>,
-            <span class="ident">port</span>: <span class="self">self</span>.<span class="ident">node_port</span>.<span class="ident">to_string</span>(),
-        })
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">terminate_node</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">session_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) {

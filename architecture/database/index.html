@@ -389,57 +389,14 @@
   </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#configuration">
-    Configuration
-  </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#manager">
-    Manager
-  </a>
-</li>
-<li class="md-nav__item">
 <a class="md-nav__link" href="#storage">
     Storage
-  </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#api">
-    API
   </a>
 </li>
 <li class="md-nav__item">
 <a class="md-nav__link" href="#sessions">
     Sessions
   </a>
-<nav aria-label="Sessions" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#log-event-codes">
-    Log event codes
-  </a>
-<nav aria-label="Log event codes" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#node">
-    Node
-  </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#orchestrator">
-    Orchestrator
-  </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#manager_1">
-    Manager
-  </a>
-</li>
-</ul>
-</nav>
-</li>
-</ul>
-</nav>
 </li>
 <li class="md-nav__item">
 <a class="md-nav__link" href="#orchestrators">
@@ -463,7 +420,7 @@
   </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#orchestrator_1">
+<a class="md-nav__link" href="#orchestrator">
     Orchestrator
   </a>
 </li>
@@ -504,6 +461,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../workflows/">
         Workflows
+      </a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../discovery/">
+        Service discovery
       </a>
 </li>
 </ul>
@@ -555,57 +517,14 @@
   </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#configuration">
-    Configuration
-  </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#manager">
-    Manager
-  </a>
-</li>
-<li class="md-nav__item">
 <a class="md-nav__link" href="#storage">
     Storage
-  </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#api">
-    API
   </a>
 </li>
 <li class="md-nav__item">
 <a class="md-nav__link" href="#sessions">
     Sessions
   </a>
-<nav aria-label="Sessions" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#log-event-codes">
-    Log event codes
-  </a>
-<nav aria-label="Log event codes" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#node">
-    Node
-  </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#orchestrator">
-    Orchestrator
-  </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#manager_1">
-    Manager
-  </a>
-</li>
-</ul>
-</nav>
-</li>
-</ul>
-</nav>
 </li>
 <li class="md-nav__item">
 <a class="md-nav__link" href="#orchestrators">
@@ -629,7 +548,7 @@
   </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#orchestrator_1">
+<a class="md-nav__link" href="#orchestrator">
     Orchestrator
   </a>
 </li>
@@ -667,31 +586,10 @@
 <span class="sb">`sessions.active`</span> <span class="o">=</span> <span class="nx">Set</span><span class="o">&lt;</span><span class="nx">string</span><span class="o">&gt;</span>     <span class="c1">// uuids</span>
 <span class="sb">`sessions.terminated`</span> <span class="o">=</span> <span class="nx">Set</span><span class="o">&lt;</span><span class="nx">string</span><span class="o">&gt;</span> <span class="c1">// uuids</span>
 </code></pre></div>
-<h3 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code><span class="sb">`timeouts`</span> <span class="o">=</span> <span class="nx">Hashes</span> <span class="p">{</span>
-    <span class="nx">queue</span> <span class="o">=</span> <span class="nx">number</span>                  <span class="c1">// seconds</span>
-    <span class="nx">scheduling</span> <span class="o">=</span> <span class="nx">number</span>             <span class="c1">// seconds</span>
-    <span class="nx">nodeStartup</span> <span class="o">=</span> <span class="nx">number</span>            <span class="c1">// seconds</span>
-    <span class="nx">driverStartup</span> <span class="o">=</span> <span class="nx">number</span>          <span class="c1">// seconds</span>
-    <span class="nx">sessionTermination</span> <span class="o">=</span> <span class="nx">number</span>     <span class="c1">// seconds</span>
-    <span class="nx">slotReclaimInterval</span> <span class="o">=</span> <span class="nx">number</span>    <span class="c1">// seconds</span>
-<span class="p">}</span>
-</code></pre></div>
-<h3 id="manager">Manager<a class="headerlink" href="#manager" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code><span class="sb">`manager:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:host`</span> <span class="o">=</span> <span class="nx">number</span> <span class="nx">EX</span> <span class="mf">120</span><span class="nx">s</span>           <span class="c1">// (host + port)</span>
-</code></pre></div>
 <h3 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code><span class="c1">// SID = storage ID</span>
-<span class="c1">// PID = randomly generated ephemeral provider ID</span>
-<span class="sb">`storage:</span><span class="si">${</span><span class="nx">SID</span><span class="si">}</span><span class="sb">:</span><span class="si">${</span><span class="nx">PID</span><span class="si">}</span><span class="sb">:host`</span> <span class="o">=</span> <span class="nx">string</span> <span class="nx">EX</span> <span class="mf">60</span><span class="nx">s</span>    <span class="c1">// (host + port)</span>
-
-<span class="sb">`storage:</span><span class="si">${</span><span class="nx">SID</span><span class="si">}</span><span class="sb">:metadata.pending`</span> <span class="o">=</span> <span class="nx">List</span><span class="o">&lt;</span><span class="nx">FileMetadata</span><span class="o">&gt;</span>  <span class="c1">// see below</span>
+<div class="highlight"><pre><span></span><code><span class="sb">`storage:</span><span class="si">${</span><span class="nx">SID</span><span class="si">}</span><span class="sb">:metadata.pending`</span> <span class="o">=</span> <span class="nx">List</span><span class="o">&lt;</span><span class="nx">FileMetadata</span><span class="o">&gt;</span>  <span class="c1">// see below</span>
 </code></pre></div>
 <p>To optimise storage performance and reduce the need for database synchronization, metadata of newly created and modified files is not written to the storage database by the writing service directly. Instead, the relevant metadata is collected and appended to the <code>:metadata.pending</code> list. The corresponding storage service will then update its internal database with this information by continously watching this list and pulling new metadata.</p>
-<h3 id="api">API<a class="headerlink" href="#api" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code><span class="c1">// AID = randomly generated ephemeral server ID</span>
-<span class="sb">`api:</span><span class="si">${</span><span class="nx">AID</span><span class="si">}</span><span class="sb">:host`</span> <span class="o">=</span> <span class="nx">string</span> <span class="nx">EX</span> <span class="mf">60</span><span class="nx">s</span>               <span class="c1">// (host + port)</span>
-</code></pre></div>
 <h3 id="sessions">Sessions<a class="headerlink" href="#sessions" title="Permanent link">¶</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1">// ID = unique, external session identifier</span>
 <span class="sb">`session:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:heartbeat.node`</span> <span class="o">=</span> <span class="nx">string</span> <span class="nx">EX</span> <span class="mf">60</span><span class="nx">s</span>      <span class="c1">// RFC 3339</span>
@@ -699,13 +597,6 @@
 
 <span class="sb">`session:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:slot`</span> <span class="o">=</span> <span class="nx">string</span>                       <span class="c1">// slot ID</span>
 <span class="sb">`session:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:orchestrator`</span> <span class="o">=</span> <span class="nx">List</span><span class="o">&lt;</span><span class="nx">string</span><span class="o">&gt;</span>         <span class="c1">// orchestrator ID</span>
-
-<span class="sb">`session:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:log`</span> <span class="o">=</span> <span class="nx">Stream</span> <span class="p">{</span>
-    <span class="nx">component</span> <span class="o">=</span> <span class="s1">'node'</span> <span class="o">|</span> <span class="s1">'orchestrator'</span> <span class="o">|</span> <span class="s1">'manager'</span> <span class="o">|</span> <span class="s1">'proxy'</span>
-    <span class="nx">level</span> <span class="o">=</span> <span class="s1">'info'</span> <span class="o">|</span> <span class="s1">'warn'</span> <span class="o">|</span> <span class="s1">'fail'</span>
-    <span class="nx">code</span> <span class="o">=</span> <span class="nx">string</span>                                   <span class="c1">// event type, see below</span>
-    <span class="nx">meta</span> <span class="o">=</span> <span class="nx">string</span>                                   <span class="c1">// additional information</span>
-<span class="p">}</span>
 
 <span class="sb">`session:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:status`</span> <span class="o">=</span> <span class="nx">Hashes</span> <span class="p">{</span>
     <span class="nx">queuedAt</span> <span class="o">=</span> <span class="nx">string</span>                               <span class="c1">// RFC 3339</span>
@@ -724,18 +615,6 @@
     <span class="nx">build</span> <span class="o">=</span> <span class="nx">string</span>
 <span class="p">}</span>
 
-<span class="sb">`session:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:upstream`</span> <span class="o">=</span> <span class="nx">Hashes</span> <span class="p">{</span>
-    <span class="nx">host</span> <span class="o">=</span> <span class="nx">string</span>
-    <span class="nx">port</span> <span class="o">=</span> <span class="nx">number</span>
-    <span class="nx">driverSessionID</span> <span class="o">=</span> <span class="nx">string</span>
-<span class="p">}</span>
-
-<span class="sb">`session:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:downstream`</span> <span class="o">=</span> <span class="nx">Hashes</span> <span class="p">{</span>
-    <span class="nx">host</span> <span class="o">=</span> <span class="nx">string</span>
-    <span class="nx">userAgent</span> <span class="o">=</span> <span class="nx">string</span>
-    <span class="nx">lastSeen</span> <span class="o">=</span> <span class="nx">string</span>                               <span class="c1">// RFC 3339</span>
-<span class="p">}</span>
-
 <span class="sb">`session:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:storage`</span> <span class="o">=</span> <span class="nx">string</span>                    <span class="c1">// storage ID</span>
 
 <span class="sb">`session:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">:telemetry.creation`</span> <span class="o">=</span> <span class="nx">Hashes</span> <span class="p">{</span>
@@ -743,189 +622,6 @@
     <span class="nx">context</span> <span class="o">=</span> <span class="nx">string</span>                                <span class="c1">// serialized span context</span>
 <span class="p">}</span>
 </code></pre></div>
-<h4 id="log-event-codes">Log event codes<a class="headerlink" href="#log-event-codes" title="Permanent link">¶</a></h4>
-<p>During the lifecycle of a session each component generates status codes for tracing purposes.</p>
-<h5 id="node">Node<a class="headerlink" href="#node" title="Permanent link">¶</a></h5>
-<table>
-<thead>
-<tr>
-<th align="left">Level</th>
-<th align="left">Code</th>
-<th align="left">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="left">Info</td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>BOOT</code></td>
-<td align="left">node has become active</td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>DSTART</code></td>
-<td align="left">driver in startup</td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>DALIVE</code></td>
-<td align="left">driver has become responsive</td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>LSINIT</code></td>
-<td align="left">local session created</td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>CLOSED</code></td>
-<td align="left">session closed by downstream client</td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>HALT</code></td>
-<td align="left">node enters shutdown</td>
-</tr>
-<tr>
-<td align="left">Fail</td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>DTIMEOUT</code></td>
-<td align="left">driver has not become responsive</td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>DFAILURE</code></td>
-<td align="left">driver process reported an error</td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>STIMEOUT</code></td>
-<td align="left">session has been inactive too long</td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>TERM</code></td>
-<td align="left">node terminates due to fault condition</td>
-</tr>
-</tbody>
-</table>
-<h5 id="orchestrator">Orchestrator<a class="headerlink" href="#orchestrator" title="Permanent link">¶</a></h5>
-<table>
-<thead>
-<tr>
-<th align="left">Level</th>
-<th align="left">Code</th>
-<th align="left">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="left">Info</td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>SCHED</code></td>
-<td align="left">node is being scheduled for startup</td>
-</tr>
-<tr>
-<td align="left">Fail</td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>STARTFAIL</code></td>
-<td align="left">creation/startup failure</td>
-</tr>
-</tbody>
-</table>
-<h5 id="manager_1">Manager<a class="headerlink" href="#manager_1" title="Permanent link">¶</a></h5>
-<table>
-<thead>
-<tr>
-<th align="left">Level</th>
-<th align="left">Code</th>
-<th align="left">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="left">Info</td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>QUEUED</code></td>
-<td align="left">session has been queued at orchestrators</td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>NALLOC</code></td>
-<td align="left">node slot has been allocated</td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>PENDING</code></td>
-<td align="left">awaiting node startup</td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>NALIVE</code></td>
-<td align="left">node has become responsive, client served</td>
-</tr>
-<tr>
-<td align="left">Warn</td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>CLEFT</code></td>
-<td align="left">client left before scheduling completed</td>
-</tr>
-<tr>
-<td align="left">Fail</td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>INVALIDCAP</code></td>
-<td align="left">invalid capabilities requested</td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>QUNAVAILABLE</code></td>
-<td align="left">no orchestrator can satisfy the capabilities</td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>QTIMEOUT</code></td>
-<td align="left">timed out waiting in queue</td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>OTIMEOUT</code></td>
-<td align="left">timed out waiting for orchestrator to schedule node</td>
-</tr>
-<tr>
-<td align="left"></td>
-<td align="left"><code>NTIMEOUT</code></td>
-<td align="left">timed out waiting for node to become responsive</td>
-</tr>
-</tbody>
-</table>
 <h3 id="orchestrators">Orchestrators<a class="headerlink" href="#orchestrators" title="Permanent link">¶</a></h3>
 <div class="highlight"><pre><span></span><code><span class="sb">`orchestrator:</span><span class="si">${</span><span class="nx">ID</span><span class="si">}</span><span class="sb">`</span> <span class="o">=</span> <span class="nx">Hashes</span> <span class="p">{</span>
     <span class="nx">type</span> <span class="o">=</span> <span class="s1">'local'</span> <span class="o">|</span> <span class="s1">'docker'</span> <span class="o">|</span> <span class="s1">'k8s'</span>
@@ -983,7 +679,7 @@
     <span class="o">&lt;</span><span class="nx">session</span><span class="o">-</span><span class="nx">log</span><span class="o">-</span><span class="nx">code</span><span class="o">&gt;</span> <span class="o">=</span> <span class="nx">number</span>
 <span class="p">}</span>
 </code></pre></div>
-<h4 id="orchestrator_1">Orchestrator<a class="headerlink" href="#orchestrator_1" title="Permanent link">¶</a></h4>
+<h4 id="orchestrator">Orchestrator<a class="headerlink" href="#orchestrator" title="Permanent link">¶</a></h4>
 <div class="highlight"><pre><span></span><code><span class="sb">`metrics:slots:reclaimed.total`</span> <span class="o">=</span> <span class="nx">Hashes</span> <span class="p">{</span>
     <span class="nx">dead</span> <span class="o">=</span> <span class="nx">number</span>
     <span class="nx">orphaned</span> <span class="o">=</span> <span class="nx">number</span>
@@ -1004,7 +700,7 @@
 <div class="md-source-date">
 <small>
     
-      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">May 10, 2021</span>
+      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">May 15, 2021</span>
 </small>
 </div>
 </article>

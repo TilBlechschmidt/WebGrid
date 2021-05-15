@@ -198,27 +198,6 @@
 <span id="195">195</span>
 <span id="196">196</span>
 <span id="197">197</span>
-<span id="198">198</span>
-<span id="199">199</span>
-<span id="200">200</span>
-<span id="201">201</span>
-<span id="202">202</span>
-<span id="203">203</span>
-<span id="204">204</span>
-<span id="205">205</span>
-<span id="206">206</span>
-<span id="207">207</span>
-<span id="208">208</span>
-<span id="209">209</span>
-<span id="210">210</span>
-<span id="211">211</span>
-<span id="212">212</span>
-<span id="213">213</span>
-<span id="214">214</span>
-<span id="215">215</span>
-<span id="216">216</span>
-<span id="217">217</span>
-<span id="218">218</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Redis database keys</span>
 <span class="doccomment">//!</span>
@@ -226,6 +205,8 @@
 <span class="doccomment">//! In the future this will be extracted to the constants file.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! The keys are stored in submodules organised by components.</span>
+
+<span class="kw">use</span> <span class="ident">uuid</span>::<span class="ident">Uuid</span>;
 
 <span class="macro">macro_rules</span><span class="macro">!</span> <span class="ident">static_keys</span> {
     ($(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">name</span>:<span class="ident">ident</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">value</span>:<span class="ident">expr</span>;)<span class="op">+</span>) <span class="op">=</span><span class="op">&gt;</span> {
@@ -239,6 +220,15 @@
 
 <span class="macro">static_keys</span><span class="macro">!</span> {
     <span class="ident">HEARTBEAT_REFRESH_CHANNEL</span> <span class="op">=</span> <span class="string">&quot;heartbeat-refresh&quot;</span>.<span class="ident">to_string</span>();
+    <span class="ident">DISCOVERY</span> <span class="op">=</span> <span class="string">&quot;discovery&quot;</span>.<span class="ident">to_string</span>();
+}
+
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">discovery</span>(<span class="ident">service</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">id</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Uuid</span><span class="op">&gt;</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
+    <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">id</span>) <span class="op">=</span> <span class="ident">id</span> {
+        <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}.{}:{}&quot;</span>, <span class="kw-2">*</span><span class="ident">DISCOVERY</span>, <span class="ident">service</span>, <span class="ident">id</span>)
+    } <span class="kw">else</span> {
+        <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}.{}&quot;</span>, <span class="kw-2">*</span><span class="ident">DISCOVERY</span>, <span class="ident">service</span>)
+    }
 }
 
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">orchestrator</span> {
@@ -305,16 +295,6 @@
     }
 }
 
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">manager</span> {
-    <span class="kw">fn</span> <span class="ident">manager_prefix</span>(<span class="ident">manager_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
-        <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;manager:{}&quot;</span>, <span class="ident">manager_id</span>)
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">host</span>(<span class="ident">manager_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
-        <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}:host&quot;</span>, <span class="ident">manager_prefix</span>(<span class="ident">manager_id</span>))
-    }
-}
-
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">session</span> {
     <span class="macro">static_keys</span><span class="macro">!</span> {
         <span class="ident">LIST_ACTIVE</span> <span class="op">=</span> <span class="string">&quot;sessions.active&quot;</span>.<span class="ident">to_string</span>();
@@ -335,14 +315,6 @@
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">metadata</span>(<span class="ident">session_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
         <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}:metadata&quot;</span>, <span class="ident">session_prefix</span>(<span class="ident">session_id</span>))
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">upstream</span>(<span class="ident">session_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
-        <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}:upstream&quot;</span>, <span class="ident">session_prefix</span>(<span class="ident">session_id</span>))
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">downstream</span>(<span class="ident">session_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
-        <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}:downstream&quot;</span>, <span class="ident">session_prefix</span>(<span class="ident">session_id</span>))
     }
 
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">slot</span>(<span class="ident">session_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
@@ -381,10 +353,6 @@
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">storage</span> {
     <span class="kw">fn</span> <span class="ident">storage_prefix</span>(<span class="ident">storage_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
         <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;storage:{}&quot;</span>, <span class="ident">storage_id</span>)
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">host</span>(<span class="ident">storage_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">provider_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
-        <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}:{}:host&quot;</span>, <span class="ident">storage_prefix</span>(<span class="ident">storage_id</span>), <span class="ident">provider_id</span>)
     }
 
     <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">metadata</span> {
@@ -426,16 +394,6 @@
             <span class="ident">CAPACITY</span> <span class="op">=</span> <span class="string">&quot;metrics:storage:disk.bytes.total&quot;</span>.<span class="ident">to_string</span>();
             <span class="ident">USAGE</span> <span class="op">=</span> <span class="string">&quot;metrics:storage:disk.bytes.used&quot;</span>.<span class="ident">to_string</span>();
         }
-    }
-}
-
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">api</span> {
-    <span class="kw">fn</span> <span class="ident">api_prefix</span>(<span class="ident">api_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
-        <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;api:{}&quot;</span>, <span class="ident">api_id</span>)
-    }
-
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">host</span>(<span class="ident">api_id</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
-        <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}:host&quot;</span>, <span class="ident">api_prefix</span>(<span class="ident">api_id</span>))
     }
 }
 </pre></div>

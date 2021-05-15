@@ -48,7 +48,6 @@
 <span id="45">45</span>
 <span id="46">46</span>
 <span id="47">47</span>
-<span id="48">48</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::<span class="kw">super</span>::<span class="ident">Context</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">helpers</span>::<span class="ident">keys</span>;
@@ -63,7 +62,6 @@
 <span class="kw">use</span> <span class="ident">log</span>::<span class="ident">debug</span>;
 <span class="kw">use</span> <span class="ident">redis</span>::<span class="ident">AsyncCommands</span>;
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">MetadataJob</span> {}
 
 <span class="attribute">#[<span class="ident">async_trait</span>]</span>
@@ -81,7 +79,7 @@
 
         <span class="kw">loop</span> {
             <span class="kw">let</span> (<span class="kw">_</span>, <span class="ident">raw_metadata</span>): (<span class="ident">String</span>, <span class="ident">String</span>) <span class="op">=</span> <span class="ident">redis</span>
-                .<span class="ident">blpop</span>(<span class="ident">keys</span>::<span class="ident">storage</span>::<span class="ident">metadata</span>::<span class="ident">pending</span>(<span class="ident">storage_id</span>), <span class="number">0</span>)
+                .<span class="ident">blpop</span>(<span class="ident">keys</span>::<span class="ident">storage</span>::<span class="ident">metadata</span>::<span class="ident">pending</span>(<span class="kw-2">&amp;</span><span class="ident">storage_id</span>.<span class="ident">to_string</span>()), <span class="number">0</span>)
                 .<span class="kw">await</span><span class="question-mark">?</span>;
 
             <span class="kw">let</span> <span class="ident">metadata</span>: <span class="ident">FileMetadata</span> <span class="op">=</span> <span class="ident">serde_json</span>::<span class="ident">from_str</span>(<span class="kw-2">&amp;</span><span class="ident">raw_metadata</span>)<span class="question-mark">?</span>;

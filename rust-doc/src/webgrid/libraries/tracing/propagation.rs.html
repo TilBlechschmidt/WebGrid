@@ -60,9 +60,9 @@
             <span class="kw">let</span> <span class="ident">parent_cx</span> <span class="op">=</span>
                 <span class="ident">global</span>::<span class="ident">get_text_map_propagator</span>(<span class="op">|</span><span class="ident">propagator</span><span class="op">|</span> <span class="ident">propagator</span>.<span class="ident">extract</span>(<span class="kw-2">&amp;</span><span class="ident">deserialized</span>));
 
-            <span class="ident">global_tracer</span>().<span class="ident">start_with_context</span>(<span class="ident">span_name</span>, <span class="ident">parent_cx</span>)
+            <span class="ident">global_tracer</span>().<span class="ident">start_with_context</span>(<span class="ident">span_name</span>.<span class="ident">to_owned</span>(), <span class="ident">parent_cx</span>)
         } <span class="kw">else</span> {
-            <span class="ident">global_tracer</span>().<span class="ident">start</span>(<span class="ident">span_name</span>)
+            <span class="ident">global_tracer</span>().<span class="ident">start</span>(<span class="ident">span_name</span>.<span class="ident">to_owned</span>())
         }
     }
 }

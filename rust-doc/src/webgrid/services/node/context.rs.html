@@ -72,6 +72,7 @@
 <span id="69">69</span>
 <span id="70">70</span>
 <span id="71">71</span>
+<span id="72">72</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">tasks</span>::<span class="ident">DriverReference</span>, <span class="ident">Options</span>};
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">resources</span>::<span class="ident">DefaultResourceManager</span>;
@@ -81,24 +82,25 @@
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">ops</span>::<span class="ident">Deref</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">Arc</span>;
 <span class="kw">use</span> <span class="ident">tokio</span>::{<span class="ident">fs</span>::<span class="ident">File</span>, <span class="ident">sync</span>::<span class="ident">Mutex</span>};
+<span class="kw">use</span> <span class="ident">uuid</span>::<span class="ident">Uuid</span>;
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Context</span> {
     <span class="ident">resource_manager</span>: <span class="ident">DefaultResourceManager</span>,
     <span class="kw">pub</span> <span class="ident">driver_reference</span>: <span class="ident">DriverReference</span>,
     <span class="kw">pub</span> <span class="ident">heart_beat</span>: <span class="ident">HeartBeat</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">DefaultResourceManager</span><span class="op">&gt;</span>,
-    <span class="kw">pub</span> <span class="ident">id</span>: <span class="ident">String</span>,
+    <span class="kw">pub</span> <span class="ident">id</span>: <span class="ident">Uuid</span>,
     <span class="kw">pub</span> <span class="ident">options</span>: <span class="ident">Options</span>,
     <span class="kw">pub</span> <span class="ident">webvtt</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Mutex</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SequentialWebVttWriter</span><span class="op">&lt;</span><span class="ident">File</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Context</span> {
     <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">redis_url</span>: <span class="ident">String</span>, <span class="ident">options</span>: <span class="ident">Options</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">id</span>.<span class="ident">clone</span>();
+        <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="ident">options</span>.<span class="ident">id</span>;
         <span class="kw">let</span> <span class="ident">heart_beat</span> <span class="op">=</span> <span class="ident">HeartBeat</span>::<span class="ident">new</span>();
 
         <span class="ident">heart_beat</span>
-            .<span class="ident">add_beat</span>(<span class="kw-2">&amp;</span><span class="ident">keys</span>::<span class="ident">session</span>::<span class="ident">heartbeat</span>::<span class="ident">node</span>(<span class="kw-2">&amp;</span><span class="ident">id</span>), <span class="number">60</span>, <span class="number">120</span>)
+            .<span class="ident">add_beat</span>(<span class="kw-2">&amp;</span><span class="ident">keys</span>::<span class="ident">session</span>::<span class="ident">heartbeat</span>::<span class="ident">node</span>(<span class="kw-2">&amp;</span><span class="ident">id</span>.<span class="ident">to_string</span>()), <span class="number">60</span>, <span class="number">120</span>)
             .<span class="kw">await</span>;
 
         <span class="self">Self</span> {

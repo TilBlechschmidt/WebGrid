@@ -79,7 +79,6 @@
 <span id="76">76</span>
 <span id="77">77</span>
 <span id="78">78</span>
-<span id="79">79</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::<span class="kw">super</span>::<span class="ident">Context</span>;
 <span class="kw">use</span> <span class="ident">anyhow</span>::<span class="prelude-ty">Result</span>;
@@ -89,7 +88,6 @@
 <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">net</span>::<span class="ident">SocketAddr</span>, <span class="ident">path</span>::<span class="ident">PathBuf</span>};
 <span class="kw">use</span> <span class="ident">warp</span>::{<span class="ident">reply</span>::<span class="ident">Reply</span>, <span class="ident">Filter</span>};
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ServerJob</span> {
     <span class="ident">port</span>: <span class="ident">u16</span>,
     <span class="ident">storage_directory</span>: <span class="ident">PathBuf</span>,
@@ -112,7 +110,7 @@
             .<span class="ident">allow_methods</span>(<span class="macro">vec</span><span class="macro">!</span>[<span class="string">&quot;OPTIONS&quot;</span>, <span class="string">&quot;GET&quot;</span>])
             .<span class="ident">allow_headers</span>(<span class="macro">vec</span><span class="macro">!</span>[<span class="string">&quot;range&quot;</span>]);
 
-        <span class="kw">let</span> <span class="ident">storage</span> <span class="op">=</span> <span class="ident">warp</span>::<span class="ident">path</span>(<span class="ident">manager</span>.<span class="ident">context</span>.<span class="ident">storage_id</span>.<span class="ident">clone</span>())
+        <span class="kw">let</span> <span class="ident">storage</span> <span class="op">=</span> <span class="ident">warp</span>::<span class="ident">path</span>(<span class="ident">manager</span>.<span class="ident">context</span>.<span class="ident">storage_id</span>.<span class="ident">to_string</span>())
             .<span class="ident">and</span>(<span class="ident">warp</span>::<span class="ident">fs</span>::<span class="ident">dir</span>(<span class="self">self</span>.<span class="ident">storage_directory</span>.<span class="ident">clone</span>()))
             .<span class="ident">map</span>(<span class="op">|</span><span class="ident">reply</span>: <span class="ident">warp</span>::<span class="ident">filters</span>::<span class="ident">fs</span>::<span class="ident">File</span><span class="op">|</span> {
                 <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;SERVE {}&quot;</span>, <span class="ident">reply</span>.<span class="ident">path</span>().<span class="ident">display</span>());

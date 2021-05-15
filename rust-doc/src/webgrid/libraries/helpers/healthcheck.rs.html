@@ -110,6 +110,7 @@
 <span id="107">107</span>
 <span id="108">108</span>
 <span id="109">109</span>
+<span id="110">110</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! HTTP healthcheck related functions</span>
 <span class="doccomment">//!</span>
@@ -119,7 +120,7 @@
 <span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">debug</span>, <span class="ident">trace</span>};
 <span class="kw">use</span> <span class="ident">opentelemetry</span>::{
     <span class="ident">global</span>,
-    <span class="ident">trace</span>::{<span class="ident">TraceContextExt</span>, <span class="ident">Tracer</span>},
+    <span class="ident">trace</span>::{<span class="ident">Span</span>, <span class="ident">TraceContextExt</span>, <span class="ident">Tracer</span>},
     <span class="ident">Context</span> <span class="kw">as</span> <span class="ident">TelemetryContext</span>,
 };
 <span class="kw">use</span> <span class="ident">opentelemetry_http</span>::<span class="ident">HeaderInjector</span>;
@@ -128,7 +129,7 @@
 <span class="kw">use</span> <span class="ident">tokio</span>::<span class="ident">time</span>::<span class="ident">sleep</span>;
 <span class="kw">use</span> <span class="ident">tokio</span>::<span class="ident">time</span>::<span class="ident">timeout</span>;
 
-<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">tracing</span>::<span class="ident">global_tracer</span>;
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">tracing</span>::{<span class="ident">constants</span>::<span class="ident">trace</span>, <span class="ident">global_tracer</span>};
 
 <span class="doccomment">/// Sends HTTP requests to the specified URL until either a 200 OK response is received or the timeout is reached</span>
 <span class="kw">pub</span> <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">wait_for</span>(<span class="ident">url</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">timeout_duration</span>: <span class="ident">Duration</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">String</span>, ()<span class="op">&gt;</span> {
@@ -136,14 +137,15 @@
 
     <span class="kw">let</span> <span class="ident">url</span> <span class="op">=</span> <span class="ident">url</span>.<span class="ident">parse</span>::<span class="op">&lt;</span><span class="ident">Uri</span><span class="op">&gt;</span>().<span class="ident">unwrap</span>();
 
-    <span class="kw">let</span> <span class="ident">check_interval</span> <span class="op">=</span> <span class="ident">Duration</span>::<span class="ident">from_millis</span>(<span class="number">150</span>);
+    <span class="kw">let</span> <span class="ident">check_interval</span> <span class="op">=</span> <span class="ident">Duration</span>::<span class="ident">from_millis</span>(<span class="number">250</span>);
     <span class="kw">let</span> <span class="ident">request_timeout</span> <span class="op">=</span> <span class="ident">Duration</span>::<span class="ident">from_millis</span>(<span class="number">1000</span>);
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">remaining_duration</span> <span class="op">=</span> <span class="ident">timeout_duration</span>;
 
     <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;Awaiting 200 OK response from {}&quot;</span>, <span class="ident">url</span>);
 
     <span class="kw">loop</span> {
-        <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="ident">global_tracer</span>().<span class="ident">start</span>(<span class="string">&quot;Sending healthcheck request&quot;</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">span</span> <span class="op">=</span> <span class="ident">global_tracer</span>().<span class="ident">start</span>(<span class="string">&quot;Sending healthcheck request&quot;</span>);
+        <span class="ident">span</span>.<span class="ident">set_attribute</span>(<span class="ident">trace</span>::<span class="ident">NET_UPSTREAM_NAME</span>.<span class="ident">string</span>(<span class="ident">url</span>.<span class="ident">to_string</span>()));
         <span class="kw">let</span> <span class="ident">telemetry_context</span> <span class="op">=</span> <span class="ident">TelemetryContext</span>::<span class="ident">current_with_span</span>(<span class="ident">span</span>);
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">req</span> <span class="op">=</span> <span class="ident">hyper</span>::<span class="ident">Request</span>::<span class="ident">new</span>(<span class="ident">hyper</span>::<span class="ident">Body</span>::<span class="ident">default</span>());

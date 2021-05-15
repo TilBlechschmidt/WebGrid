@@ -8,13 +8,11 @@
 <span id="5">5</span>
 <span id="6">6</span>
 <span id="7">7</span>
-<span id="8">8</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Service lifecycle functions</span>
 
 <span class="kw">mod</span> <span class="ident">heart</span>;
 <span class="kw">mod</span> <span class="ident">heart_beat</span>;
-<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">logging</span>;
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">heart</span>::{<span class="ident">DeathReason</span>, <span class="ident">Heart</span>, <span class="ident">HeartStone</span>};
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">heart_beat</span>::{<span class="ident">BeatValue</span>, <span class="ident">HeartBeat</span>};

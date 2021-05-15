@@ -26,11 +26,7 @@
 <span id="23">23</span>
 <span id="24">24</span>
 <span id="25">25</span>
-<span id="26">26</span>
-<span id="27">27</span>
-<span id="28">28</span>
 </pre><div class="example-wrap"><pre class="rust ">
-<span class="kw">use</span> <span class="kw">super</span>::<span class="ident">routing_info</span>::<span class="ident">RoutingInfo</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::{
     <span class="ident">metrics</span>::<span class="ident">MetricsProcessor</span>,
     <span class="ident">resources</span>::{<span class="ident">DefaultResourceManager</span>, <span class="ident">ResourceManagerProvider</span>},
@@ -39,7 +35,6 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Context</span> {
     <span class="ident">resource_manager</span>: <span class="ident">DefaultResourceManager</span>,
-    <span class="kw">pub</span> <span class="ident">routing_info</span>: <span class="ident">RoutingInfo</span>,
     <span class="kw">pub</span> <span class="ident">metrics</span>: <span class="ident">MetricsProcessor</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">DefaultResourceManager</span><span class="op">&gt;</span>,
 }
 
@@ -47,7 +42,6 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">redis_url</span>: <span class="ident">String</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">resource_manager</span>: <span class="ident">DefaultResourceManager</span>::<span class="ident">new</span>(<span class="ident">redis_url</span>),
-            <span class="ident">routing_info</span>: <span class="ident">RoutingInfo</span>::<span class="ident">new</span>(),
             <span class="ident">metrics</span>: <span class="ident">MetricsProcessor</span>::<span class="ident">default</span>(),
         }
     }

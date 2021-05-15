@@ -289,7 +289,6 @@
 <span id="286">286</span>
 <span id="287">287</span>
 <span id="288">288</span>
-<span id="289">289</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">super</span>::<span class="kw">super</span>::<span class="ident">Context</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">libraries</span>::<span class="ident">resources</span>::{<span class="ident">ResourceManager</span>, <span class="ident">ResourceManagerProvider</span>};
@@ -324,7 +323,6 @@
     <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">SESSION_RE</span>: <span class="ident">Regex</span> <span class="op">=</span> <span class="ident">Regex</span>::<span class="ident">new</span>(<span class="string">r&quot;/session/(?P&lt;sid&gt;[^/]*)(?:/(?P&lt;op&gt;.+))?&quot;</span>).<span class="ident">unwrap</span>();
 }
 
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ProxyJob</span> {
     <span class="ident">client</span>: <span class="ident">HttpClient</span><span class="op">&lt;</span><span class="ident">HttpConnector</span><span class="op">&gt;</span>,
     <span class="ident">internal_session_id</span>: <span class="ident">String</span>,
@@ -354,7 +352,7 @@
         <span class="kw">let</span> <span class="ident">redis</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="macro">with_shared_redis_resource</span><span class="macro">!</span>(<span class="ident">manager</span>)));
         <span class="kw">let</span> <span class="ident">request_context</span> <span class="op">=</span> <span class="ident">RequestContext</span> {
             <span class="ident">internal_session_id</span>: <span class="self">self</span>.<span class="ident">internal_session_id</span>.<span class="ident">clone</span>(),
-            <span class="ident">external_session_id</span>: <span class="ident">manager</span>.<span class="ident">context</span>.<span class="ident">id</span>.<span class="ident">clone</span>(),
+            <span class="ident">external_session_id</span>: <span class="ident">manager</span>.<span class="ident">context</span>.<span class="ident">id</span>.<span class="ident">to_string</span>(),
             <span class="ident">client</span>: <span class="self">self</span>.<span class="ident">client</span>.<span class="ident">clone</span>(),
             <span class="ident">heart_stone</span>: <span class="self">self</span>.<span class="ident">heart_stone</span>.<span class="ident">clone</span>(),
             <span class="ident">context</span>: <span class="ident">manager</span>.<span class="ident">context</span>.<span class="ident">clone</span>(),
@@ -452,7 +450,7 @@
         <span class="kw">let</span> <span class="ident">parent_cx</span> <span class="op">=</span> <span class="ident">global</span>::<span class="ident">get_text_map_propagator</span>(<span class="op">|</span><span class="ident">propagator</span><span class="op">|</span> {
             <span class="ident">propagator</span>.<span class="ident">extract</span>(<span class="kw-2">&amp;</span><span class="ident">HeaderExtractor</span>(<span class="ident">req</span>.<span class="ident">headers</span>()))
         });
-        <span class="kw">let</span> <span class="ident">span</span> <span class="op">=</span> <span class="ident">global_tracer</span>().<span class="ident">start_with_context</span>(<span class="string">&quot;Forward to driver&quot;</span>, <span class="ident">parent_cx</span>);
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">span</span> <span class="op">=</span> <span class="ident">global_tracer</span>().<span class="ident">start_with_context</span>(<span class="string">&quot;Forward to driver&quot;</span>, <span class="ident">parent_cx</span>);
 
         <span class="comment">// Reset the lifetime</span>
         <span class="ident">ctx</span>.<span class="ident">heart_stone</span>.<span class="ident">reset_lifetime</span>().<span class="kw">await</span>;
@@ -521,7 +519,7 @@
 
         <span class="comment">// Dispatch the request</span>
         <span class="kw">let</span> <span class="ident">telemetry_context</span> <span class="op">=</span> <span class="ident">TelemetryContext</span>::<span class="ident">current_with_span</span>(<span class="ident">span</span>);
-        <span class="kw">let</span> <span class="ident">driver_span</span> <span class="op">=</span>
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">driver_span</span> <span class="op">=</span>
             <span class="ident">global_tracer</span>().<span class="ident">start_with_context</span>(<span class="string">&quot;WebDriver internal&quot;</span>, <span class="ident">telemetry_context</span>.<span class="ident">clone</span>());
         <span class="kw">match</span> <span class="ident">proxy_request</span>.<span class="kw">await</span> {
             <span class="prelude-val">Ok</span>(<span class="ident">driver_response</span>) <span class="op">=</span><span class="op">&gt;</span> {

@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["LogCode","Log event types"],["LogLevel","Message criticality"]],"struct":[["Logger","Database logging facility"],["SessionLogger","Wrapper around logger that stores the session_id"]]});

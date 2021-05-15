@@ -1,1 +1,1 @@
-initSidebarItems({"mod":[["api",""],["manager",""],["metrics",""],["orchestrator",""],["session",""],["storage",""]],"struct":[["HEARTBEAT_REFRESH_CHANNEL",""]]});
+initSidebarItems({"fn":[["discovery",""]],"mod":[["metrics",""],["orchestrator",""],["session",""],["storage",""]],"struct":[["DISCOVERY",""],["HEARTBEAT_REFRESH_CHANNEL",""]]});

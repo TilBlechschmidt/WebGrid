@@ -180,13 +180,27 @@
 <span id="177">177</span>
 <span id="178">178</span>
 <span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Session provider and driver manager</span>
 
 <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">SharedOptions</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::{
     <span class="ident">libraries</span>::{
-        <span class="ident">helpers</span>::<span class="ident">constants</span>,
+        <span class="ident">helpers</span>::{<span class="ident">constants</span>, <span class="ident">parse_seconds</span>},
+        <span class="ident">net</span>::{<span class="ident">advertise</span>::<span class="ident">ServiceAdvertisorJob</span>, <span class="ident">discovery</span>::<span class="ident">ServiceDescriptor</span>},
         <span class="ident">recording</span>::<span class="ident">VideoQualityPreset</span>,
         <span class="ident">tracing</span>::{<span class="self">self</span>, <span class="ident">constants</span>::<span class="ident">service</span>},
     },
@@ -196,8 +210,9 @@
 <span class="kw">use</span> <span class="ident">jatsl</span>::{<span class="ident">schedule</span>, <span class="ident">JobScheduler</span>, <span class="ident">StatusServer</span>};
 <span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">info</span>, <span class="ident">warn</span>};
 <span class="kw">use</span> <span class="ident">opentelemetry</span>::<span class="ident">trace</span>::<span class="ident">TraceContextExt</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">path</span>::<span class="ident">PathBuf</span>;
+<span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">path</span>::<span class="ident">PathBuf</span>, <span class="ident">time</span>::<span class="ident">Duration</span>};
 <span class="kw">use</span> <span class="ident">structopt</span>::<span class="ident">StructOpt</span>;
+<span class="kw">use</span> <span class="ident">uuid</span>::<span class="ident">Uuid</span>;
 
 <span class="kw">mod</span> <span class="ident">context</span>;
 <span class="kw">mod</span> <span class="ident">jobs</span>;
@@ -206,9 +221,7 @@
 
 <span class="kw">use</span> <span class="ident">context</span>::<span class="ident">Context</span>;
 <span class="kw">use</span> <span class="ident">jobs</span>::{<span class="ident">ProxyJob</span>, <span class="ident">RecorderJob</span>};
-<span class="kw">use</span> <span class="ident">tasks</span>::{
-    <span class="ident">initialize_service</span>, <span class="ident">initialize_session</span>, <span class="ident">log_exit</span>, <span class="ident">start_driver</span>, <span class="ident">stop_driver</span>, <span class="ident">terminate</span>,
-};
+<span class="kw">use</span> <span class="ident">tasks</span>::{<span class="ident">initialize_service</span>, <span class="ident">initialize_session</span>, <span class="ident">start_driver</span>, <span class="ident">stop_driver</span>, <span class="ident">terminate</span>};
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">StructOpt</span>, <span class="ident">Clone</span>)]</span>
 <span class="doccomment">/// Session provider</span>
@@ -218,7 +231,11 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Options</span> {
     <span class="doccomment">/// Unique instance identifier</span>
     <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">env</span>)]</span>
-    <span class="ident">id</span>: <span class="ident">String</span>,
+    <span class="ident">id</span>: <span class="ident">Uuid</span>,
+
+    <span class="doccomment">/// Host under which the node server is reachable by the proxy</span>
+    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span>, <span class="ident">env</span>)]</span>
+    <span class="ident">host</span>: <span class="ident">String</span>,
 
     <span class="doccomment">/// Port on which the HTTP server will listen</span>
     <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">short</span>, <span class="ident">long</span>, <span class="ident">default_value</span> <span class="op">=</span> <span class="ident">constants</span>::<span class="ident">PORT_NODE</span>)]</span>
@@ -286,6 +303,14 @@
     <span class="doccomment">/// https://trac.ffmpeg.org/wiki/Encode/H.264</span>
     <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span>, <span class="ident">env</span>, <span class="ident">default_value</span> <span class="op">=</span> <span class="string">&quot;450000&quot;</span>)]</span>
     <span class="ident">max_bitrate</span>: <span class="ident">usize</span>,
+
+    <span class="doccomment">/// Maximum idle duration after which the node self-terminates; in seconds</span>
+    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span>, <span class="ident">env</span>, <span class="ident">default_value</span> <span class="op">=</span> <span class="string">&quot;300&quot;</span>, <span class="ident">parse</span>(<span class="ident">try_from_str</span> <span class="op">=</span> <span class="ident">parse_seconds</span>))]</span>
+    <span class="ident">timeout_idle</span>: <span class="ident">Duration</span>,
+
+    <span class="doccomment">/// Maximum duration the WebDriver may take to become responsive; in seconds</span>
+    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span>, <span class="ident">env</span>, <span class="ident">default_value</span> <span class="op">=</span> <span class="string">&quot;30&quot;</span>, <span class="ident">parse</span>(<span class="ident">try_from_str</span> <span class="op">=</span> <span class="ident">parse_seconds</span>))]</span>
+    <span class="ident">timeout_driver_startup</span>: <span class="ident">Duration</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Options</span> {
@@ -300,6 +325,7 @@
     <span class="ident">context</span>: <span class="kw-2">&amp;</span><span class="ident">Context</span>,
 ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">scheduler</span> <span class="op">=</span> <span class="ident">JobScheduler</span>::<span class="ident">default</span>();
+    <span class="kw">let</span> <span class="ident">endpoint</span> <span class="op">=</span> <span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{}:{}&quot;</span>, <span class="ident">options</span>.<span class="ident">host</span>, <span class="ident">options</span>.<span class="ident">port</span>);
 
     <span class="kw">let</span> <span class="ident">telemetry_context</span> <span class="op">=</span>
         <span class="ident">JobScheduler</span>::<span class="ident">spawn_task</span>(<span class="kw-2">&amp;</span><span class="ident">initialize_tracing</span>, <span class="ident">context</span>.<span class="ident">clone</span>()).<span class="kw">await</span><span class="question-mark">?</span><span class="question-mark">?</span><span class="question-mark">?</span>;
@@ -324,18 +350,18 @@
     <span class="kw">let</span> <span class="ident">heart_beat_job</span> <span class="op">=</span> <span class="ident">context</span>.<span class="ident">heart_beat</span>.<span class="ident">clone</span>();
     <span class="kw">let</span> <span class="ident">proxy_job</span> <span class="op">=</span> <span class="ident">ProxyJob</span>::<span class="ident">new</span>(<span class="ident">options</span>.<span class="ident">port</span>, <span class="ident">internal_session_id</span>, <span class="ident">heart_stone</span>);
     <span class="kw">let</span> <span class="ident">recorder_job</span> <span class="op">=</span> <span class="ident">RecorderJob</span>::<span class="ident">new</span>();
+    <span class="kw">let</span> <span class="ident">advertise_job</span> <span class="op">=</span> <span class="ident">ServiceAdvertisorJob</span>::<span class="ident">new</span>(<span class="ident">ServiceDescriptor</span>::<span class="ident">Node</span>(<span class="ident">options</span>.<span class="ident">id</span>), <span class="ident">endpoint</span>);
 
     <span class="macro">schedule</span><span class="macro">!</span>(<span class="ident">scheduler</span>, <span class="ident">context</span>, {
         <span class="ident">status_job</span>,
         <span class="ident">heart_beat_job</span>,
         <span class="ident">proxy_job</span>,
         <span class="ident">recorder_job</span>,
+        <span class="ident">advertise_job</span>
     });
 
     <span class="kw">let</span> <span class="ident">death_reason</span> <span class="op">=</span> <span class="ident">heart</span>.<span class="ident">death</span>().<span class="kw">await</span>;
     <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;Heart died: {}&quot;</span>, <span class="ident">death_reason</span>);
-
-    <span class="ident">JobScheduler</span>::<span class="ident">spawn_task</span>(<span class="kw-2">&amp;</span><span class="ident">log_exit</span>(<span class="ident">death_reason</span>), <span class="ident">context</span>.<span class="ident">clone</span>()).<span class="kw">await</span><span class="question-mark">?</span><span class="question-mark">?</span><span class="question-mark">?</span>;
 
     <span class="ident">scheduler</span>.<span class="ident">terminate_jobs</span>().<span class="kw">await</span>;
 
@@ -348,7 +374,7 @@
     <span class="ident">tracing</span>::<span class="ident">init</span>(
         <span class="kw-2">&amp;</span><span class="ident">shared_options</span>.<span class="ident">trace_endpoint</span>,
         <span class="ident">service</span>::<span class="ident">NODE</span>,
-        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">options</span>.<span class="ident">id</span>),
+        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="ident">options</span>.<span class="ident">id</span>.<span class="ident">to_string</span>()),
     )<span class="question-mark">?</span>;
 
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span> <span class="ident">launch_session</span>(<span class="ident">shared_options</span>, <span class="ident">options</span>, <span class="kw-2">&amp;</span><span class="ident">context</span>).<span class="kw">await</span> {
