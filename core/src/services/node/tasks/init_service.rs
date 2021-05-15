@@ -6,15 +6,11 @@ use crate::libraries::{
     tracing::global_tracer,
 };
 use crate::with_redis_resource;
-use crate::{
-    libraries::helpers::{keys, Timeout},
-    services::node::context::StartupContext,
-};
+use crate::{libraries::helpers::keys, services::node::context::StartupContext};
 use jatsl::TaskManager;
 use log::error;
 use opentelemetry::trace::{Span, Tracer};
 use redis::AsyncCommands;
-use std::time::Duration;
 
 pub async fn initialize_service(
     manager: TaskManager<StartupContext>,
@@ -26,9 +22,7 @@ pub async fn initialize_service(
         manager.context.telemetry_context.clone(),
     );
 
-    let (heart, heart_stone) = Heart::with_lifetime(Duration::from_secs(
-        Timeout::SessionTermination.get(&mut con).await as u64,
-    ));
+    let (heart, heart_stone) = Heart::with_lifetime(manager.context.options.timeout_idle);
 
     if let Some(storage_directory) = &manager.context.options.storage_directory {
         span.add_event("Load storage information".to_string(), vec![]);

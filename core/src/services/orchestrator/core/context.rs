@@ -3,8 +3,8 @@ use crate::libraries::resources::DefaultResourceManager;
 use crate::libraries::{helpers::keys, resources::ResourceManagerProvider};
 use crate::libraries::{lifecycle::HeartBeat, net::discovery::ServiceDiscovery};
 use opentelemetry::Context as TelemetryContext;
-use std::ops::Deref;
 use std::sync::Arc;
+use std::{ops::Deref, time::Duration};
 
 #[derive(Clone)]
 pub struct Context {
@@ -12,6 +12,7 @@ pub struct Context {
     pub heart_beat: HeartBeat<Self, DefaultResourceManager>,
     pub provisioner: Arc<Box<dyn Provisioner + Send + Sync + 'static>>,
     pub provisioner_type: ProvisionerType,
+    pub timeout_startup: Duration,
     pub id: String,
 }
 
@@ -20,6 +21,7 @@ impl Context {
         provisioner_type: ProvisionerType,
         provisioner: P,
         redis_url: String,
+        timeout_startup: Duration,
         id: String,
     ) -> Self {
         let heart_beat = HeartBeat::new();
@@ -38,6 +40,7 @@ impl Context {
             provisioner: Arc::new(Box::new(provisioner)),
             provisioner_type,
             id,
+            timeout_startup,
         }
     }
 

@@ -103,6 +103,10 @@ data:
                   value: "{{ .Values.recording.quality.crf }}"
                 - name: MAX_BITRATE
                   value: "{{ .Values.recording.quality.maxBitrate }}"
+                - name: TIMEOUT_IDLE
+                  value: "{{ .Values.config.timeouts.idle }}"
+                - name: TIMEOUT_DRIVER_STARTUP
+                  value: "{{ .Values.config.timeouts.webdriver }}"
                 - name: HOST
                   valueFrom:
                     fieldRef:

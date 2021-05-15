@@ -55,13 +55,13 @@ pub async fn provision_session(manager: TaskManager<ProvisioningContext>) -> Res
 mod subtasks {
     use super::*;
     use crate::libraries::{
-        helpers::{wait_for, wait_for_key, Timeout},
+        helpers::{wait_for, wait_for_key},
         net::discovery::ServiceDescriptor,
         tracing::global_tracer,
     };
     use futures::TryFutureExt;
     use opentelemetry::trace::{Span, Tracer};
-    use std::time::{Duration, Instant};
+    use std::time::Instant;
     use uuid::Uuid;
 
     pub async fn provision_session(
@@ -100,8 +100,7 @@ mod subtasks {
     ) -> Result<()> {
         let tracer = global_tracer();
         let mut span = tracer.start("Await session startup");
-        let timeout = Timeout::NodeStartup.get(con).await as u64;
-        let timeout_duration = Duration::from_secs(timeout);
+        let timeout_duration = context.timeout_startup;
         let healthcheck_start = Instant::now();
 
         // Wait for the node to send heart-beats

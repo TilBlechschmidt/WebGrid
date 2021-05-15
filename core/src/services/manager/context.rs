@@ -1,3 +1,4 @@
+use super::Options;
 use crate::libraries::{lifecycle::HeartBeat, resources::ResourceManagerProvider};
 use crate::libraries::{metrics::MetricsProcessor, resources::DefaultResourceManager};
 use opentelemetry::Context as TelemetryContext;
@@ -8,16 +9,18 @@ pub struct Context {
     resource_manager: DefaultResourceManager,
     pub heart_beat: HeartBeat<Self, DefaultResourceManager>,
     pub metrics: MetricsProcessor<Self, DefaultResourceManager>,
+    pub options: Options,
 }
 
 impl Context {
-    pub async fn new(redis_url: String) -> Self {
+    pub async fn new(redis_url: String, options: Options) -> Self {
         let heart_beat = HeartBeat::new();
 
         Self {
             resource_manager: DefaultResourceManager::new(redis_url),
             heart_beat,
             metrics: MetricsProcessor::default(),
+            options,
         }
     }
 }

@@ -1,5 +1,5 @@
 use super::super::Context;
-use crate::libraries::helpers::{lua::terminate_session, Timeout};
+use crate::libraries::helpers::lua::terminate_session;
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
 use crate::with_shared_redis_resource;
 use anyhow::Result;
@@ -21,8 +21,7 @@ impl Job for SlotReclaimJob {
 
     async fn execute(&self, manager: TaskManager<Self::Context>) -> Result<()> {
         let mut con = with_shared_redis_resource!(manager);
-        let interval_seconds = Timeout::SlotReclaimInterval.get(&mut con).await as u64;
-        let mut interval = time::interval(Duration::from_secs(interval_seconds));
+        let mut interval = time::interval(Duration::from_secs(300));
         let orchestrator_id = manager.context.id.clone();
 
         manager.ready().await;

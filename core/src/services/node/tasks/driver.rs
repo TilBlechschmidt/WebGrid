@@ -1,11 +1,6 @@
 use super::super::{structs::NodeError, Context};
-use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
 use crate::libraries::tracing::global_tracer;
-use crate::with_redis_resource;
-use crate::{
-    libraries::helpers::{wait_for, Timeout},
-    services::node::context::StartupContext,
-};
+use crate::{libraries::helpers::wait_for, services::node::context::StartupContext};
 use jatsl::TaskManager;
 use log::{error, info};
 use opentelemetry::trace::StatusCode;
@@ -38,8 +33,7 @@ pub async fn start_driver(manager: TaskManager<StartupContext>) -> Result<(), No
     let mut span = global_tracer()
         .start_with_context("Start driver", manager.context.telemetry_context.clone());
 
-    let mut con = with_redis_resource!(manager);
-    let startup_timeout = Timeout::DriverStartup.get(&mut con).await;
+    let startup_timeout = manager.context.options.timeout_driver_startup;
     let driver = &manager.context.options.driver;
     let driver_port = manager.context.options.driver_port;
     let browser = &manager.context.options.browser;
@@ -98,7 +92,10 @@ mod subtasks {
         }
     }
 
-    pub async fn await_driver_startup(timeout: usize, driver_port: u16) -> Result<(), NodeError> {
+    pub async fn await_driver_startup(
+        timeout: Duration,
+        driver_port: u16,
+    ) -> Result<(), NodeError> {
         let span = global_tracer().start("Awaiting driver startup");
         info!("Awaiting driver startup");
 
@@ -106,7 +103,7 @@ mod subtasks {
         let url = format!("http://{}/status", socket_addr);
         let telemetry_context = TelemetryContext::current_with_span(span);
 
-        match wait_for(&url, Duration::from_secs(timeout as u64))
+        match wait_for(&url, timeout)
             .with_context(telemetry_context.clone())
             .await
         {

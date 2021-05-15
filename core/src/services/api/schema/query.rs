@@ -1,5 +1,5 @@
 use super::{
-    types::{InputDictionaryEntry, Orchestrator, Session, SessionState, Timeouts},
+    types::{InputDictionaryEntry, Orchestrator, Session, SessionState},
     GqlContext,
 };
 use crate::libraries::helpers::keys;
@@ -26,10 +26,6 @@ impl Query {
 
 #[graphql_object(context = GqlContext)]
 impl Query {
-    fn timeouts() -> Timeouts {
-        Timeouts::new()
-    }
-
     async fn sessions(
         &self,
         state: Option<SessionState>,

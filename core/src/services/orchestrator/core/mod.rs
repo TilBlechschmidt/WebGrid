@@ -1,5 +1,8 @@
+use std::time::Duration;
+
 use super::super::SharedOptions;
 use crate::libraries::{
+    helpers::parse_seconds,
     lifecycle::Heart,
     net::discovery::ServiceDiscovery,
     tracing::{self, constants::service},
@@ -32,6 +35,10 @@ pub struct Options {
     /// Number of concurrent sessions
     #[structopt(long, env)]
     pub slot_count: usize,
+
+    /// Maximum duration to wait for a session start up; in seconds
+    #[structopt(long, env, default_value = "300", parse(try_from_str = parse_seconds))]
+    timeout_startup: Duration,
 }
 
 pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
@@ -52,6 +59,7 @@ pub async fn start<P: Provisioner + Send + Sync + Clone + 'static>(
         provisioner_type,
         provisioner,
         shared_options.redis,
+        options.timeout_startup,
         options.id,
     )
     .await;

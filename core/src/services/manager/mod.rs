@@ -1,8 +1,10 @@
 //! Endpoint for handling session creation
 
+use std::time::Duration;
+
 use super::SharedOptions;
 use crate::libraries::{
-    helpers::constants,
+    helpers::{constants, parse_seconds},
     tracing::{self, constants::service},
 };
 use crate::libraries::{
@@ -23,7 +25,7 @@ use context::Context;
 use jobs::SessionHandlerJob;
 pub use structures::*;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, StructOpt, Clone)]
 /// Endpoint for handling session creation
 ///
 /// Handles scheduling and provisioning lifecycle of sessions.
@@ -39,6 +41,14 @@ pub struct Options {
     /// Port on which the HTTP server will listen
     #[structopt(short, long, default_value = constants::PORT_MANAGER)]
     port: u16,
+
+    /// Maximum duration to wait in queue; in seconds
+    #[structopt(long, env, default_value = "600", parse(try_from_str = parse_seconds))]
+    timeout_queue: Duration,
+
+    /// Maximum duration to wait for a session to become provisioned; in seconds
+    #[structopt(long, env, default_value = "300", parse(try_from_str = parse_seconds))]
+    timeout_provisioning: Duration,
 }
 
 pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> {
@@ -51,7 +61,7 @@ pub async fn run(shared_options: SharedOptions, options: Options) -> Result<()> 
     let (mut heart, _) = Heart::new();
 
     let endpoint = format!("{}:{}", options.host, options.port);
-    let context = Context::new(shared_options.redis).await;
+    let context = Context::new(shared_options.redis, options.clone()).await;
     let scheduler = JobScheduler::default();
 
     let status_job = StatusServer::new(&scheduler, shared_options.status_server);

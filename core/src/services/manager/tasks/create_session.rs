@@ -3,7 +3,7 @@ use crate::libraries::metrics::MetricsEntry;
 use crate::libraries::resources::{ResourceManager, ResourceManagerProvider};
 use crate::libraries::tracing::StringPropagator;
 use crate::libraries::{
-    helpers::{keys, parse_browser_string, CapabilitiesRequest, Timeout},
+    helpers::{keys, parse_browser_string, CapabilitiesRequest},
     tracing::global_tracer,
 };
 use crate::with_redis_resource;
@@ -62,13 +62,21 @@ pub async fn create_session(
 
     // Create startup routine
     let startup = async {
+        let timeout_queue = manager.context.options.timeout_queue;
+        let timeout_provisioning = manager.context.options.timeout_provisioning;
+
         // Request a slot
-        subtasks::request_slot(&mut con, &session_id, &manager.context.capabilities)
-            .with_context(telemetry_context.clone())
-            .await?;
+        subtasks::request_slot(
+            &mut con,
+            &session_id,
+            &manager.context.capabilities,
+            timeout_queue,
+        )
+        .with_context(telemetry_context.clone())
+        .await?;
 
         // Await scheduling & startup
-        subtasks::await_scheduling(&mut con, &session_id)
+        subtasks::await_provisioning(&mut con, &session_id, timeout_provisioning)
             .with_context(telemetry_context.clone())
             .await?;
 
@@ -110,7 +118,7 @@ pub async fn create_session(
 mod subtasks {
     use super::*;
     use crate::libraries::tracing::constants::trace;
-    use std::collections::HashMap;
+    use std::{collections::HashMap, time::Duration};
 
     pub async fn create_new_session<C: ConnectionLike + AsyncCommands>(
         con: &mut C,
@@ -177,10 +185,10 @@ mod subtasks {
         con: &mut C,
         session_id: &str,
         capabilities: &str,
+        timeout: Duration,
     ) -> Result<(), RequestError> {
         let tracer = global_tracer();
         let mut span = tracer.start("Request slot");
-        let queue_timeout = Timeout::Queue.get(con).await;
 
         let mut queues: Vec<String> = helpers::match_orchestrators(con, capabilities)
             .await?
@@ -202,7 +210,7 @@ mod subtasks {
         span.add_event("Entering queue".to_string(), vec![]);
 
         let response: Option<(String, String)> = con
-            .blpop(queues, queue_timeout)
+            .blpop(queues, timeout.as_secs() as usize)
             .map_err(RequestError::RedisError)
             .await?;
 
@@ -252,18 +260,18 @@ mod subtasks {
         }
     }
 
-    pub async fn await_scheduling<C: ConnectionLike + AsyncCommands>(
+    pub async fn await_provisioning<C: ConnectionLike + AsyncCommands>(
         con: &mut C,
         session_id: &str,
+        timeout: Duration,
     ) -> Result<(), RequestError> {
         let tracer = global_tracer();
-        let mut span = tracer.start("Await scheduling");
+        let mut span = tracer.start("Await provisioning");
 
-        let scheduling_timeout = Timeout::Scheduling.get(con).await;
         let scheduling_key = keys::session::orchestrator(session_id);
 
         let res: Option<()> = con
-            .brpoplpush(&scheduling_key, &scheduling_key, scheduling_timeout)
+            .brpoplpush(&scheduling_key, &scheduling_key, timeout.as_secs() as usize)
             .map_err(RequestError::RedisError)
             .await?;
 

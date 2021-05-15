@@ -67,6 +67,8 @@ spec:
               value: "/configs"
             - name: WEBGRID_RESOURCE_PREFIX
               value: "{{ include "web-grid.fullname" . }}-"
+            - name: TIMEOUT_STARTUP
+              value: "{{ .Values.config.timeouts.startup }}"
             - name: NAMESPACE
               valueFrom:
                 fieldRef:

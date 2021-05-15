@@ -56,6 +56,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+            - name: TIMEOUT_QUEUE
+              value: "{{ .Values.config.timeouts.queue }}"
+            - name: TIMEOUT_PROVISIONING
+              value: "{{ .Values.config.timeouts.provisioning }}"
             - name: RUST_LOG
               value: {{ .Values.logLevel }}
             {{- if .Values.telemetry.enabled }}

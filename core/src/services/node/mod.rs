@@ -3,7 +3,7 @@
 use super::SharedOptions;
 use crate::{
     libraries::{
-        helpers::constants,
+        helpers::{constants, parse_seconds},
         net::{advertise::ServiceAdvertisorJob, discovery::ServiceDescriptor},
         recording::VideoQualityPreset,
         tracing::{self, constants::service},
@@ -14,7 +14,7 @@ use anyhow::Result;
 use jatsl::{schedule, JobScheduler, StatusServer};
 use log::{info, warn};
 use opentelemetry::trace::TraceContextExt;
-use std::path::PathBuf;
+use std::{path::PathBuf, time::Duration};
 use structopt::StructOpt;
 use uuid::Uuid;
 
@@ -107,6 +107,14 @@ pub struct Options {
     /// https://trac.ffmpeg.org/wiki/Encode/H.264
     #[structopt(long, env, default_value = "450000")]
     max_bitrate: usize,
+
+    /// Maximum idle duration after which the node self-terminates; in seconds
+    #[structopt(long, env, default_value = "300", parse(try_from_str = parse_seconds))]
+    timeout_idle: Duration,
+
+    /// Maximum duration the WebDriver may take to become responsive; in seconds
+    #[structopt(long, env, default_value = "30", parse(try_from_str = parse_seconds))]
+    timeout_driver_startup: Duration,
 }
 
 impl Options {

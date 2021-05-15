@@ -9,6 +9,17 @@ service:
   port: 80
 
 config:
+  timeouts:
+    # Maximum duration to wait in queue
+    queue: 600
+    # How long a session pod may take to become responsive
+    startup: 300
+    # Maximum duration the WebDriver may take to become responsive
+    webdriver: 30
+    # Maximum duration to wait for an orchestrator to provision a node
+    provisioning: 300
+    # Maximum idle duration after which sessions self-terminate
+    idle: 300
   orchestrator:
     # Number of concurrent sessions allowed *per* orchestrator
     maxSessions: 5

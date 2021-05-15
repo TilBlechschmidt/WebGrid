@@ -4,15 +4,15 @@
 
 mod capabilities;
 mod healthcheck;
-mod timeout;
 
 pub mod constants;
 pub mod keys;
 pub mod lua;
 
+use std::{num::ParseIntError, time::Duration};
+
 pub use capabilities::*;
 pub use healthcheck::{wait_for, wait_for_key};
-pub use timeout::Timeout;
 
 /// Splits the input string into two parts at the first occurence of the separator
 pub fn split_into_two(input: &str, separator: &'static str) -> Option<(String, String)> {
@@ -46,4 +46,11 @@ pub fn load_config(name: &str) -> String {
 /// Replaces a variable in the passed config string
 pub fn replace_config_variable(config: String, key: &str, value: &str) -> String {
     config.replace(&format!("{{{{{}}}}}", key), &value.to_string())
+}
+
+/// Parses a Duration from a string containing seconds.
+/// Useful for command line parsing
+pub fn parse_seconds(src: &str) -> Result<Duration, ParseIntError> {
+    let seconds = src.parse::<u64>()?;
+    Ok(Duration::from_secs(seconds))
 }
