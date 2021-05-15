@@ -11,18 +11,6 @@ All metadata is stored in a key-value in-memory database called [Redis](https://
 `sessions.terminated` = Set<string> // uuids
 ```
 
-### Configuration
-```javascript
-`timeouts` = Hashes {
-	queue = number                  // seconds
-	scheduling = number             // seconds
-	nodeStartup = number            // seconds
-	driverStartup = number          // seconds
-	sessionTermination = number     // seconds
-	slotReclaimInterval = number    // seconds
-}
-```
-
 ### Storage
 ```javascript
 `storage:${SID}:metadata.pending` = List<FileMetadata>	// see below
