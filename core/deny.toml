@@ -1,0 +1,61 @@
+# This section is considered when running `cargo deny check advisories`
+# More documentation for the advisories section can be found here:
+# https://embarkstudios.github.io/cargo-deny/checks/advisories/cfg.html
+[advisories]
+db-path = "~/.cargo/advisory-db"
+db-urls = ["https://github.com/rustsec/advisory-db"]
+vulnerability = "deny"
+unmaintained = "warn"
+yanked = "warn"
+notice = "warn"
+ignore = []
+severity-threshold = "Low"
+
+# This section is considered when running `cargo deny check licenses`
+# More documentation for the licenses section can be found here:
+# https://embarkstudios.github.io/cargo-deny/checks/licenses/cfg.html
+[licenses]
+unlicensed = "deny"
+allow = []
+deny = []
+copyleft = "warn"
+allow-osi-fsf-free = "both"
+default = "deny"
+confidence-threshold = 0.8
+exceptions = [
+    { allow = ["BSD-2-Clause"], name = "juniper", version = "*" },
+    { allow = ["BSD-2-Clause"], name = "juniper_warp", version = "*" },
+    { allow = ["BSD-2-Clause"], name = "juniper_codegen", version = "*" },
+]
+
+[[licenses.clarify]]
+name = "ring"
+version = "*"
+expression = "MIT AND ISC"
+license-files = [
+    { path = "LICENSE", hash = 0xbd0eed23 }
+]
+
+# This section is considered when running `cargo deny check bans`.
+# More documentation about the 'bans' section can be found here:
+# https://embarkstudios.github.io/cargo-deny/checks/bans/cfg.html
+[bans]
+multiple-versions = "allow"
+wildcards = "deny"
+highlight = "all"
+allow = []
+deny = []
+skip = []
+skip-tree = []
+
+# This section is considered when running `cargo deny check sources`.
+# More documentation about the 'sources' section can be found here:
+# https://embarkstudios.github.io/cargo-deny/checks/sources/cfg.html
+[sources]
+unknown-registry = "warn"
+unknown-git = "warn"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []
+
+[sources.allow-org]
+github = ["TilBlechschmidt"]

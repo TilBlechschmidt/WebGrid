@@ -1,6 +1,7 @@
 [package]
 name = "webgrid"
 version = "0.0.0"
+license = "MIT"
 authors = ["Til Blechschmidt <til@blechschmidt.de>"]
 edition = "2018"
 
@@ -35,8 +36,8 @@ opentelemetry-semantic-conventions = "0.6"
 opentelemetry-http = "0.3"
 
 # API
-juniper = { git = "https://github.com/TilBlechschmidt/juniper", branch = "patch-1", optional = true, features = ["expose-test-schema"] }
-juniper_warp = { git = "https://github.com/TilBlechschmidt/juniper", branch = "patch-1", optional = true }
+juniper = { version = "0.15.2", git = "https://github.com/TilBlechschmidt/juniper", branch = "patch-1", optional = true, features = ["expose-test-schema"] }
+juniper_warp = { version = "0.6.1", git = "https://github.com/TilBlechschmidt/juniper", branch = "patch-1", optional = true }
 
 # Docker
 bollard = { version = "0.10", optional = true }
