@@ -44,8 +44,7 @@ pub fn parse_images_string(input: String) -> Vec<(String, String)> {
     input
         .split(',')
         .map(|image_string| split_into_two(image_string, "="))
-        .filter(|p| p.is_some())
-        .map(|p| p.unwrap())
+        .flatten()
         .collect()
 }
 

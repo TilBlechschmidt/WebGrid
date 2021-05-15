@@ -118,7 +118,7 @@ mod subtasks {
         serialized_telemetry_context: Option<String>,
     ) -> Result<String, RequestError> {
         let tracer = global_tracer();
-        let span = tracer.start("Create session object");
+        let mut span = tracer.start("Create session object");
 
         let session_id = Uuid::new_v4().to_hyphenated().to_string();
         let now = Utc::now().to_rfc3339();
@@ -179,7 +179,7 @@ mod subtasks {
         capabilities: &str,
     ) -> Result<(), RequestError> {
         let tracer = global_tracer();
-        let span = tracer.start("Request slot");
+        let mut span = tracer.start("Request slot");
         let queue_timeout = Timeout::Queue.get(con).await;
 
         let mut queues: Vec<String> = helpers::match_orchestrators(con, capabilities)
@@ -257,7 +257,7 @@ mod subtasks {
         session_id: &str,
     ) -> Result<(), RequestError> {
         let tracer = global_tracer();
-        let span = tracer.start("Await scheduling");
+        let mut span = tracer.start("Await scheduling");
 
         let scheduling_timeout = Timeout::Scheduling.get(con).await;
         let scheduling_key = keys::session::orchestrator(session_id);

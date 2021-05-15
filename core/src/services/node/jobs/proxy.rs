@@ -158,7 +158,7 @@ impl ProxyJob {
         let parent_cx = global::get_text_map_propagator(|propagator| {
             propagator.extract(&HeaderExtractor(req.headers()))
         });
-        let span = global_tracer().start_with_context("Forward to driver", parent_cx);
+        let mut span = global_tracer().start_with_context("Forward to driver", parent_cx);
 
         // Reset the lifetime
         ctx.heart_stone.reset_lifetime().await;
@@ -227,7 +227,7 @@ impl ProxyJob {
 
         // Dispatch the request
         let telemetry_context = TelemetryContext::current_with_span(span);
-        let driver_span =
+        let mut driver_span =
             global_tracer().start_with_context("WebDriver internal", telemetry_context.clone());
         match proxy_request.await {
             Ok(driver_response) => {

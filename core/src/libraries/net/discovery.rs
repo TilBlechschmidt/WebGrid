@@ -197,7 +197,7 @@ impl ServiceDiscoverer {
     }
 
     async fn discover_once(&mut self) -> Result<String, ServiceDiscoveryError> {
-        let span = global_tracer().start("Attempt discovery");
+        let mut span = global_tracer().start("Attempt discovery");
 
         // Try fetching a random element from cache
         if let Some(endpoints) = self.cache.lock().await.get(&self.service) {

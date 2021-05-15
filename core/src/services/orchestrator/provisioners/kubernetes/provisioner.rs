@@ -9,7 +9,9 @@ use anyhow::{bail, Result};
 use async_trait::async_trait;
 use k8s_openapi::{api::batch::v1::Job, Resource};
 use kube::{
-    api::{Api, DeleteParams, Meta, PostParams, PropagationPolicy},
+    api::{
+        Api, DeleteParams, PostParams, PropagationPolicy, Resource as KubeResource, ResourceExt,
+    },
     error::Error as KubeError,
     Client,
 };
@@ -19,6 +21,7 @@ use opentelemetry::{
     Context as TelemetryContext,
 };
 use serde::{de::DeserializeOwned, ser::Serialize};
+use std::fmt::Debug;
 
 #[derive(Clone)]
 pub struct K8sProvisioner {
@@ -50,20 +53,28 @@ impl K8sProvisioner {
         format!("{}session-{}", prefix, short_id)
     }
 
-    async fn get_api<T: Resource>(&self) -> Api<T> {
+    async fn get_api<T: Resource + Debug + KubeResource>(&self) -> Api<T>
+    where
+        <T as KubeResource>::DynamicType: Default,
+    {
         let client = Client::try_default().await.unwrap();
         Api::namespaced(client, &self.namespace)
     }
 
-    async fn create_resource<T: Resource + Meta + DeserializeOwned + Serialize + Clone>(
+    async fn create_resource<
+        T: Resource + KubeResource + DeserializeOwned + Serialize + Clone + Debug,
+    >(
         &self,
         value: &T,
-    ) -> Result<T, KubeError> {
+    ) -> Result<T, KubeError>
+    where
+        <T as KubeResource>::DynamicType: Default,
+    {
         let api = self.get_api::<T>().await;
 
         match api.create(&PostParams::default(), value).await {
             Ok(o) => {
-                let name = Meta::name(&o);
+                let name = ResourceExt::name(&o);
                 info!("Created {} {}", T::KIND, name);
                 Ok(o)
             }
@@ -74,10 +85,14 @@ impl K8sProvisioner {
         }
     }
 
-    async fn delete_resource<T: Resource + Meta + DeserializeOwned + Serialize + Clone>(
+    async fn delete_resource<
+        T: Resource + KubeResource + DeserializeOwned + Serialize + Clone + Debug,
+    >(
         &self,
         name: &str,
-    ) {
+    ) where
+        <T as KubeResource>::DynamicType: Default,
+    {
         let api = self.get_api::<T>().await;
 
         let params = DeleteParams {
@@ -116,7 +131,7 @@ impl K8sProvisioner {
         let context = TelemetryContext::current_with_span(span);
         let resource = self.create_resource(&job).with_context(context).await?;
 
-        Ok(Meta::meta(&resource)
+        Ok(KubeResource::meta(&resource)
             .uid
             .as_ref()
             .map(|uid| uid.to_owned())

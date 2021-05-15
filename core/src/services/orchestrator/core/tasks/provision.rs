@@ -99,7 +99,7 @@ mod subtasks {
         context: &ProvisioningContext,
     ) -> Result<()> {
         let tracer = global_tracer();
-        let span = tracer.start("Await session startup");
+        let mut span = tracer.start("Await session startup");
         let timeout = Timeout::NodeStartup.get(con).await as u64;
         let timeout_duration = Duration::from_secs(timeout);
         let healthcheck_start = Instant::now();

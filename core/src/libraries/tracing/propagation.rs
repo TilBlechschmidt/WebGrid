@@ -24,9 +24,9 @@ impl StringPropagator {
             let parent_cx =
                 global::get_text_map_propagator(|propagator| propagator.extract(&deserialized));
 
-            global_tracer().start_with_context(span_name, parent_cx)
+            global_tracer().start_with_context(span_name.to_owned(), parent_cx)
         } else {
-            global_tracer().start(span_name)
+            global_tracer().start(span_name.to_owned())
         }
     }
 }

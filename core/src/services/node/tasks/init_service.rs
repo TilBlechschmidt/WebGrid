@@ -21,7 +21,7 @@ pub async fn initialize_service(
 ) -> Result<(Heart, HeartStone), NodeError> {
     let mut con = with_redis_resource!(manager);
 
-    let span = global_tracer().start_with_context(
+    let mut span = global_tracer().start_with_context(
         "Initialize service",
         manager.context.telemetry_context.clone(),
     );

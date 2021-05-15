@@ -35,7 +35,7 @@ impl DriverReference {
 }
 
 pub async fn start_driver(manager: TaskManager<StartupContext>) -> Result<(), NodeError> {
-    let span = global_tracer()
+    let mut span = global_tracer()
         .start_with_context("Start driver", manager.context.telemetry_context.clone());
 
     let mut con = with_redis_resource!(manager);

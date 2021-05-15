@@ -51,7 +51,7 @@ mod subtasks {
     pub async fn create_local_session(
         manager: TaskManager<StartupContext>,
     ) -> Result<String, NodeError> {
-        let span = global_tracer().start("Create session");
+        let mut span = global_tracer().start("Create session");
 
         let external_session_id: String = manager.context.id.to_string();
         let driver_port = manager.context.options.driver_port;
@@ -121,7 +121,7 @@ mod subtasks {
     }
 
     pub async fn resize_window(session_id: &str, driver_port: u16) -> Result<(), NodeError> {
-        let span = global_tracer().start("Resize window");
+        let mut span = global_tracer().start("Resize window");
 
         let socket_addr: SocketAddr = ([127, 0, 0, 1], driver_port).into();
         let url = format!("http://{}/session/{}/window/rect", socket_addr, session_id);

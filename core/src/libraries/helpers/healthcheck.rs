@@ -30,7 +30,7 @@ pub async fn wait_for(url: &str, timeout_duration: Duration) -> Result<String, (
     debug!("Awaiting 200 OK response from {}", url);
 
     loop {
-        let span = global_tracer().start("Sending healthcheck request");
+        let mut span = global_tracer().start("Sending healthcheck request");
         span.set_attribute(trace::NET_UPSTREAM_NAME.string(url.to_string()));
         let telemetry_context = TelemetryContext::current_with_span(span);
 

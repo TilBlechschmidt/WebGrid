@@ -115,7 +115,7 @@ impl Provisioner for DockerProvisioner {
 
         debug!("Creating docker container {}", name);
 
-        let create_span =
+        let mut create_span =
             global_tracer().start_with_context("Create container", telemetry_context.clone());
         self.docker
             .create_container(options, config)
@@ -126,7 +126,8 @@ impl Provisioner for DockerProvisioner {
             })?;
         create_span.end();
 
-        let start_span = global_tracer().start_with_context("Start container", telemetry_context);
+        let mut start_span =
+            global_tracer().start_with_context("Start container", telemetry_context);
         self.docker
             .start_container(&name, None::<StartContainerOptions<String>>)
             .await
