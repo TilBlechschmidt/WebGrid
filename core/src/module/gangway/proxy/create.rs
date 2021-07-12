@@ -36,7 +36,7 @@ impl SessionCreationResponder {
 
     #[inline]
     fn new_success_response(&self, notification: SessionOperationalNotification) -> Response<Body> {
-        let capabilities = match serde_json::to_value(notification.actual_capabilities) {
+        let capabilities = match serde_json::from_str(&notification.actual_capabilities) {
             Ok(value) => value,
             Err(e) => {
                 return self.new_error_response(&e.to_string(), StatusCode::INTERNAL_SERVER_ERROR)
