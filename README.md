@@ -47,10 +47,14 @@
 ---
 
 <!-- Bullet points -->
-* **Cluster ready.** Designed with concurrency, on-demand scalability and cluster operation in mind
-* **Debuggable.** Provides browser screen recordings and extensive logs
-* **Resilient.** Built with automatic error recovery at its core
-* **[W3C Specification](https://www.w3.org/TR/webdriver1/) compilant.** Fully compatible with existing Selenium clients
+* **Cluster ready.** Designed with concurrency and on-demand scalability<sup>1</sup> in mind
+* **Debuggable.** Provides browser screen recordings, extensive logs, and tracing
+* **Fast.** Built for speed and performance on a single grid instance
+* **[W3C Specification](https://www.w3.org/TR/webdriver1/) compilant.** Fully compatible with existing Selenium 4 clients
+
+<p align="center">
+  <sub><sup>1</sup>All the way down to zero, obviously</sub>
+</p>
 
 ---
 
