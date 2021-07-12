@@ -5,7 +5,8 @@
 //! specific logic, through the executable [`harness`], up to the high-level [`modules`](module) and contained service implementations.
 
 #![deny(missing_docs)]
-#![allow(clippy::nonstandard_macro_braces)]
+// Disable the lint for now as it has a high false-positive rate
+#![allow(unknown_lints, clippy::nonstandard_macro_braces)]
 
 pub mod constants;
 pub mod domain;

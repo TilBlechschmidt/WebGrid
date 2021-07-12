@@ -33,6 +33,7 @@ pub trait Responder {
 ///# use http::request::Parts;
 ///# use webgrid::{library::http::{responder_chain, ResponderResult, Responder}};
 ///# use async_trait::async_trait;
+///# use std::convert::Infallible;
 ///#
 ///# #[derive(Clone)]
 ///# struct StatusCodeResponder(Option<StatusCode>);
@@ -48,13 +49,13 @@ pub trait Responder {
 ///#                     .body(Body::empty())
 ///#                     .unwrap();
 ///#
-///#                 ResponderResult::Intercepted(response)
+///#                 ResponderResult::Intercepted(Ok(response))
 ///#             }
 ///#             None => ResponderResult::Continue(parts, body, client_ip),
 ///#         }
 ///#     }
 ///# }
-/// async fn respond(input_parts: Parts, input_body: Body, input_client_ip: IpAddr) -> Response<Body> {
+/// async fn respond(input_parts: Parts, input_body: Body, input_client_ip: IpAddr) -> Result<Response<Body>, Infallible> {
 ///     let a = StatusCodeResponder(None);
 ///     let b = StatusCodeResponder(None);
 ///     let c = StatusCodeResponder(Some(StatusCode::OK));
@@ -65,10 +66,10 @@ pub trait Responder {
 ///         c
 ///     });
 ///
-///     Response::builder()
+///     Ok(Response::builder()
 ///         .status(StatusCode::NOT_FOUND)
 ///         .body(Body::empty())
-///         .unwrap()
+///         .unwrap())
 /// }
 /// ```
 ///
@@ -79,6 +80,7 @@ pub trait Responder {
 ///# use http::request::Parts;
 ///# use webgrid::{library::http::{responder_chain, ResponderResult, Responder}};
 ///# use async_trait::async_trait;
+///# use std::convert::Infallible;
 ///#
 ///# #[derive(Clone)]
 ///# struct StatusCodeResponder(Option<StatusCode>);
@@ -94,13 +96,13 @@ pub trait Responder {
 ///#                     .body(Body::empty())
 ///#                     .unwrap();
 ///#
-///#                 ResponderResult::Intercepted(response)
+///#                 ResponderResult::Intercepted(Ok(response))
 ///#             }
 ///#             None => ResponderResult::Continue(parts, body, client_ip),
 ///#         }
 ///#     }
 ///# }
-/// async fn respond(input_parts: Parts, input_body: Body, input_client_ip: IpAddr) -> Response<Body> {
+/// async fn respond(input_parts: Parts, input_body: Body, input_client_ip: IpAddr) -> Result<Response<Body>, Infallible> {
 ///     let a = StatusCodeResponder(None);
 ///     let b = StatusCodeResponder(None);
 ///     let c = StatusCodeResponder(Some(StatusCode::OK));
@@ -128,10 +130,10 @@ pub trait Responder {
 ///     drop(body);
 ///     drop(ip);
 ///
-///     Response::builder()
+///     Ok(Response::builder()
 ///         .status(StatusCode::NOT_FOUND)
 ///         .body(Body::empty())
-///         .unwrap()
+///         .unwrap())
 /// }
 /// ```
 #[macro_export]
