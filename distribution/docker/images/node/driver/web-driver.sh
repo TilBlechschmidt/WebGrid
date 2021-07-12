@@ -19,9 +19,8 @@ function geckodriver {
 	install_packages firefox-esr
 
 	echo 'export DRIVER="/usr/bin/geckodriver"' >> /env.sh
-	echo 'export DRIVER_PORT=4444' >>/env.sh
-	echo 'export BROWSER="firefox"' >> /env.sh
-	echo "export BROWSER_VERSION=\"$( firefox -version | cut -d " " -f 3 )\"" >> /env.sh
+	echo 'export DRIVER_VARIANT="firefox"' >> /env.sh
+	echo "export BROWSER_VERSION=\"$(firefox -version | cut -d " " -f 3 )\"" >> /env.sh
 }
 
 function chromedriver {
@@ -37,8 +36,7 @@ function chromedriver {
 	install_packages google-chrome-stable libnss3
 
 	echo 'export DRIVER="/usr/bin/chromedriver"' >> /env.sh
-	echo 'export DRIVER_PORT=9515' >>/env.sh
-	echo 'export BROWSER="chrome"' >> /env.sh
+	echo 'export DRIVER_VARIANT="chrome"' >> /env.sh
 	echo "export BROWSER_VERSION=\"$(/usr/bin/google-chrome -version | awk '{ print $3 }')\"" >> /env.sh
 
 	# Wrap the chrome binary so we run it with --no-sandbox
