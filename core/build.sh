@@ -43,7 +43,7 @@ docker run --rm --name core-build \
 	-e WEBGRID_GIT_REPOSITORY=/repository \
 	-e CARGO_TERM_COLOR=always \
 	webgrid/rust-musl-builder:${BUILDER_TAG} \
-	bash -c "cargo build ${RELEASE_FLAG} --locked && cargo doc ${RELEASE_FLAG} --locked --no-deps && rm -f /home/rust/src/target/x86_64-unknown-linux-musl/doc/.lock"
+	bash -c "cargo build ${RELEASE_FLAG} --bin webgrid --locked && cargo doc ${RELEASE_FLAG} --locked --no-deps && rm -f /home/rust/src/target/x86_64-unknown-linux-musl/doc/.lock"
 
 
 echo "Creating output directories in $TARGET_DIR"
@@ -58,9 +58,13 @@ rsync -av $BUILD_DIR/target/x86_64-unknown-linux-musl/$BUILD_OUTPUT_DIR/webgrid 
 # Strip the binary
 if [[ $1 = "--release" ]];
 then
-	echo "Stripping binary"
-	docker run --rm --name core-strip \
-		-v $TARGET_DIR/core-executable:/output \
-		alpine \
-		sh -c "apk add --update binutils && ls /output && strip /output/webgrid"
+	if uname -a | grep -q "arm64"; then
+		echo "Binary stripping not supported on arm64 architecture"
+	else
+		echo "Stripping binary"
+		docker run --rm --name core-strip \
+			-v $TARGET_DIR/core-executable:/output \
+			alpine \
+			sh -c "apk add --update binutils && ls /output && strip /output/webgrid"
+	fi
 fi

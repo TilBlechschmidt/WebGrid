@@ -1,72 +1,79 @@
 [package]
 name = "webgrid"
 version = "0.0.0"
+edition = "2018"
 license = "MIT"
 authors = ["Til Blechschmidt <til@blechschmidt.de>"]
-edition = "2018"
 
 [dependencies]
-tokio = { version = "1.2", default-features = false, features = ["full"] }
-sqlx = { version = "0.5", default-features = false, features = [ "runtime-tokio-native-tls", "macros", "sqlite" ] }
-pretty_env_logger = "0.4"
+# Everyday stuff
+tokio = { version = "1.6", features = ["rt-multi-thread", "macros"] }
+futures = "0.3"
+uuid = { version = "0.8", features = ["v4", "serde"] }
 async-trait = "0.1"
 lazy_static = "1.4"
+structopt = "0.3"
 rand = "0.8"
-log = "0.4"
-regex = "1.3"
-redis = { version = "0.20", default-features = false, features = ["tokio-comp", "script"] }
-futures = "0.3"
+lru = "0.6"
+
+# Proxying
+hyper = { version = "0.14", features = ["full"] }
+paste = "1.0"
+
+# Component operation
+jatsl = "0.1.5"
+
+# Data serialization
+serde = "1.0"
+bincode = "1.3"
+serde_json = "1.0"
+
+# Error handling
 thiserror = "1.0"
 anyhow = "1.0"
-hyper = "0.14"
-structopt = "0.3"
-warp = { version = "0.3", default-features = false }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-bincode = "1.3.3"
-lru = "0.6.5"
-chrono = { version = "0.4", features = ["serde"] }
-uuid = { version = "0.8", features = ["v4", "serde"] }
-jatsl = "0.1.3"
 
-# Tracing
+# Tracing, Metrics & Co.
+pretty_env_logger = "0.4"
+log = "0.4"
+tracing = { git = "https://github.com/tokio-rs/tracing", version = "0.2", features = ["log"] }
+tracing-subscriber = { git = "https://github.com/tokio-rs/tracing", version = "0.3", default-features = false, features = ["env-filter", "smallvec"] }
+tracing-opentelemetry = { git = "https://github.com/tokio-rs/tracing", version = "0.13" }
+tracing-futures = { git = "https://github.com/tokio-rs/tracing", version = "0.3" }
 opentelemetry = { version = "0.14", features = ["rt-tokio"] }
 opentelemetry-otlp = "0.7"
 opentelemetry-semantic-conventions = "0.6"
 opentelemetry-http = "0.3"
 
-# API
-juniper = { version = "0.15.2", git = "https://github.com/TilBlechschmidt/juniper", branch = "patch-1", optional = true, features = ["expose-test-schema"] }
-juniper_warp = { version = "0.6.1", git = "https://github.com/TilBlechschmidt/juniper", branch = "patch-1", optional = true }
+# Data storage and stream processing
+redis = { version = "0.20.2-alpha.0", default-features = false, features = ["tokio-comp", "streams"], git = "https://github.com/TilBlechschmidt/redis-rs", branch = "webgrid-state" }
 
-# Docker
+# Storage dependencies
+rust-s3 = { version = "0.27.0-rc4", git = "https://github.com/durch/rust-s3", optional = true }
+http = { version = "0.2", optional = true }
+
+# Provisioner implementations
 bollard = { version = "0.10", optional = true }
-
-# Kubernetes
-kube = { version = "0.53", optional = true }
-kube-derive = { version = "0.53", optional = true }
-k8s-openapi = { version = "0.11", default-features = false, features = ["v1_17"], optional = true }
+kube = { version = "0.56", optional = true }
+kube-derive = { version = "0.56", optional = true }
+k8s-openapi = { version = "0.11", default-features = false, features = ["v1_20"], optional = true }
 serde_yaml = { version = "0.8", optional = true }
 
 [build-dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
-sqlx = { version = "0.5", default-features = false, features = [ "macros", "sqlite", "runtime-tokio-native-tls" ] }
-tokio = { version = "1.2", features = ["full"] }
 git2 = "0.13"
 
+[dev-dependencies]
+tokio-stream = { version = "0.1", features = ["sync"] }
+reqwest = "0.11"
+pretty_assertions = "0.7"
+
 [features]
-default = ["gc", "api", "proxy", "manager", "node", "metrics", "storage", "docker", "kubernetes"]
-gc = []
-api = ["juniper", "juniper_warp"]
-proxy = []
-manager = []
-node = []
-metrics = []
-storage = []
-orchestrator = []
-kubernetes = ["orchestrator", "kube", "kube-derive", "k8s-openapi", "serde_yaml"]
-docker = ["orchestrator", "bollard"]
+default = ["storage", "docker", "kubernetes"]
+docker = ["bollard"]
+kubernetes = ["kube", "kube-derive", "k8s-openapi", "serde_yaml"]
+storage = ["rust-s3", "http"]
+test = []
 
 [profile.release]
 lto = true
