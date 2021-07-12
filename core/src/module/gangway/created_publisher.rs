@@ -45,6 +45,8 @@ impl Job for CreatedNotificationPublisherJob {
         let factory = RedisCommunicationFactory::new(self.redis_url.clone(), handle_provider);
         let publisher = factory.notification_publisher();
 
+        manager.ready().await;
+
         self.publish_notifications(publisher).await;
 
         Err(anyhow!(

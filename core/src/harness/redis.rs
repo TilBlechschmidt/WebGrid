@@ -559,8 +559,11 @@ where
     const NAME: &'static str = concat!(module_path!(), "::discovery");
 
     async fn execute(&self, manager: jatsl::JobManager) -> EmptyResult {
-        let factory = MonitoredRedisFactory::new(self.url.clone(), Arc::new(manager));
+        let manager = Arc::new(manager);
+        let factory = MonitoredRedisFactory::new(self.url.clone(), manager.clone());
         let backend = RedisPubSubBackend::new(factory).await?;
+
+        manager.ready().await;
 
         self.daemon.daemon_loop(backend).await;
 
