@@ -1,20 +1,22 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "web-grid.fullname" . }}-orchestrator
   labels:
-    web-grid/component: orchestrator
+    dev.webgrid/component: orchestrator
     {{- include "web-grid.labels" . | nindent 4 }}
 spec:
+  serviceName: {{ include "web-grid.fullname" . }}-orchestrator
   replicas: {{ .Values.replicaCount.orchestrator }}
+  podManagementPolicy: Parallel
   selector:
     matchLabels:
-      web-grid/component: orchestrator
+      dev.webgrid/component: orchestrator
       {{- include "web-grid.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        web-grid/component: orchestrator
+        dev.webgrid/component: orchestrator
         {{- include "web-grid.selectorLabels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "web-grid.serviceAccountName" . }}
@@ -30,19 +32,19 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      volumes:
-        - name: orchestrator-config
-          configMap:
-            name: {{ include "web-grid.fullname" . }}-orchestrator
       {{- if .Values.image.pullSecret }}
       imagePullSecrets:
       - name: {{ .Values.image.pullSecret }}
       {{- end }}
+      volumes:
+        - name: orchestrator-config
+          configMap:
+            name: {{ include "web-grid.fullname" . }}-orchestrator
       containers:
         - image: "{{ .Values.image.repository }}/core:{{ include "web-grid.imageTag" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: {{ .Chart.Name }}-orchestrator
-          args: ["orchestrator", "kubernetes", "--status-server"]
+          args: ["orchestrator", "kubernetes", "--status-server", "47002"]
           volumeMounts:
             - name: orchestrator-config
               mountPath: /configs
@@ -53,30 +55,25 @@ spec:
           env:
             - name: REDIS
               value: "{{ include "web-grid.redisURL" . }}"
+            - name: RUST_LOG
+              value: {{ .Values.logLevel }}
             - name: ID
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            - name: SLOT_COUNT
-              value: "{{ .Values.config.orchestrator.maxSessions }}"
+            - name: PERMITS
+              value: "{{ .Values.config.orchestrator.permits }}"
             - name: IMAGES
               value: "{{ .Values.image.repository }}/node-firefox:{{ include "web-grid.imageTag" . }}=firefox::68.7.0esr,{{ .Values.image.repository }}/node-chrome:{{ include "web-grid.imageTag" . }}=chrome::81.0.4044.122"
-            - name: RUST_LOG
-              value: {{ .Values.logLevel }}
+            # TODO Make the three environment vars below actual arguments instead of std::env usages!
             - name: WEBGRID_CONFIG_DIR
               value: "/configs"
             - name: WEBGRID_RESOURCE_PREFIX
               value: "{{ include "web-grid.fullname" . }}-"
-            - name: TIMEOUT_STARTUP
-              value: "{{ .Values.config.timeouts.startup }}"
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-            {{- if .Values.telemetry.enabled }}
-            - name: TRACE_ENDPOINT
-              value: {{ include "web-grid.telemetryEndpoint" . }}
-            {{- end}}
           livenessProbe:
             tcpSocket:
               port: status

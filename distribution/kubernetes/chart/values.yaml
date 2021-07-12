@@ -2,67 +2,51 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-logLevel: debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn
+logLevel: info,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn
 
 service:
   type: ClusterIP
   port: 80
 
 config:
-  timeouts:
-    # Maximum duration to wait in queue
-    queue: 600
-    # How long a session pod may take to become responsive
-    startup: 300
-    # Maximum duration the WebDriver may take to become responsive
-    webdriver: 30
-    # Maximum duration to wait for an orchestrator to provision a node
-    provisioning: 300
-    # Maximum idle duration after which sessions self-terminate
-    idle: 300
+  redis:
+    storageClassName: emptyDir
+  gangway:
+    # Maximum number of cached service endpoints
+    cacheSize: 1000
+    # Maximum number of concurrent, pending session creation requests.
+    # When more requests arrive, the oldest ones will be terminated.
+    # In reality, this variable is only here to cap the memory usage and not to actively control the requests.
+    # When you are hitting this limit you should probably start scaling horizontally instead.
+    pendingRequestLimit: 25000
   orchestrator:
-    # Number of concurrent sessions allowed *per* orchestrator
-    maxSessions: 5
-  garbageCollector:
-    # How long session metadata is kept (seconds)
-    retentionDuration: 604800
+    # Number of concurrent sessions allowed *per* orchestrator replica
+    permits: 5
+  node:
+    # Maximum duration (in seconds) the webdriver may take until it reports a ready state.
+    startupTimeout: 15
+    # Idle timeout (in seconds) which is in effect until the first client request is received.
+    # This allows the session to terminate early if the client no longer has any interest in the session
+    # or it itself ran into a local timeout (e.g. due to prolonged queueing).
+    # After the first request from a client has been received, the regular idle-timeout is taking effect.
+    initialTimeout: 30
+    # If no WebDriver client request is received within the specified period (in seconds), the node will terminate.
+    # Each incoming request resets the countdown.
+    idleTimeout: 120
+    # Screen resolution for sessions
+    resolution: 1920x1080
 
-recording:
-  # Whether or not to create PVCs and a storage service
-  enabled: false
-  # Size in GB
-  sizeLimit: 50
-  # Consult the ffmpeg documentation on how these parameters work
-  # https://trac.ffmpeg.org/wiki/Encode/H.264
-  quality:
-    crf: 46
-    maxBitrate: 450000
-  persistentVolumeClaim:
-    create: true
-    # The name of the volume claim to use.
-    # If not set and createVolumeClaim is true, a name is generated using the fullname template
-    name: ""
-    # A backing PersistentVolume has to exist and implicitly defines
-    # the node-affinity for sessions and storage pods if recording is enabled.
-    #
-    # Note: The storage class needs to support concurrent access by multiple pods! (e.g. a hostPath based PV)
-    storageClassName: local-path
-
-telemetry:
-  # Whether request traces should be collected
-  enabled: false
-  # OpenTelemetry collector gRPC endpoint where traces are pushed to.
-  endpoint: ""
-  # Whether to deploy a OpenTelemetry collector and Jaeger "all-in-one" demo. Overwrites the endpoint.
-  # NOTE: This is intended for demonstration purposes ONLY and may impact performance when used in production!
-  demo: false
+# recording:
+#   # Consult the ffmpeg documentation on how these parameters work
+#   # https://trac.ffmpeg.org/wiki/Encode/H.264
+#   quality:
+#     crf: 46
+#     maxBitrate: 450000
 
 replicaCount:
-  proxy: 1
+  gangway: 1
   manager: 1
   orchestrator: 1
-  metrics: 1
-  api: 1
 
 image:
   repository: webgrid
@@ -80,54 +64,35 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-storageClassName:
-  redis: emptyDir
-
 resources:
   redis: {}
-  proxy: {}
+  gangway: {}
   manager: {}
-  metrics: {}
   orchestrator: {}
-  storage: {}
-  api: {}
-  session:
+  node:
     limits:
       memory: 3000Mi
     requests:
-      cpu: '1'
+      cpu: "1"
       memory: 3000Mi
-  telemetryDemo: {}
 
 nodeSelector:
   redis: {}
-  proxy: {}
+  gangway: {}
   manager: {}
-  metrics: {}
   orchestrator: {}
-  session: {}
-  storage: {}
-  api: {}
-  telemetryDemo: {}
+  node: {}
 
 tolerations:
   redis: []
-  proxy: []
+  gangway: []
   manager: []
-  metrics: []
   orchestrator: []
-  session: []
-  storage: []
-  api: []
-  telemetryDemo: []
+  node: []
 
 affinity:
   redis: {}
-  proxy: {}
+  gangway: {}
   manager: {}
-  metrics: {}
   orchestrator: {}
-  session: {}
-  storage: {}
-  api: {}
-  telemetryDemo: {}
+  node: {}

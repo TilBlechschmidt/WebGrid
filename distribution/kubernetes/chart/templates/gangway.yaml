@@ -1,31 +1,33 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
-  name: {{ include "web-grid.fullname" . }}-proxy
+  name: {{ include "web-grid.fullname" . }}-gangway
   labels:
-    web-grid/component: proxy
+    dev.webgrid/component: gangway
     {{- include "web-grid.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount.proxy }}
+  serviceName: {{ include "web-grid.fullname" . }}-gangway
+  replicas: {{ .Values.replicaCount.gangway }}
+  podManagementPolicy: Parallel
   selector:
     matchLabels:
-      web-grid/component: proxy
+      dev.webgrid/component: gangway
       {{- include "web-grid.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        web-grid/component: proxy
+        dev.webgrid/component: gangway
         {{- include "web-grid.selectorLabels" . | nindent 8 }}
     spec:
-      {{- with .Values.nodeSelector.proxy }}
+      {{- with .Values.nodeSelector.gangway }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity.proxy }}
+      {{- with .Values.affinity.gangway }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.tolerations.proxy }}
+      {{- with .Values.tolerations.gangway }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -36,8 +38,8 @@ spec:
       containers:
         - image: "{{ .Values.image.repository }}/core:{{ include "web-grid.imageTag" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          name: {{ .Chart.Name }}-proxy
-          args: ["proxy", "--status-server"]
+          name: {{ .Chart.Name }}-gangway
+          args: ["gangway", "--status-server", "47002"]
           ports:
             - name: http
               containerPort: 40005
@@ -50,10 +52,14 @@ spec:
               value: "{{ include "web-grid.redisURL" . }}"
             - name: RUST_LOG
               value: {{ .Values.logLevel }}
-            {{- if .Values.telemetry.enabled }}
-            - name: TRACE_ENDPOINT
-              value: {{ include "web-grid.telemetryEndpoint" . }}
-            {{- end}}
+            - name: CACHE_SIZE
+              value: {{ .Values.config.gangway.cacheSize }}
+            - name: PENDING_REQUEST_LIMIT
+              value: {{ .Values.config.gangway.pendingRequestLimit }}
+            - name: ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           livenessProbe:
             tcpSocket:
               port: status
@@ -62,7 +68,7 @@ spec:
               path: /status
               port: status
           resources:
-            {{- toYaml .Values.resources.proxy | nindent 12 }}
+            {{- toYaml .Values.resources.gangway | nindent 12 }}
 ---
 apiVersion: v1
 kind: Service
@@ -78,5 +84,5 @@ spec:
       protocol: TCP
       name: http
   selector:
-    web-grid/component: proxy
+    dev.webgrid/component: gangway
     {{- include "web-grid.selectorLabels" . | nindent 4 }}

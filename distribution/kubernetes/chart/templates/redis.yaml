@@ -1,18 +1,47 @@
-{{- if ne .Values.storageClassName.redis "emptyDir" }}
+{{- if ne .Values.config.redis.storageClassName "emptyDir" }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ include "web-grid.fullname" . }}-redis
   labels:
-    web-grid/component: redis
+    dev.webgrid/component: redis
     {{- include "web-grid.labels" . | nindent 4 }}
 spec:
-  storageClassName: {{ .Values.storageClassName.redis }}
+  storageClassName: {{ .Values.config.redis.storageClassName }}
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 100M
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "web-grid.fullname" . }}-redis
+  labels:
+      dev.webgrid/component: redis
+      {{- include "web-grid.labels" . | nindent 6 }}
+data:
+  # ------- TODO Replace maxmemory with calculated value! -------
+  redis.conf: |
+    maxmemory 100mb
+
+    # RDB Snapshots
+    save 900 1
+    save 300 10
+    save 60 10000
+    
+    dbfilename dump.rdb
+    dir /data
+
+    # AOF Persistence
+    appendonly yes
+    appendfilename "appendonly.aof"
+    appendfsync everysec
+    auto-aof-rewrite-percentage 100
+    auto-aof-rewrite-min-size 64mb
+    aof-load-truncated yes
+    aof-use-rdb-preamble yes
 ---
 {{- end }}
 apiVersion: apps/v1
@@ -20,13 +49,13 @@ kind: Deployment
 metadata:
   name: {{ include "web-grid.fullname" . }}-redis
   labels:
-    web-grid/component: redis
+    dev.webgrid/component: redis
     {{- include "web-grid.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      web-grid/component: redis
+      dev.webgrid/component: redis
       {{- include "web-grid.selectorLabels" . | nindent 6 }}
   template:
     metadata:
@@ -34,7 +63,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "9121"
       labels:
-        web-grid/component: redis
+        dev.webgrid/component: redis
         {{- include "web-grid.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.nodeSelector.redis }}
@@ -54,7 +83,7 @@ spec:
           configMap:
             name: {{ include "web-grid.fullname" . }}-redis
         - name: redis-persistence
-          {{- if eq .Values.storageClassName.redis "emptyDir" }}
+          {{- if eq .Values.config.redis.storageClassName "emptyDir" }}
           emptyDir:
             medium: Memory
           {{- else }}
@@ -81,32 +110,6 @@ spec:
           name: redis-exporter
           ports:
             - containerPort: 9121
-        - image: "{{ .Values.image.repository }}/core:{{ include "web-grid.imageTag" . }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          name: {{ .Chart.Name }}-gc
-          args: ["gc", "--status-server"]
-          ports:
-            - name: status
-              containerPort: 47002
-              protocol: TCP
-          env:
-            - name: REDIS
-              value: "{{ include "web-grid.redisURL" . }}"
-            - name: RUST_LOG
-              value: {{ .Values.logLevel }}
-            - name: SESSION_RETENTION_DURATION
-              value: "{{ .Values.config.garbageCollector.retentionDuration }}"
-            {{- if .Values.telemetry.enabled }}
-            - name: TRACE_ENDPOINT
-              value: {{ include "web-grid.telemetryEndpoint" . }}
-            {{- end}}
-          livenessProbe:
-            tcpSocket:
-              port: status
-          readinessProbe:
-            httpGet:
-              path: /status
-              port: status
 ---
 apiVersion: v1
 kind: Service
@@ -121,6 +124,6 @@ spec:
       protocol: TCP
       name: redis
   selector:
-    web-grid/component: redis
+    dev.webgrid/component: redis
     {{- include "web-grid.selectorLabels" . | nindent 4 }}
   

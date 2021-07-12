@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "web-grid.fullname" . }}-orchestrator
+  labels:
+      dev.webgrid/component: orchestrator
+      {{- include "web-grid.labels" . | nindent 6 }}
+data:
+  job.yaml: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: {{ "{{job_name}}" }}
+      labels:
+        dev.webgrid/component: node
+        dev.webgrid/session.id: {{ "{{session_id}}" }}
+        dev.webgrid/provisioner.instance: {{ "{{provisioner_instance}}" }}
+        {{- include "web-grid.labels" . | nindent 8 }}
+    spec:
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            dev.webgrid/component: node
+            dev.webgrid/session.id: {{ "{{session_id}}" }}
+            {{- include "web-grid.selectorLabels" . | nindent 12 }}
+        spec:
+          {{- with .Values.nodeSelector.node }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity.node }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations.node }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          restartPolicy: Never
+          volumes:
+            - name: dshm
+              emptyDir:
+                medium: Memory
+          containers:
+            - name: {{ "{{job_name}}" }}
+              image: {{ "{{image_name}}" }}
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              ports:
+                - name: http
+                  containerPort: 40001
+                  protocol: TCP
+              env:
+                - name: RUST_LOG
+                  value: {{ .Values.logLevel }}
+                - name: ID
+                  value: {{ "{{session_id}}" }}
+                - name: CAPABILITIES
+                  value: {{ "{{capabilities}}" }}
+                - name: REDIS
+                  value: "{{ include "web-grid.redisURL" . }}"
+                - name: HOST
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: status.podIP
+                - name: STARTUP_TIMEOUT
+                  value: {{ .Values.config.node.startupTimeout }}
+                - name: INITIAL_TIMEOUT
+                  value: {{ .Values.config.node.initialTimeout }}
+                - name: IDLE_TIMEOUT
+                  value: {{ .Values.config.node.idleTimeout }}
+                - name: RESOLUTION
+                  value: {{ .Values.config.node.resolution }}
+              volumeMounts:
+                - mountPath: /dev/shm
+                  name: dshm
+              resources:
+                {{- toYaml .Values.resources.node | nindent 16 }}

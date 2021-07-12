@@ -1,20 +1,22 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "web-grid.fullname" . }}-manager
   labels:
-    web-grid/component: manager
+    dev.webgrid/component: manager
     {{- include "web-grid.labels" . | nindent 4 }}
 spec:
+  serviceName: {{ include "web-grid.fullname" . }}-manager
   replicas: {{ .Values.replicaCount.manager }}
+  podManagementPolicy: Parallel
   selector:
     matchLabels:
-      web-grid/component: manager
+      dev.webgrid/component: manager
       {{- include "web-grid.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        web-grid/component: manager
+        dev.webgrid/component: manager
         {{- include "web-grid.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.nodeSelector.manager }}
@@ -37,35 +39,20 @@ spec:
         - image: "{{ .Values.image.repository }}/core:{{ include "web-grid.imageTag" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: {{ .Chart.Name }}-manager
-          args: ["manager", "--status-server"]
+          args: ["manager", "--status-server", "47002"]
           ports:
-            - name: http
-              containerPort: 40001
-              protocol: TCP
             - name: status
               containerPort: 47002
               protocol: TCP
           env:
             - name: REDIS
               value: "{{ include "web-grid.redisURL" . }}"
-            - name: HOST
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
+            - name: RUST_LOG
+              value: {{ .Values.logLevel }}
             - name: ID
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            - name: TIMEOUT_QUEUE
-              value: "{{ .Values.config.timeouts.queue }}"
-            - name: TIMEOUT_PROVISIONING
-              value: "{{ .Values.config.timeouts.provisioning }}"
-            - name: RUST_LOG
-              value: {{ .Values.logLevel }}
-            {{- if .Values.telemetry.enabled }}
-            - name: TRACE_ENDPOINT
-              value: {{ include "web-grid.telemetryEndpoint" . }}
-            {{- end}}
           livenessProbe:
             tcpSocket:
               port: status
