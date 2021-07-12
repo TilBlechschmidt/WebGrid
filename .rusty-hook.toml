@@ -1,5 +1,5 @@
 [hooks]
-pre-commit = "cd core && cargo fmt --all && find src -name '*.rs' | xargs touch && cargo clippy -- -D warnings"
+pre-commit = "cd core && cargo fmt --all && find src -name '*.rs' | xargs touch && cargo clippy --tests --all-targets --all-features -- -D warnings"
 
 [logging]
 verbose = true

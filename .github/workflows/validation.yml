@@ -28,7 +28,7 @@ jobs:
       - name: Build
         run: cargo build --verbose --locked
       - name: Lint code
-        run: cargo clippy --verbose -- -D warnings
+        run: cargo clippy --tests --all-targets --all-features --verbose -- -D warnings
       - name: Document
         run: |
           cargo doc --verbose --locked --no-deps && \
