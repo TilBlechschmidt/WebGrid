@@ -203,6 +203,9 @@ impl Module for Node {
             advertise_job
         });
 
+        // TODO This method is problematic as it wastes resources and does not have a timeout!
+        //      Additionally, the ready-states are not yet indicative of the actual ready state as e.g. the HTTP server future is only polled after the ready signal is sent.
+        scheduler.wait_for_ready().await;
         self.send_alive_notification().await?;
 
         Ok(Some(heart))

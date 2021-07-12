@@ -597,8 +597,12 @@ where
     const NAME: &'static str = module_path!();
 
     async fn execute(&self, manager: jatsl::JobManager) -> EmptyResult {
-        let factory = RedisCommunicationFactory::new(self.url.clone(), Arc::new(manager));
+        let manager = Arc::new(manager);
+        let factory = RedisCommunicationFactory::new(self.url.clone(), manager.clone());
         let advertiser = factory.service_advertiser();
+
+        // TODO This "ready" reporting should happen only after the responder loop has started!
+        manager.ready().await;
 
         advertiser
             .advertise(self.service.clone(), self.endpoint.clone())

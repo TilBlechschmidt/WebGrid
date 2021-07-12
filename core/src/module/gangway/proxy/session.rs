@@ -19,8 +19,8 @@ const SESSION_ID_LENGTH: usize = 36; // Length of a UUID e.g. "7B43902E-7520-4AB
 
 #[derive(Debug, Error)]
 enum SessionForwardingError {
-    #[error("no endpoint available")]
-    NoEndpoint,
+    #[error("no endpoint available for session {0}")]
+    NoEndpoint(SessionIdentifier),
 }
 
 pub struct SessionForwardingResponder<D: ServiceDiscoverer<WebgridServiceDescriptor>> {
@@ -74,7 +74,7 @@ where
     async fn discover_endpoint(&self, identifier: SessionIdentifier) -> Result<D::I, BoxedError> {
         let descriptor = WebgridServiceDescriptor::Node(identifier);
         let endpoint = self.discoverer.discover(descriptor).try_next().await?;
-        endpoint.ok_or_else(|| SessionForwardingError::NoEndpoint.into())
+        endpoint.ok_or_else(|| SessionForwardingError::NoEndpoint(identifier).into())
     }
 }
 
