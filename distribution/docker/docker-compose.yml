@@ -1,62 +1,36 @@
 version: "3"
 services:
-  proxy:
+  gangway:
     image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-latest}
     platform: linux/amd64
-    container_name: webgrid-proxy
-    command: proxy --log debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn --trace-endpoint http://webgrid-otelcol:4317
-    ports:
-      - 8080:40005
+    container_name: webgrid-gangway
+    command: gangway DEADBEEF-0000-0000-0000-0000CAFEFEED
     depends_on:
       - redis
+    ports:
+      - 8080:40002
   manager:
     image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-latest}
     platform: linux/amd64
     container_name: webgrid-manager
-    command: manager example-manager --host webgrid-manager --log debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn --trace-endpoint http://webgrid-otelcol:4317
+    command: manager DEADBEEF-0000-0000-0000-0000CAFEFEED
     depends_on:
       - redis
   orchestrator:
     image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-latest}
     platform: linux/amd64
     container_name: webgrid-orchestrator
-    command: orchestrator --slot-count 5 example-orchestrator docker --images "${REPOSITORY:-webgrid}/node-firefox:${IMAGE_TAG:-latest}=firefox::68.7.0esr,${REPOSITORY:-webgrid}/node-chrome:${IMAGE_TAG:-latest}=chrome::81.0.4044.122" --log debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn --trace-endpoint http://webgrid-otelcol:4317 ${ORCHESTRATOR_FLAGS:-}
+    command: orchestrator docker -p 5 DEADBEEF-0000-0000-0000-0000CAFEFEED "${REPOSITORY:-webgrid}/node-firefox:${IMAGE_TAG:-latest}=firefox::68.7.0esr,${REPOSITORY:-webgrid}/node-chrome:${IMAGE_TAG:-latest}=chrome::81.0.4044.122"
     depends_on:
       - redis
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-  storage:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-latest}
-    platform: linux/amd64
-    container_name: webgrid-storage
-    command: storage --log debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn --trace-endpoint http://webgrid-otelcol:4317 --host webgrid-storage --storage-directory /storage --size-limit 10
-    depends_on:
-      - redis
-    volumes:
-      - webgrid:/storage
-  gc:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-latest}
-    platform: linux/amd64
-    container_name: webgrid-gc
-    command: gc --log debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn --trace-endpoint http://webgrid-otelcol:4317
-    depends_on:
-      - redis
-  api:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-latest}
-    platform: linux/amd64
-    container_name: webgrid-api
-    command: api --log debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn --trace-endpoint http://webgrid-otelcol:4317 --host webgrid-api
-    depends_on:
-      - redis
   redis:
     image: redis:6.2-alpine
     container_name: webgrid-redis
     command: redis-server --notify-keyspace-events Kgx --save "" --appendonly no
     ports:
       - 6379:6379
-volumes:
-  webgrid:
-    external: true
 
 networks:
   default:
