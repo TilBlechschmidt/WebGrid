@@ -11,6 +11,6 @@ spec:
       protocol: TCP
       name: http
   selector:
-    web-grid/component: proxy
+    web-grid/component: gangway
     app.kubernetes.io/name: webgrid
     app.kubernetes.io/instance: test
