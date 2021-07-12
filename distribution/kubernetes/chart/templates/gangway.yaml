@@ -42,7 +42,7 @@ spec:
           args: ["gangway", "--status-server", "47002"]
           ports:
             - name: http
-              containerPort: 40005
+              containerPort: 40002
               protocol: TCP
             - name: status
               containerPort: 47002
@@ -53,9 +53,9 @@ spec:
             - name: RUST_LOG
               value: {{ .Values.logLevel }}
             - name: CACHE_SIZE
-              value: {{ .Values.config.gangway.cacheSize }}
+              value: "{{ .Values.config.gangway.cacheSize }}"
             - name: PENDING_REQUEST_LIMIT
-              value: {{ .Values.config.gangway.pendingRequestLimit }}
+              value: "{{ .Values.config.gangway.pendingRequestLimit }}"
             - name: ID
               valueFrom:
                 fieldRef:

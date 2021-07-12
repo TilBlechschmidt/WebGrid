@@ -54,9 +54,9 @@ data:
                 - name: RUST_LOG
                   value: {{ .Values.logLevel }}
                 - name: ID
-                  value: {{ "{{session_id}}" }}
+                  value: "{{ "{{session_id}}" }}"
                 - name: CAPABILITIES
-                  value: {{ "{{capabilities}}" }}
+                  value: '{{ "{{capabilities}}" }}'
                 - name: REDIS
                   value: "{{ include "web-grid.redisURL" . }}"
                 - name: HOST
@@ -64,13 +64,13 @@ data:
                     fieldRef:
                       fieldPath: status.podIP
                 - name: STARTUP_TIMEOUT
-                  value: {{ .Values.config.node.startupTimeout }}
+                  value: "{{ .Values.config.node.startupTimeout }}"
                 - name: INITIAL_TIMEOUT
-                  value: {{ .Values.config.node.initialTimeout }}
+                  value: "{{ .Values.config.node.initialTimeout }}"
                 - name: IDLE_TIMEOUT
-                  value: {{ .Values.config.node.idleTimeout }}
+                  value: "{{ .Values.config.node.idleTimeout }}"
                 - name: RESOLUTION
-                  value: {{ .Values.config.node.resolution }}
+                  value: "{{ .Values.config.node.resolution }}"
               volumeMounts:
                 - mountPath: /dev/shm
                   name: dshm

@@ -14,6 +14,7 @@ spec:
     requests:
       storage: 100M
 ---
+{{- end }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -43,7 +44,6 @@ data:
     aof-load-truncated yes
     aof-use-rdb-preamble yes
 ---
-{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
