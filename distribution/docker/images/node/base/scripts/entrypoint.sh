@@ -3,6 +3,7 @@ set -e
 source /env.sh
 
 export DISPLAY=:42
+# TODO Use the RESOLUTION env variable instead
 export ON_SESSION_CREATE="xwit -display $DISPLAY -all -resize 1920 1080"
 
 ./start-xvfb.sh

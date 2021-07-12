@@ -1,6 +1,6 @@
 #!/bin/sh
 echo "Starting virtual X-Server ..."
-Xvfb $DISPLAY -ac -wr +render -noreset +extension GLX -screen 0 1920x1080x24 &
+Xvfb $DISPLAY -ac -wr +render -noreset +extension GLX -screen 0 ${RESOLUTION}x24 &
 
 timeout=${XVFB_TIMEOUT:-5}
 loopCount=0

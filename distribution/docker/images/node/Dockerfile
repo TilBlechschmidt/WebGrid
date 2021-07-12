@@ -1,6 +1,7 @@
 FROM bitnami/minideb:buster AS base
 
 ENV DBUS_SESSION_BUS_ADDRESS=/dev/null
+ENV RESOLUTION=1920x1080
 
 RUN echo "#!/usr/bin/env bash\necho 'Loading environment ...'" > /env.sh && chmod +x /env.sh
 
