@@ -7,13 +7,6 @@
 	"settings": {
 		"editor.formatOnSave": true,
 		"files.autoSave": "onFocusChange",
-		"rust.clippy_preference": "on",
-		"rust-analyzer.files.exclude": [
-			".cache/**"
-		],
-		"rust-analyzer.linkedProjects": [
-			"core/Cargo.toml"
-		],
 		"[svelte]": {
 			"editor.defaultFormatter": "svelte.svelte-vscode",
 			"editor.quickSuggestions": {
@@ -22,7 +15,16 @@
 		},
 		"tailwindCSS.includeLanguages": {
 			"svelte": "html"
-		}
+		},
+		"rust-analyzer.files.excludeDirs": [
+			".cache"
+		],
+		"rust-analyzer.linkedProjects": [
+			"core/Cargo.toml"
+		],
+		"rust-analyzer.assist.importEnforceGranularity": true,
+		"rust-analyzer.assist.importGranularity": "module",
+		"rust-analyzer.lens.implementations": false,
 	},
 	"extensions": {
 		"recommendations": [
@@ -37,5 +39,5 @@
 		"unwantedRecommendations": [
 			"rust-lang.rust"
 		]
-	}
+	},
 }
