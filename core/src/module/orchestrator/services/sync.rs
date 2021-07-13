@@ -40,9 +40,9 @@ where
         loop {
             sleep(self.interval).await;
 
-            // if let Err(e) = self.provisioner.purge_terminated().await {
-            //     log::warn!("Failed to purge terminated jobs: {}", e);
-            // }
+            if let Err(e) = self.provisioner.purge_terminated().await {
+                log::warn!("Failed to purge terminated jobs: {}", e);
+            }
 
             match self.provisioner.alive_sessions().await {
                 Ok(alive_sessions) => self.state.release_dead_sessions(alive_sessions).await,

@@ -32,7 +32,7 @@ impl Module for Manager {
         let consumer = self.options.queueing.id.to_string();
 
         let runner = ServiceRunner::<SchedulingService<_>>::new(redis_url, group, consumer, ());
-        scheduler.spawn_job(runner);
+        scheduler.spawn_job(runner).await;
 
         Ok(Some(Heart::without_heart_stone()))
     }

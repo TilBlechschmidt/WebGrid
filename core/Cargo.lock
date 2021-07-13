@@ -921,9 +921,9 @@ checksum = "dd25036021b0de88a0aff6b850051563c6516d0bf53f8638938edbb9de732736"
 
 [[package]]
 name = "jatsl"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db3521f9006b482475361fdf922d8bab29c52fc486a0c11db28dbf51a6e4239e"
+checksum = "48d50c8589208ccdbf2e593146c9e9fe8e4b149e166633a7ecfe5c37cf508f78"
 dependencies = [
  "anyhow",
  "async-trait",

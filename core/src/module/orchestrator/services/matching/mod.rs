@@ -14,7 +14,7 @@ pub trait MatchingStrategy {
     fn matches(&self, request: CapabilitiesRequest) -> bool;
 }
 
-impl MatchingStrategy for Box<dyn MatchingStrategy + Send + Sync> {
+impl<'a> MatchingStrategy for Box<dyn MatchingStrategy + Send + Sync + 'a> {
     fn matches(&self, request: CapabilitiesRequest) -> bool {
         self.as_ref().matches(request)
     }

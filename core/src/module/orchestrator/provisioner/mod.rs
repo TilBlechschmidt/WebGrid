@@ -38,7 +38,7 @@ pub trait SessionProvisioner {
 }
 
 #[async_trait]
-impl SessionProvisioner for Box<dyn SessionProvisioner + Send + Sync> {
+impl<'a> SessionProvisioner for Box<dyn SessionProvisioner + Send + Sync + 'a> {
     async fn provision(
         &self,
         session_id: &crate::domain::event::SessionIdentifier,

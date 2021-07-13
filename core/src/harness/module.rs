@@ -85,7 +85,7 @@ impl ModuleRunner {
         if let Some(port) = self.status_server_port {
             // TODO Provide the status server with a "fake job" that is not ready while we the module.run() method has not been awaited
             let status_server = StatusServer::new(&scheduler, port);
-            scheduler.spawn_job(status_server);
+            scheduler.spawn_job(status_server).await;
         }
 
         let startup = timeout(self.startup_timeout, module.pre_startup()).await;
