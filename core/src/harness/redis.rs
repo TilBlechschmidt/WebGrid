@@ -601,11 +601,12 @@ where
         let factory = RedisCommunicationFactory::new(self.url.clone(), manager.clone());
         let advertiser = factory.service_advertiser();
 
-        // TODO This "ready" reporting should happen only after the responder loop has started!
-        manager.ready().await;
-
         advertiser
-            .advertise(self.service.clone(), self.endpoint.clone())
+            .advertise(
+                self.service.clone(),
+                self.endpoint.clone(),
+                Some(|| manager.ready()),
+            )
             .await?;
 
         Ok(())

@@ -9,7 +9,8 @@ use serde::de::DeserializeOwned;
 use std::any::type_name;
 use std::time::Duration;
 
-const DEFAULT_BATCH_SIZE: usize = 1;
+const DEFAULT_BATCH_SIZE: usize = 10;
+const DEFAULT_CONCURRENCY: usize = DEFAULT_BATCH_SIZE;
 const DEFAULT_IDLE_TIMEOUT: Option<Duration> = None;
 
 /// Entity which may consume and process [`Notifications`](Notification)
@@ -66,7 +67,7 @@ where
             .await?;
 
         stream
-            .for_each(|item| async move {
+            .for_each_concurrent(Some(DEFAULT_CONCURRENCY), |item| async move {
                 match item {
                     Ok(mut entry) => match entry.parse_payload::<C::Notification>() {
                         Ok(notification) => match self.consume(notification).await {

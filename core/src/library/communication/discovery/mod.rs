@@ -5,6 +5,7 @@ use crate::library::EmptyResult;
 use super::super::BoxedError;
 use async_trait::async_trait;
 use futures::stream::BoxStream;
+use futures::Future;
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
 
@@ -47,11 +48,18 @@ pub type ServiceEndpoint = String;
 /// Structure advertising a service
 #[async_trait]
 pub trait ServiceAdvertiser {
-    /// Advertises the given job while the returned future is polled
-    async fn advertise<S: ServiceDescriptor + Serialize + Send + Sync>(
+    /// Advertises the given job while the returned future is polled.
+    /// Additionally, an optional ready function can be passed which is called
+    /// once the advertiser is ready to accept incoming requests.
+    async fn advertise<
+        S: ServiceDescriptor + Serialize + Send + Sync,
+        F: Future<Output = ()> + Send + Sync,
+        Fn: FnOnce() -> F + Send + Sync,
+    >(
         &self,
         service: S,
         endpoint: ServiceEndpoint,
+        on_ready: Option<Fn>,
     ) -> EmptyResult;
 }
 

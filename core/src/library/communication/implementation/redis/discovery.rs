@@ -6,11 +6,11 @@ use crate::library::communication::discovery::{
 use crate::library::communication::implementation::redis::RedisConnectionVariant;
 use crate::library::{BoxedError, EmptyResult};
 use async_trait::async_trait;
-use futures::TryStreamExt;
 use futures::{
     stream::{self, BoxStream},
     StreamExt,
 };
+use futures::{Future, TryStreamExt};
 use redis::aio::ConnectionLike;
 use redis::AsyncCommands;
 use serde::de::DeserializeOwned;
@@ -43,10 +43,15 @@ where
     F: RedisFactory + Send + Sync,
     F::PubSub: Send + Sync,
 {
-    async fn advertise<S: ServiceDescriptor + Serialize + Send + Sync>(
+    async fn advertise<
+        S: ServiceDescriptor + Serialize + Send + Sync,
+        Fut: Future<Output = ()> + Send + Sync,
+        Fn: FnOnce() -> Fut + Send + Sync,
+    >(
         &self,
         service: S,
         endpoint: ServiceEndpoint,
+        on_ready: Option<Fn>,
     ) -> EmptyResult {
         let mut sub = self.factory.pubsub().await?;
         let mut con = self
@@ -69,6 +74,10 @@ where
         con.publish(SERVICE_ANNOUNCEMENT_CHANNEL, &message).await?;
 
         let mut stream = sub.into_on_message();
+
+        if let Some(on_ready) = on_ready {
+            (on_ready)().await;
+        }
 
         while stream.try_next().await?.is_some() {
             // To reduce CPU load, we ignorantly assume that *any* message on the request channel will be a request for us.

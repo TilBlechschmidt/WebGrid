@@ -66,7 +66,7 @@ impl Job for ProxyJob {
         };
 
         let addr = SocketAddr::from(([0, 0, 0, 0], self.port));
-        let server = Server::bind(&addr).serve(make_svc);
+        let server = Server::bind(&addr).http2_only(true).serve(make_svc);
         let graceful = server.with_graceful_shutdown(manager.termination_signal());
 
         manager.ready().await;
