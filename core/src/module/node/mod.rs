@@ -15,7 +15,7 @@ use crate::library::communication::{BlackboxError, CommunicationFactory};
 use crate::library::{BoxedError, EmptyResult};
 use anyhow::anyhow;
 use async_trait::async_trait;
-use jatsl::{schedule, JobScheduler};
+use jatsl::{schedule_and_wait, JobScheduler};
 use thiserror::Error;
 
 mod options;
@@ -198,14 +198,12 @@ impl Module for Node {
         let proxy_job = self.build_proxy_job(stone)?;
         let advertise_job = self.build_advertise_job();
 
-        schedule!(scheduler, {
+        schedule_and_wait!(scheduler, {
             proxy_job,
             advertise_job
         });
 
-        // TODO This method is problematic as it wastes resources and does not have a timeout!
-        //      Additionally, the ready-states are not yet indicative of the actual ready state as e.g. the HTTP server future is only polled after the ready signal is sent.
-        scheduler.wait_for_ready().await;
+        // TODO The ready-states are not yet indicative of the actual ready state as e.g. the HTTP server future is only polled after the ready signal is sent.
         self.send_alive_notification().await?;
 
         Ok(Some(heart))
