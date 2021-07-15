@@ -9,7 +9,7 @@ use serde::de::DeserializeOwned;
 use std::any::type_name;
 use std::time::Duration;
 
-const DEFAULT_BATCH_SIZE: usize = 10;
+const DEFAULT_BATCH_SIZE: usize = 50;
 const DEFAULT_CONCURRENCY: usize = DEFAULT_BATCH_SIZE;
 const DEFAULT_IDLE_TIMEOUT: Option<Duration> = None;
 
