@@ -37,6 +37,11 @@ pub struct Options {
     /// Hostname or IP address where this instance can be reached by proxy services
     #[structopt(short, long, env)]
     pub host: String,
+
+    /// Maximum duration (in seconds) for the server to bind to a port and advertise its ready-state.
+    /// If the server is for whatever reason unable to claim the port in this time, startup will fail.
+    #[structopt(long, env, default_value = "120", parse(try_from_str = parse_seconds))]
+    pub bind_timeout: Duration,
 }
 
 /// WebDriver related options

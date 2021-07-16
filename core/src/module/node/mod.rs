@@ -198,7 +198,7 @@ impl Module for Node {
         let proxy_job = self.build_proxy_job(stone)?;
         let advertise_job = self.build_advertise_job();
 
-        schedule_and_wait!(scheduler, {
+        schedule_and_wait!(scheduler, self.options.bind_timeout, {
             proxy_job,
             advertise_job
         });

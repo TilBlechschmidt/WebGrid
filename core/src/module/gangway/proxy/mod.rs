@@ -61,7 +61,7 @@ where
         };
 
         let addr = SocketAddr::from(([0, 0, 0, 0], self.port));
-        let server = Server::bind(&addr).serve(make_svc);
+        let server = Server::try_bind(&addr)?.serve(make_svc);
         let graceful = server.with_graceful_shutdown(manager.termination_signal());
 
         manager.ready().await;

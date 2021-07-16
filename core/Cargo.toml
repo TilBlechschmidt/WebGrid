@@ -21,7 +21,7 @@ hyper = { version = "0.14", features = ["full"] }
 paste = "1.0"
 
 # Component operation
-jatsl = "0.1.7"
+jatsl = "0.1.8"
 
 # Data serialization
 serde = "1.0"
