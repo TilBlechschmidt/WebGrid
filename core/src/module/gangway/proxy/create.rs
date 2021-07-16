@@ -24,9 +24,9 @@ impl SessionCreationResponder {
     }
 
     #[inline]
-    fn new_error_response(&self, message: &str, status: StatusCode) -> Response<Body> {
+    fn new_error_response(&self, id: &str, message: &str, status: StatusCode) -> Response<Body> {
         // TODO Wrap the error in a WebDriver protocol compliant JSON error (and stack using the BlackboxError type)
-        let error = format!("unable to create session: {}", message);
+        let error = format!("unable to create session {}: {}", id, message);
 
         Response::builder()
             .status(status)
@@ -39,7 +39,11 @@ impl SessionCreationResponder {
         let capabilities = match serde_json::from_str(&notification.actual_capabilities) {
             Ok(value) => value,
             Err(e) => {
-                return self.new_error_response(&e.to_string(), StatusCode::INTERNAL_SERVER_ERROR)
+                return self.new_error_response(
+                    &notification.id.to_string(),
+                    &e.to_string(),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                )
             }
         };
 
@@ -54,7 +58,11 @@ impl SessionCreationResponder {
         let serialized_response = match serde_json::to_string(&response) {
             Ok(serialized) => serialized,
             Err(e) => {
-                return self.new_error_response(&e.to_string(), StatusCode::INTERNAL_SERVER_ERROR)
+                return self.new_error_response(
+                    &notification.id.to_string(),
+                    &e.to_string(),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                )
             }
         };
 
@@ -83,9 +91,11 @@ impl Responder for SessionCreationResponder {
         let bytes = match body::to_bytes(body).await {
             Ok(bytes) => bytes,
             Err(e) => {
-                return ResponderResult::Intercepted(Ok(
-                    self.new_error_response(&e.to_string(), StatusCode::INTERNAL_SERVER_ERROR)
-                ))
+                return ResponderResult::Intercepted(Ok(self.new_error_response(
+                    "-",
+                    &e.to_string(),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                )))
             }
         };
         let capabilities = match serde_json::from_slice::<SessionCreationRequest>(&bytes)
@@ -93,14 +103,18 @@ impl Responder for SessionCreationResponder {
         {
             Ok(Ok(raw)) => RawCapabilitiesRequest::new(raw),
             Ok(Err(e)) => {
-                return ResponderResult::Intercepted(Ok(
-                    self.new_error_response(&e.to_string(), StatusCode::INTERNAL_SERVER_ERROR)
-                ))
+                return ResponderResult::Intercepted(Ok(self.new_error_response(
+                    "-",
+                    &e.to_string(),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                )))
             }
             Err(e) => {
-                return ResponderResult::Intercepted(Ok(
-                    self.new_error_response(&e.to_string(), StatusCode::INTERNAL_SERVER_ERROR)
-                ))
+                return ResponderResult::Intercepted(Ok(self.new_error_response(
+                    "-",
+                    &e.to_string(),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                )))
             }
         };
 
@@ -113,9 +127,11 @@ impl Responder for SessionCreationResponder {
 
         // Send the notification and handle potential errors
         if let Err(e) = self.handle.creation_tx.send(notification) {
-            return ResponderResult::Intercepted(Ok(
-                self.new_error_response(&e.to_string(), StatusCode::INTERNAL_SERVER_ERROR)
-            ));
+            return ResponderResult::Intercepted(Ok(self.new_error_response(
+                &id.to_string(),
+                &e.to_string(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            )));
         }
 
         // Wait for either a failed or successful startup
@@ -125,10 +141,12 @@ impl Responder for SessionCreationResponder {
             }
             Ok(StatusResponse::Failed(notification)) => ResponderResult::Intercepted(Ok(self
                 .new_error_response(
+                    &id.to_string(),
                     &notification.cause.to_string(),
                     StatusCode::INTERNAL_SERVER_ERROR,
                 ))),
             Err(_) => ResponderResult::Intercepted(Ok(self.new_error_response(
+                &id.to_string(),
                 "gangway has exceeded the maximum pending request limit",
                 StatusCode::INTERNAL_SERVER_ERROR,
             ))),
