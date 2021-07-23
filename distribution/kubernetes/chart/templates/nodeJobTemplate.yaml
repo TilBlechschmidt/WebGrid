@@ -71,6 +71,8 @@ data:
                   value: "{{ .Values.config.node.idleTimeout }}"
                 - name: RESOLUTION
                   value: "{{ .Values.config.node.resolution }}"
+                - name: BIND_TIMEOUT
+                  value: 600
               volumeMounts:
                 - mountPath: /dev/shm
                   name: dshm
