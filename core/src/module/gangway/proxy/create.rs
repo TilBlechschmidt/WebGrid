@@ -4,10 +4,12 @@ use crate::domain::webdriver::{
     RawCapabilitiesRequest, SessionCreateResponse, SessionCreateResponseValue,
     SessionCreationRequest,
 };
-use crate::library::http::{Responder, ResponderResult};
+use crate::library::http::Responder;
 use async_trait::async_trait;
+use futures::Future;
 use hyper::http::{request::Parts, Method, Response, StatusCode};
 use hyper::{body, Body};
+use std::convert::Infallible;
 use std::net::IpAddr;
 use tokio::sync::oneshot;
 use uuid::Uuid;
@@ -75,13 +77,24 @@ impl SessionCreationResponder {
 
 #[async_trait]
 impl Responder for SessionCreationResponder {
-    async fn respond(&self, parts: Parts, body: Body, client_ip: IpAddr) -> ResponderResult {
+    #[inline]
+    async fn respond<F, Fut>(
+        &self,
+        parts: Parts,
+        body: Body,
+        client_ip: IpAddr,
+        next: F,
+    ) -> Result<Response<Body>, Infallible>
+    where
+        Fut: Future<Output = Result<Response<Body>, Infallible>> + Send,
+        F: FnOnce(Parts, Body, IpAddr) -> Fut + Send,
+    {
         // Match the method and path or short-circuit
         let method_matches = parts.method == Method::POST;
         let path_matches = parts.uri.path().eq_ignore_ascii_case(SESSION_CREATION_PATH);
 
         if !(method_matches && path_matches) {
-            return ResponderResult::Continue(parts, body, client_ip);
+            return next(parts, body, client_ip).await;
         }
 
         // TODO Limit the number of pending requests by using a Semaphore. This prevents DDoS attacks (somewhat) and limits the number of open connections!
@@ -91,11 +104,11 @@ impl Responder for SessionCreationResponder {
         let bytes = match body::to_bytes(body).await {
             Ok(bytes) => bytes,
             Err(e) => {
-                return ResponderResult::Intercepted(Ok(self.new_error_response(
+                return Ok(self.new_error_response(
                     "-",
                     &e.to_string(),
                     StatusCode::INTERNAL_SERVER_ERROR,
-                )))
+                ))
             }
         };
         let capabilities = match serde_json::from_slice::<SessionCreationRequest>(&bytes)
@@ -103,18 +116,18 @@ impl Responder for SessionCreationResponder {
         {
             Ok(Ok(raw)) => RawCapabilitiesRequest::new(raw),
             Ok(Err(e)) => {
-                return ResponderResult::Intercepted(Ok(self.new_error_response(
+                return Ok(self.new_error_response(
                     "-",
                     &e.to_string(),
                     StatusCode::INTERNAL_SERVER_ERROR,
-                )))
+                ))
             }
             Err(e) => {
-                return ResponderResult::Intercepted(Ok(self.new_error_response(
+                return Ok(self.new_error_response(
                     "-",
                     &e.to_string(),
                     StatusCode::INTERNAL_SERVER_ERROR,
-                )))
+                ))
             }
         };
 
@@ -127,29 +140,28 @@ impl Responder for SessionCreationResponder {
 
         // Send the notification and handle potential errors
         if let Err(e) = self.handle.creation_tx.send(notification) {
-            return ResponderResult::Intercepted(Ok(self.new_error_response(
+            return Ok(self.new_error_response(
                 &id.to_string(),
                 &e.to_string(),
                 StatusCode::INTERNAL_SERVER_ERROR,
-            )));
+            ));
         }
 
         // Wait for either a failed or successful startup
         match status_rx.await {
             Ok(StatusResponse::Operational(notification)) => {
-                ResponderResult::Intercepted(Ok(self.new_success_response(notification)))
+                Ok(self.new_success_response(notification))
             }
-            Ok(StatusResponse::Failed(notification)) => ResponderResult::Intercepted(Ok(self
-                .new_error_response(
-                    &id.to_string(),
-                    &notification.cause.to_string(),
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                ))),
-            Err(_) => ResponderResult::Intercepted(Ok(self.new_error_response(
+            Ok(StatusResponse::Failed(notification)) => Ok(self.new_error_response(
+                &id.to_string(),
+                &notification.cause.to_string(),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            )),
+            Err(_) => Ok(self.new_error_response(
                 &id.to_string(),
                 "gangway has exceeded the maximum pending request limit",
                 StatusCode::INTERNAL_SERVER_ERROR,
-            ))),
+            )),
         }
     }
 }

@@ -3,11 +3,10 @@ use hyper::Server;
 use jatsl::Job;
 use std::net::SocketAddr;
 
+use self::forwarding::ForwardingResponder;
+use self::terminate::TerminationInterceptor;
 use crate::harness::HeartStone;
 use crate::make_responder_chain_service_fn;
-use crate::module::node::proxy::terminate::TerminationInterceptor;
-
-use self::forwarding::ForwardingResponder;
 
 mod forwarding;
 mod terminate;

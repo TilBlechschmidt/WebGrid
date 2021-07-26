@@ -1,15 +1,14 @@
 use crate::domain::event::SessionIdentifier;
 use crate::domain::WebgridServiceDescriptor;
 use crate::library::communication::discovery::{DiscoveredServiceEndpoint, ServiceDiscoverer};
-use crate::library::http::{
-    forward_request, uri_with_authority, MatchableString, Responder, ResponderResult,
-};
+use crate::library::http::{forward_request, uri_with_authority, MatchableString, Responder};
 use crate::library::BoxedError;
 use async_trait::async_trait;
-use futures::TryStreamExt;
+use futures::{Future, TryStreamExt};
 use hyper::client::HttpConnector;
 use hyper::http::{request::Parts, Request, Response, StatusCode, Version};
 use hyper::{Body, Client};
+use std::convert::Infallible;
 use std::net::IpAddr;
 use thiserror::Error;
 use uuid::Uuid;
@@ -84,21 +83,28 @@ where
     D: ServiceDiscoverer<WebgridServiceDescriptor> + Send + Sync,
     D::I: Send + Sync,
 {
-    async fn respond(&self, parts: Parts, body: Body, client_ip: IpAddr) -> ResponderResult {
+    #[inline]
+    async fn respond<F, Fut>(
+        &self,
+        parts: Parts,
+        body: Body,
+        client_ip: IpAddr,
+        next: F,
+    ) -> Result<Response<Body>, Infallible>
+    where
+        Fut: Future<Output = Result<Response<Body>, Infallible>> + Send,
+        F: FnOnce(Parts, Body, IpAddr) -> Fut + Send,
+    {
         // Match the incoming request
         let identifier = match self.match_request(&parts) {
             Some(identifier) => identifier,
-            None => return ResponderResult::Continue(parts, body, client_ip),
+            None => return next(parts, body, client_ip).await,
         };
 
         // Search for an endpoint
         let endpoint = match self.discover_endpoint(identifier).await {
             Ok(endpoint) => endpoint,
-            Err(e) => {
-                return ResponderResult::Intercepted(Ok(
-                    self.new_error_response(&e.to_string(), StatusCode::BAD_GATEWAY)
-                ))
-            }
+            Err(e) => return Ok(self.new_error_response(&e.to_string(), StatusCode::BAD_GATEWAY)),
         };
 
         // Reconstruct the request and force HTTP/2 for SPEEEEEED :P
@@ -109,9 +115,9 @@ where
         let uri = match uri_with_authority(&req, &endpoint) {
             Ok(uri) => uri,
             Err(e) => {
-                return ResponderResult::Intercepted(Ok(
+                return Ok(
                     self.new_error_response(&e.to_string(), StatusCode::INTERNAL_SERVER_ERROR)
-                ))
+                )
             }
         };
 
@@ -128,6 +134,6 @@ where
             }
         };
 
-        ResponderResult::Intercepted(Ok(response))
+        Ok(response)
     }
 }

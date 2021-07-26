@@ -1,11 +1,13 @@
-use crate::library::http::{forward_request, MatchableString, Responder, ResponderResult};
+use crate::library::http::{forward_request, MatchableString, Responder};
 use async_trait::async_trait;
+use futures::Future;
 use hyper::client::HttpConnector;
 use hyper::http::{
     request::{Parts, Request},
     Response, Uri, Version,
 };
 use hyper::{Body, Client, StatusCode};
+use std::convert::Infallible;
 use std::net::IpAddr;
 
 const SESSION_PREFIX: &str = "/session/";
@@ -78,16 +80,24 @@ impl ForwardingResponder {
 #[async_trait]
 impl Responder for ForwardingResponder {
     #[inline]
-    async fn respond(&self, parts: Parts, body: Body, client_ip: IpAddr) -> ResponderResult {
+    async fn respond<F, Fut>(
+        &self,
+        parts: Parts,
+        body: Body,
+        client_ip: IpAddr,
+        next: F,
+    ) -> Result<Response<Body>, Infallible>
+    where
+        Fut: Future<Output = Result<Response<Body>, Infallible>> + Send,
+        F: FnOnce(Parts, Body, IpAddr) -> Fut + Send,
+    {
         // Check if we have a matching path and build the target URI
         let matched_uri = self.match_request(&parts).map(|r| self.build_uri(r));
 
         let uri = match matched_uri {
             Some(Ok(uri)) => uri,
-            Some(Err(e)) => {
-                return ResponderResult::Intercepted(Ok(self.new_error_response(&e.to_string())))
-            }
-            None => return ResponderResult::Continue(parts, body, client_ip),
+            Some(Err(e)) => return Ok(self.new_error_response(&e.to_string())),
+            None => return next(parts, body, client_ip).await,
         };
 
         // Reconstruct the request and force HTTP/1.1 (because WebDrivers are ancient technology :P)
@@ -104,6 +114,6 @@ impl Responder for ForwardingResponder {
             Err(e) => self.new_error_response(&e.to_string()),
         };
 
-        ResponderResult::Intercepted(Ok(response))
+        Ok(response)
     }
 }
