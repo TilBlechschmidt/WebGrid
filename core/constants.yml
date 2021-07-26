@@ -1,5 +1,5 @@
 ports:
-  base: 40001
+  base: 40002
   offsets:
     node: 0
     gangway: 1
