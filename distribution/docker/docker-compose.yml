@@ -8,7 +8,7 @@ services:
     depends_on:
       - redis
     ports:
-      - 8080:40002
+      - 8080:40003
   manager:
     image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-latest}
     platform: linux/amd64
