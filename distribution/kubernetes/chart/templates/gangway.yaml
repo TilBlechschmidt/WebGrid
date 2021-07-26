@@ -42,7 +42,7 @@ spec:
           args: ["gangway", "--status-server", "47002"]
           ports:
             - name: http
-              containerPort: 40003
+              containerPort: 48048
               protocol: TCP
             - name: status
               containerPort: 47002

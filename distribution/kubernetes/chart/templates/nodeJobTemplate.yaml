@@ -48,7 +48,7 @@ data:
               imagePullPolicy: {{ .Values.image.pullPolicy }}
               ports:
                 - name: http
-                  containerPort: 40002
+                  containerPort: 48049
                   protocol: TCP
               env:
                 - name: RUST_LOG
