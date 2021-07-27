@@ -74,7 +74,7 @@ extra:
     - icon: fontawesome/brands/twitter
       link: https://twitter.com/themegatb
     - icon: fontawesome/brands/docker
-      link: https://hub.docker.com/repositories/webgrid
+      link: https://hub.docker.com/u/webgrid
     - icon: fontawesome/brands/discord
       link: https://discord.gg/yYaPcNM
 
