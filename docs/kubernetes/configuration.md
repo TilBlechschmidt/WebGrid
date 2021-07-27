@@ -26,8 +26,3 @@ Below is a reference of all default helm values with their documentations. You c
 <!--codeinclude-->
 [Default helm values](../../distribution/kubernetes/chart/values.yaml)
 <!--/codeinclude-->
-
-!!! todo
-    Sorry for the broken syntax highlighting. The plugin needs to be updated — tracking PR:
-
-    [rnorth/mkdocs-codeinclude-plugin#5](https://github.com/rnorth/mkdocs-codeinclude-plugin/pull/5)
