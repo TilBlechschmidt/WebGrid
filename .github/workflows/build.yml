@@ -82,6 +82,7 @@ jobs:
           echo "created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
           chmod +x .artifacts/core-executable/webgrid
       - name: Login to GHCR
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
@@ -93,11 +94,18 @@ jobs:
           context: .
           file: distribution/docker/images/core/Dockerfile
           tags: ${{ env.tags }}
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
             org.opencontainers.image.created=${{ env.created }}
             org.opencontainers.image.revision=${{ github.sha }}
+      - name: Export docker image as artifact
+        run: |
+          docker save ${{ env.tags }} | gzip > core.tar.gz
+      - uses: actions/upload-artifact@v2
+        with:
+          name: docker-core
+          path: core.tar.gz
 
   bundle-node:
     name: 🐳 Push Node to GHCR
@@ -121,6 +129,7 @@ jobs:
           echo "created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
           chmod +x .artifacts/core-executable/webgrid
       - name: Login to GHCR
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
@@ -133,11 +142,18 @@ jobs:
           file: distribution/docker/images/node/Dockerfile
           build-args: browser=${{ matrix.browser }}
           tags: ${{ env.tags }}
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
             org.opencontainers.image.created=${{ env.created }}
             org.opencontainers.image.revision=${{ github.sha }}
+      - name: Export docker image as artifact
+        run: |
+          docker save ${{ env.tags }} | gzip > node-${{ matrix.browser }}.tar.gz
+      - uses: actions/upload-artifact@v2
+        with:
+          name: docker-node-${{ matrix.browser }}
+          path: node-${{ matrix.browser }}.tar.gz
 
   docker-integration:
     name: 🐳 Docker integration test
@@ -147,12 +163,23 @@ jobs:
       - bundle-node
     steps:
       - uses: actions/checkout@v2
-      - name: Login to GHCR
-        uses: docker/login-action@v1
+      - uses: actions/download-artifact@v2
         with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GHCR_TOKEN }}
+          name: docker-core
+          path: ./
+      - uses: actions/download-artifact@v2
+        with:
+          name: docker-node-firefox
+          path: ./
+      - uses: actions/download-artifact@v2
+        with:
+          name: docker-node-chrome
+          path: ./
+      - name: Import docker images
+        run: |
+          docker load --input core.tar.gz
+          docker load --input node-firefox.tar.gz
+          docker load --input node-chrome.tar.gz
       - name: Run integration test in Docker
         run: |
           export REPOSITORY=ghcr.io/tilblechschmidt/webgrid
@@ -160,8 +187,6 @@ jobs:
           echo "Using $REPOSITORY/core:$IMAGE_TAG"
 
           pip install selenium
-          docker pull $REPOSITORY/node-firefox:$IMAGE_TAG
-          docker pull $REPOSITORY/node-chrome:$IMAGE_TAG
 
           make install
           docker-compose -f distribution/docker/docker-compose.yml logs -f &
@@ -176,6 +201,23 @@ jobs:
       - bundle-node
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+        with:
+          name: docker-core
+          path: ./
+      - uses: actions/download-artifact@v2
+        with:
+          name: docker-node-firefox
+          path: ./
+      - uses: actions/download-artifact@v2
+        with:
+          name: docker-node-chrome
+          path: ./
+      - name: Import docker images
+        run: |
+          docker load --input core.tar.gz
+          docker load --input node-firefox.tar.gz
+          docker load --input node-chrome.tar.gz
       - name: Install dependencies
         run: |
           curl -fLO https://github.com/wercker/stern/releases/download/1.11.0/stern_linux_amd64
@@ -185,7 +227,7 @@ jobs:
           pip install selenium
       - name: Start K8s cluster
         run: |
-          curl -sfL https://get.k3s.io | K3S_KUBECONFIG_MODE=777 sh -
+          curl -sfL https://get.k3s.io | K3S_KUBECONFIG_MODE=777 sh -s - --docker
           mkdir -p ~/.kube
           cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
 
@@ -193,9 +235,8 @@ jobs:
           kubectl get nodes
       - name: Run integration test in K8s
         run: |
-          kubectl create secret docker-registry regcred --docker-server=ghcr.io --docker-username=${{ github.repository_owner }} --docker-password=${{ secrets.GHCR_TOKEN }}
           stern --color always test-webgrid* &
-          helm install test ./distribution/kubernetes/chart/ --wait --set image.repository=ghcr.io/tilblechschmidt/webgrid,image.tag=sha-${GITHUB_SHA::7},image.pullSecret=regcred
+          helm install test ./distribution/kubernetes/chart/ --wait --set image.repository=ghcr.io/tilblechschmidt/webgrid,image.tag=sha-${GITHUB_SHA::7},image.pullPolicy=IfNotPresent
           kubectl apply -f test/node-port.yml
 
           kubectl get pods
