@@ -60,7 +60,7 @@ pub struct WebDriverOptions {
     pub resolution: ScreenResolution,
 
     /// Maximum duration (in seconds) the webdriver may take until it reports a ready state
-    #[structopt(long, env, default_value = "15", parse(try_from_str = parse_seconds))]
+    #[structopt(long, env, default_value = "120", parse(try_from_str = parse_seconds))]
     pub startup_timeout: Duration,
 
     /// Capabilities object which will be used to create a session with the driver (formatted as JSON)

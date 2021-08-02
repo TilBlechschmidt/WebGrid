@@ -24,7 +24,7 @@ config:
     permits: 5
   node:
     # Maximum duration (in seconds) the webdriver may take until it reports a ready state.
-    startupTimeout: 15
+    startupTimeout: 120
     # Idle timeout (in seconds) which is in effect until the first client request is received.
     # This allows the session to terminate early if the client no longer has any interest in the session
     # or it itself ran into a local timeout (e.g. due to prolonged queueing).
