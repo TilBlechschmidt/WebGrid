@@ -77,10 +77,10 @@ resources:
   orchestrator: {}
   node:
     limits:
-      memory: 3000Mi
+      memory: 8000Mi
     requests:
       cpu: "1"
-      memory: 3000Mi
+      memory: 4000Mi
 
 nodeSelector:
   redis: {}
