@@ -100,7 +100,7 @@ impl WebDriverVariant {
 
     fn extra_arguments(&self) -> &[&'static str] {
         match self {
-            WebDriverVariant::Chrome => &["--port=4444"],
+            WebDriverVariant::Chrome => &["--port=4444", "--whitelisted-ips", "*"],
             WebDriverVariant::Safari => &["--diagnose", "-p", "4444"],
             WebDriverVariant::Firefox => &["-p", "4444"],
         }
@@ -161,10 +161,14 @@ impl<'a> WebDriver<'a> {
 
     /// Spawns an instance of the webdriver executable, creates a new session, and resizes the window
     pub async fn launch(self) -> Result<WebDriverInstance, WebDriverError> {
+        log::debug!("Spawning webdriver process");
         let process = self.spawn_process()?;
 
+        log::debug!("Awaiting driver startup");
         self.startup().await?;
+        log::debug!("Creating local session");
         let state = self.create_local_session().await?;
+        log::debug!("Resizing window");
         self.resize_window(&state.internal_session_id).await?;
 
         Ok(WebDriverInstance {

@@ -121,7 +121,7 @@ where
                 .await;
 
             if let Err(e) = shutdown_result {
-                println!("Video forwarding server terminated with error: {}", e);
+                log::error!("Video forwarding server terminated with error: {}", e);
             }
         };
 

@@ -51,7 +51,7 @@ pub struct PubSubServiceDiscovererDaemon<D: ServiceDescriptor> {
 
 impl<D> PubSubServiceDiscovererDaemon<D>
 where
-    D: ServiceDescriptor + Eq + Hash,
+    D: ServiceDescriptor + Eq + Hash + std::fmt::Debug,
 {
     /// Main loop which handles outgoing service queries and incoming announcements
     /// as well as cache operations.
@@ -212,21 +212,28 @@ where
         &mut self,
     ) -> Result<PubSubDiscoveredServiceEndpoint<D>, ServiceDiscoveryError> {
         while self.retries < self.max_retries {
+            log::trace!("Discover {:?}, try #{}", self.service, self.retries);
+
             // Try discovering a new endpoint, retry when we hit a timeout
             // (but increase the number of retries to set an upper limit)
             match self.discover_once().await {
                 Ok(endpoint) => {
+                    log::trace!("Discover {:?}, success", self.service);
                     return Ok(PubSubDiscoveredServiceEndpoint {
                         endpoint,
                         service: self.service.clone(),
                         cache: self.cache.clone(),
-                    })
+                    });
                 }
                 Err(ServiceDiscoveryError::Timeout) => self.retries += 1,
-                Err(e) => return Err(e),
+                Err(e) => {
+                    log::debug!("Discover {:?}, error {}", self.service, e);
+                    return Err(e);
+                }
             }
         }
 
+        log::trace!("Discover {:?}, retries exceeded", self.service);
         Err(ServiceDiscoveryError::RetriesExceeded)
     }
 
@@ -238,6 +245,8 @@ where
                 return Ok(endpoint.clone());
             }
         }
+
+        log::trace!("Discover {:?}, cache miss", self.service);
 
         // On cache miss, send out a discovery request
         if self.request_tx.send(self.service.clone()).await.is_err() {

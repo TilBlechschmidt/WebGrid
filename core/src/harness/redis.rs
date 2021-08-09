@@ -554,7 +554,7 @@ impl<D: ServiceDescriptor> RedisServiceDiscoveryJob<D> {
 #[async_trait]
 impl<D> Job for RedisServiceDiscoveryJob<D>
 where
-    D: ServiceDescriptor + Send + Sync + Eq + Hash + Serialize + DeserializeOwned,
+    D: ServiceDescriptor + Send + Sync + Eq + Hash + Serialize + DeserializeOwned + std::fmt::Debug,
 {
     const NAME: &'static str = concat!(module_path!(), "::discovery");
 
