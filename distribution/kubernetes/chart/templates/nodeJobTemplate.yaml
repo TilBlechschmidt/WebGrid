@@ -1,3 +1,13 @@
+{{- if .Values.config.session.storageBackend }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "web-grid.fullname" . }}-storage
+type: Opaque
+stringData:
+  url: {{ .Values.config.session.storageBackend }}
+---
+{{- end }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -71,8 +81,23 @@ data:
                   value: "{{ .Values.config.node.idleTimeout }}"
                 - name: RESOLUTION
                   value: "{{ .Values.config.node.resolution }}"
+                - name: CRF
+                  value: "{{ .Values.config.node.recording.crf }}"
+                - name: MAX_BITRATE
+                  value: "{{ .Values.config.node.recording.maxBitrate }}"
+                - name: FRAMERATE
+                  value: "{{ .Values.config.node.recording.framerate }}"
+                - name: SEGMENT_DURATION
+                  value: "{{ .Values.config.node.recording.segmentDuration }}"
                 - name: BIND_TIMEOUT
                   value: 600
+                {{- if .Values.config.session.storageBackend }}
+                - name: STORAGE
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "web-grid.fullname" . }}-storage
+                      key: url
+                {{- end }}
               volumeMounts:
                 - mountPath: /dev/shm
                   name: dshm

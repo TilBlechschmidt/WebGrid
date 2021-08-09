@@ -15,6 +15,7 @@ lazy_static = "1.4"
 structopt = "0.3"
 rand = "0.8"
 lru = "0.6"
+tempfile = "3"
 
 # Proxying
 hyper = { version = "0.14", features = ["full"] }
@@ -22,6 +23,7 @@ paste = "1.0"
 
 # Module operation
 jatsl = "0.1.8"
+heim = { version = "0.1.0-rc.1", features = ["process"] }
 
 # Data serialization
 serde = "1.0"

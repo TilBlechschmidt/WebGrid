@@ -43,6 +43,7 @@ pub struct DockerProvisioner {
     images: ContainerImageSet,
     instance: Uuid,
     auto_remove: bool,
+    storage: Option<String>,
 }
 
 impl DockerProvisioner {
@@ -50,6 +51,7 @@ impl DockerProvisioner {
     pub fn new(
         images: ContainerImageSet,
         auto_remove: bool,
+        storage: Option<String>,
     ) -> Result<Self, bollard::errors::Error> {
         if images.is_empty() {
             log::warn!("No images provided! Orchestrator won't be able to schedule nodes.");
@@ -65,6 +67,7 @@ impl DockerProvisioner {
             images,
             instance,
             auto_remove,
+            storage,
         })
     }
 
@@ -109,11 +112,15 @@ impl DockerProvisioner {
             .map_err(DockerProvisionerError::ImagePullError)?;
 
         let name = format!("webgrid-session-{}", session_id);
-        let env: Vec<String> = vec![
+        let mut env: Vec<String> = vec![
             format!("ID={}", session_id),
             format!("CAPABILITIES={}", raw_capabilities.as_str()),
             format!("HOST={}", name.as_str()),
         ];
+
+        if let Some(storage) = &self.storage {
+            env.push(format!("STORAGE={}", storage));
+        }
 
         let mut labels = HashMap::<&str, &str>::new();
         let instance_id = self.instance.to_string();

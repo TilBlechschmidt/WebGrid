@@ -50,6 +50,7 @@ impl Orchestrator {
                 let provisioner = DockerProvisioner::new(
                     provisioner_options.images.clone(),
                     !provisioner_options.retain_exited_sessions,
+                    provisioner_options.storage,
                 )
                 .unwrap();
 

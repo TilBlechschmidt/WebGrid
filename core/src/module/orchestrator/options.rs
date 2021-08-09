@@ -59,6 +59,10 @@ pub struct DockerOptions {
     /// and primarily for debugging purposes!
     #[structopt(long)]
     pub retain_exited_sessions: bool,
+
+    /// Storage URL which will be passed on to newly created sessions
+    #[structopt(env, long)]
+    pub storage: Option<String>,
 }
 
 #[derive(Debug, StructOpt)]

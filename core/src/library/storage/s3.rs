@@ -1,9 +1,11 @@
 //! Trait implementations for [Amazon S3](https://aws.amazon.com/s3/) compatible storage providers
 
-use super::StorageBackend;
+use crate::library::BoxedError;
+
+use super::{StorageBackend, StorageURL};
 use async_trait::async_trait;
 use http::header::CONTENT_TYPE;
-use http::{HeaderMap, StatusCode};
+use http::{HeaderMap, StatusCode, Uri};
 use s3::creds::Credentials;
 use s3::{Bucket, Region};
 use std::error::Error as StdError;
@@ -22,15 +24,59 @@ pub enum S3StorageError {
     Other(#[from] anyhow::Error),
 }
 
+/// URL for the S3 storage backend
+///
+/// It takes the following input where parts in brackets are optional:
+/// ```text
+/// s3+http[s]://key:secret@endpoint/bucket[?pathStyle]
+/// ```
+pub struct S3StorageURL {
+    access_key: String,
+    secret_key: String,
+    endpoint: String,
+    bucket: String,
+    path_style: bool,
+}
+
+impl StorageURL for S3StorageURL {
+    fn prefix() -> &'static str {
+        "s3"
+    }
+
+    fn parse(uri: Uri) -> Option<Self> {
+        let scheme = uri.scheme_str()?;
+        let (auth, endpoint) = uri.authority()?.as_str().split_once('@')?;
+        let (access_key, secret_key) = auth.split_once(':')?;
+
+        let path = uri.path();
+        let bucket_name_index = path.rfind('/')?;
+
+        if bucket_name_index >= path.len() - 1 {
+            return None;
+        }
+
+        let endpoint_path = &path[0..bucket_name_index];
+        let bucket = &path[(bucket_name_index + 1)..];
+
+        Some(Self {
+            access_key: access_key.to_owned(),
+            secret_key: secret_key.to_owned(),
+            endpoint: format!("{}://{}{}", scheme, endpoint, endpoint_path),
+            bucket: bucket.to_owned(),
+            path_style: uri.query() == Some("pathStyle"),
+        })
+    }
+}
+
 /// Storage backend for AWS S3 compatible servers
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct S3StorageBackend {
     bucket: Bucket,
 }
 
 impl S3StorageBackend {
     /// Creates a new S3 backend connection to a pre-existing bucket using the provided credentials
-    pub fn new(
+    fn new(
         region: Region,
         credentials: Credentials,
         bucket: &str,
@@ -59,6 +105,25 @@ impl S3StorageBackend {
 
 #[async_trait]
 impl StorageBackend for S3StorageBackend {
+    type URL = S3StorageURL;
+
+    fn new(url: Self::URL) -> Result<Self, BoxedError> {
+        let credentials = Credentials::new(
+            Some(&url.access_key),
+            Some(&url.secret_key),
+            None,
+            None,
+            None,
+        )?;
+
+        let region = Region::Custom {
+            region: "custom".into(),
+            endpoint: url.endpoint,
+        };
+
+        Ok(Self::new(region, credentials, &url.bucket, url.path_style)?)
+    }
+
     fn presign_get(
         &self,
         path: &str,
@@ -106,6 +171,7 @@ impl StorageBackend for S3StorageBackend {
 #[cfg(test)]
 mod does {
     use super::*;
+    use std::str::FromStr;
     use uuid::Uuid;
 
     const S3_TEST_BACKEND: &str = "http://127.0.0.1:9000";
@@ -132,6 +198,18 @@ mod does {
         .unwrap();
 
         S3StorageBackend::new(region, credentials, S3_TEST_BUCKET, true).unwrap()
+    }
+
+    #[test]
+    fn parse_all_url_components() {
+        let uri = Uri::from_str("http://key:secret@endpoint/bucket?pathStyle").unwrap();
+        let url = S3StorageURL::parse(uri).unwrap();
+
+        assert_eq!(url.access_key, "key");
+        assert_eq!(url.secret_key, "secret");
+        assert_eq!(url.endpoint, "http://endpoint");
+        assert_eq!(url.bucket, "bucket");
+        assert!(url.path_style);
     }
 
     #[ignore]

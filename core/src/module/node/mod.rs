@@ -12,6 +12,7 @@ use crate::harness::{
 };
 use crate::library::communication::event::NotificationPublisher;
 use crate::library::communication::{BlackboxError, CommunicationFactory};
+use crate::library::storage::s3::S3StorageBackend;
 use crate::library::{BoxedError, EmptyResult};
 use anyhow::anyhow;
 use async_trait::async_trait;
@@ -20,10 +21,12 @@ use thiserror::Error;
 
 mod options;
 mod proxy;
+mod recording;
 
 pub use options::Options;
 
 use self::proxy::ProxyJob;
+use self::recording::RecordingJob;
 
 #[derive(Debug, Error)]
 enum NodeError {
@@ -102,6 +105,14 @@ impl Node {
             WebgridServiceDescriptor::Node(self.options.id),
             endpoint,
         )
+    }
+
+    fn build_recording_job(&self) -> Option<RecordingJob<S3StorageBackend>> {
+        Some(RecordingJob::new(
+            self.options.id,
+            self.options.recording.generate_arguments(),
+            self.options.storage.clone()?,
+        ))
     }
 
     async fn send_alive_notification(&self) -> Result<(), NodeError> {
@@ -197,6 +208,10 @@ impl Module for Node {
 
         let proxy_job = self.build_proxy_job(stone)?;
         let advertise_job = self.build_advertise_job();
+
+        if let Some(recording_job) = self.build_recording_job() {
+            schedule_and_wait!(scheduler, self.options.bind_timeout, { recording_job });
+        }
 
         schedule_and_wait!(scheduler, self.options.bind_timeout, {
             proxy_job,
