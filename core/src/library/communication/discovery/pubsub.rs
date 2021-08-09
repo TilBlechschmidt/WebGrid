@@ -292,4 +292,110 @@ impl<D> Deref for PubSubDiscoveredServiceEndpoint<D> {
     }
 }
 
-// TODO Write tests for the PubSub stuff ;)
+#[cfg(test)]
+mod does {
+    use futures::TryStreamExt;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    use super::*;
+
+    #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+    enum ExampleDescriptor {
+        SomeService(usize),
+    }
+
+    impl ServiceDescriptor for ExampleDescriptor {
+        fn service_identifier(&self) -> String {
+            match self {
+                ExampleDescriptor::SomeService(id) => format!("someservice-{}", id),
+            }
+        }
+    }
+
+    #[derive(Clone)]
+    struct EchoBackend<D> {
+        tx: broadcast::Sender<D>,
+        query_count: Arc<AtomicUsize>,
+    }
+
+    impl<D> EchoBackend<D>
+    where
+        D: ServiceDescriptor + Send + Sync + std::fmt::Debug,
+    {
+        fn query_count(&self) -> usize {
+            self.query_count.load(Ordering::Relaxed)
+        }
+    }
+
+    impl<D> Default for EchoBackend<D>
+    where
+        D: ServiceDescriptor + Send + Sync + std::fmt::Debug,
+    {
+        fn default() -> Self {
+            let (tx, _rx) = broadcast::channel(1000);
+            Self {
+                tx,
+                query_count: Arc::new(AtomicUsize::new(0)),
+            }
+        }
+    }
+
+    #[async_trait]
+    impl<D> PubSubServiceDiscoveryBackend<D> for EchoBackend<D>
+    where
+        D: ServiceDescriptor + Send + Sync + std::fmt::Debug,
+    {
+        async fn listen<'a>(&self) -> BoxStream<'a, ServiceAnnouncement<D>>
+        where
+            D: 'a,
+        {
+            let stream = unfold(self.tx.subscribe(), |mut rx| async move {
+                let service = rx.recv().await.unwrap();
+                let announcement = ServiceAnnouncement::new(service, "somewhere".into());
+                Some((announcement, rx))
+            });
+
+            stream.boxed()
+        }
+
+        async fn query(&self, descriptor: &D) {
+            self.query_count.fetch_add(1, Ordering::Relaxed);
+            self.tx.send(descriptor.clone()).unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn fulfill_requests() {
+        let (discoverer, discovery_daemon) =
+            PubSubServiceDiscoverer::<ExampleDescriptor>::new(0, 1, 1);
+        let backend = EchoBackend::default();
+
+        tokio::spawn(async move {
+            discovery_daemon.daemon_loop(backend).await;
+        });
+
+        let mut discovery_stream = discoverer.discover(ExampleDescriptor::SomeService(42));
+        let endpoint = discovery_stream.try_next().await.unwrap();
+        assert!(endpoint.is_some());
+    }
+
+    #[tokio::test]
+    async fn cache_responses() {
+        let (discoverer, discovery_daemon) =
+            PubSubServiceDiscoverer::<ExampleDescriptor>::new(1, 1, 1);
+        let backend = EchoBackend::default();
+        let cloned_backend = backend.clone();
+
+        tokio::spawn(async move {
+            discovery_daemon.daemon_loop(cloned_backend).await;
+        });
+
+        for _ in 0..1_000 {
+            let mut discovery_stream = discoverer.discover(ExampleDescriptor::SomeService(42));
+            let endpoint = discovery_stream.try_next().await.unwrap();
+            assert!(endpoint.is_some());
+        }
+
+        assert_eq!(backend.query_count(), 1);
+    }
+}
