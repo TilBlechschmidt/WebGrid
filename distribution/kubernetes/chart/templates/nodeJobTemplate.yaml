@@ -1,11 +1,11 @@
-{{- if .Values.config.session.storageBackend }}
+{{- if .Values.config.node.storageBackend }}
 apiVersion: v1
 kind: Secret
 metadata:
   name: {{ include "web-grid.fullname" . }}-storage
 type: Opaque
 stringData:
-  url: {{ .Values.config.session.storageBackend }}
+  url: {{ .Values.config.node.storageBackend }}
 ---
 {{- end }}
 apiVersion: v1
@@ -91,7 +91,7 @@ data:
                   value: "{{ .Values.config.node.recording.segmentDuration }}"
                 - name: BIND_TIMEOUT
                   value: 600
-                {{- if .Values.config.session.storageBackend }}
+                {{- if .Values.config.node.storageBackend }}
                 - name: STORAGE
                   valueFrom:
                     secretKeyRef:
