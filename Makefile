@@ -35,7 +35,7 @@ clean:
 
 install:
 	-docker network create webgrid
-	docker-compose -f distribution/docker/docker-compose.yml up -d
+	docker compose -f distribution/docker/docker-compose.yml up -d
 
 uninstall:
-	docker-compose -f distribution/docker/docker-compose.yml down
+	docker compose -f distribution/docker/docker-compose.yml down

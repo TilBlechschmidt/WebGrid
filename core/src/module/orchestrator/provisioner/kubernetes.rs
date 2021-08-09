@@ -208,9 +208,9 @@ impl SessionProvisioner for KubernetesProvisioner {
 
         let alive_session_ids = running_jobs
             .iter()
-            .filter_map(|job| match &job.meta().labels {
-                None => None,
-                Some(labels) => labels
+            .filter_map(|job| {
+                job.meta()
+                    .labels
                     .get(CONTAINER_SESSION_ID_LABEL)
                     .map(|id| {
                         Uuid::from_str(id)
@@ -223,7 +223,7 @@ impl SessionProvisioner for KubernetesProvisioner {
                             })
                             .ok()
                     })
-                    .flatten(),
+                    .flatten()
             })
             .collect();
 

@@ -9,7 +9,6 @@
 pub mod communication;
 pub mod helpers;
 pub mod http;
-#[cfg(feature = "storage")]
 pub mod storage;
 
 /// Generic error type

@@ -41,8 +41,8 @@ impl Job for CreatedNotificationPublisherJob {
     const NAME: &'static str = module_path!();
 
     async fn execute(&self, manager: JobManager) -> EmptyResult {
-        let handle_provider = Arc::new(manager.clone());
-        let factory = RedisCommunicationFactory::new(self.redis_url.clone(), handle_provider);
+        let manager = Arc::new(manager);
+        let factory = RedisCommunicationFactory::new(self.redis_url.clone(), manager.clone());
         let publisher = factory.notification_publisher();
 
         manager.ready().await;

@@ -127,7 +127,6 @@ impl DockerProvisioner {
             auto_remove: Some(self.auto_remove),
             network_mode: Some("webgrid".to_string()),
             shm_size: Some(1024 * 1024 * 1024 * 2),
-            binds: Some(vec!["webgrid:/storage".to_string()]),
             ..Default::default()
         };
 

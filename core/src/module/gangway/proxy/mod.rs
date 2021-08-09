@@ -1,6 +1,6 @@
 use crate::domain::WebgridServiceDescriptor;
 use crate::library::communication::discovery::ServiceDiscoverer;
-use crate::make_responder_chain_service_fn;
+use crate::{library::http::Responder, make_responder_chain_service_fn, responder_chain};
 use async_trait::async_trait;
 use hyper::Server;
 use jatsl::Job;

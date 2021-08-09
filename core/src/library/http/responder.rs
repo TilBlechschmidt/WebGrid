@@ -194,10 +194,6 @@ macro_rules! make_responder_chain_service_fn {
         {
             use hyper::{server::conn::AddrStream, service::{make_service_fn, service_fn}};
             use std::{sync::Arc, convert::Infallible};
-            use crate::{
-                library::http::Responder,
-                responder_chain,
-            };
 
             paste::paste! {
                 $(

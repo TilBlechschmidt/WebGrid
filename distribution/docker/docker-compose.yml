@@ -28,7 +28,7 @@ services:
   redis:
     image: redis:6.2-alpine
     container_name: webgrid-redis
-    command: redis-server --notify-keyspace-events Kgx --save "" --appendonly no
+    command: redis-server --save "" --appendonly no
     ports:
       - 6379:6379
 

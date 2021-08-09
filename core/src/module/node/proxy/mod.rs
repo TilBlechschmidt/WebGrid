@@ -6,7 +6,7 @@ use std::net::SocketAddr;
 use self::forwarding::ForwardingResponder;
 use self::terminate::TerminationInterceptor;
 use crate::harness::HeartStone;
-use crate::make_responder_chain_service_fn;
+use crate::{library::http::Responder, make_responder_chain_service_fn, responder_chain};
 
 mod forwarding;
 mod terminate;

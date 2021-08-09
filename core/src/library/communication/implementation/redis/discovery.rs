@@ -142,7 +142,6 @@ where
             .filter_map(|x| async move {
                 match x {
                     Ok(message) => {
-                        // TODO
                         let payload = message.get_payload_bytes();
                         let announcement =
                             serde_json::from_slice::<ServiceAnnouncement<D>>(payload);

@@ -3,7 +3,6 @@
 use super::BoxedError;
 use async_trait::async_trait;
 
-#[cfg(feature = "storage")]
 pub mod s3;
 
 /// Generic storage backend providing read and write access
