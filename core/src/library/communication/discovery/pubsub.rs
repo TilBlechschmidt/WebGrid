@@ -43,6 +43,10 @@ pub struct PubSubServiceDiscovererDaemon<D: ServiceDescriptor> {
     cache: ServiceEndpointCache<D>,
     request_rx: Arc<Mutex<mpsc::Receiver<D>>>,
     response_tx: broadcast::Sender<ServiceAnnouncement<D>>,
+
+    // Technically, this serves no purpose here. However, to prevent a race-condition
+    // in tokio::sync::broadcast, we keep an instance of the response_rx in memory at all times.
+    _response_rx: broadcast::Receiver<ServiceAnnouncement<D>>,
 }
 
 impl<D> PubSubServiceDiscovererDaemon<D>
@@ -117,7 +121,7 @@ where
     ) -> (Self, PubSubServiceDiscovererDaemon<D>) {
         let cache = Arc::new(Mutex::new(LruCache::new(cache_size)));
         let (request_tx, request_rx) = mpsc::channel(request_channel_size);
-        let (response_tx, _) = broadcast::channel(response_channel_size);
+        let (response_tx, response_rx) = broadcast::channel(response_channel_size);
 
         let discoverer = Self {
             cache: cache.clone(),
@@ -129,6 +133,7 @@ where
             cache,
             request_rx: Arc::new(Mutex::new(request_rx)),
             response_tx,
+            _response_rx: response_rx,
         };
 
         (discoverer, daemon)
