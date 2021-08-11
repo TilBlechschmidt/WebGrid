@@ -37,6 +37,6 @@ pub struct QueueingOptions {
 #[derive(Debug, StructOpt)]
 pub struct StorageOptions {
     /// Storage backend URL
-    #[structopt(name = "storage", long, env, parse(try_from_str = parse_storage_backend_uri))]
+    #[structopt(name = "storage", long, env = "STORAGE", parse(try_from_str = parse_storage_backend_uri))]
     pub backend: Option<S3StorageBackend>,
 }
