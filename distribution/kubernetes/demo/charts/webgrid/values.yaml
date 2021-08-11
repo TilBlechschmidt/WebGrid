@@ -9,6 +9,11 @@ service:
   port: 80
 
 config:
+  # When set, sessions will be provided with this backend enabling video recording.
+  # Currently, only S3 compatible storage backends are supported. The URL encapsulates all parameters needed to
+  # connect to the backend. It follows the following pattern where values in brackets are optional:
+  #   s3+http[s]://key:secret@endpoint/bucket[?pathStyle]
+  storageBackend:
   redis:
     storageClassName: emptyDir
   gangway:
@@ -35,11 +40,6 @@ config:
     idleTimeout: 120
     # Screen resolution for sessions
     resolution: 1920x1080
-    # When set, sessions will be provided with this backend enabling video recording.
-    # Currently, only S3 compatible storage backends are supported. The URL encapsulates all parameters needed to
-    # connect to the backend. It follows the following pattern where values in brackets are optional:
-    #   s3+http[s]://key:secret@endpoint/bucket[?pathStyle]
-    storageBackend:
     # Options related to video recording
     # Consult the ffmpeg documentation on how these parameters work
     # https://trac.ffmpeg.org/wiki/Encode/H.264

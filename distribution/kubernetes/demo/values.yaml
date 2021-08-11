@@ -6,5 +6,4 @@ volumeClaim:
 
 webgrid:
   config:
-    node:
-      storageBackend: s3+http://minioadmin:minioadmin@webgrid-demo-storage/webgrid-video?pathStyle
+    storageBackend: s3+http://minioadmin:minioadmin@webgrid-demo-storage/webgrid-video?pathStyle

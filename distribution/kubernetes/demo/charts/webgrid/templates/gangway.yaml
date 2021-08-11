@@ -60,6 +60,13 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+            {{- if .Values.config.storageBackend }}
+            - name: STORAGE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "web-grid.fullname" . }}-storage
+                  key: url
+            {{- end }}
           livenessProbe:
             tcpSocket:
               port: status
