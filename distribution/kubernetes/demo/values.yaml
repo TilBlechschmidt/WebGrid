@@ -1,0 +1,10 @@
+volumeClaim:
+  # How much storage should be allocated for videos and other assets
+  request: 32Gi
+  # Which storageClass to use for the PVC
+  storageClass: local-path
+
+webgrid:
+  config:
+    node:
+      storageBackend: s3+http://minioadmin:minioadmin@webgrid-demo-storage/webgrid-video?pathStyle

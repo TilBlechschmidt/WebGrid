@@ -87,7 +87,9 @@ plugins:
       arguments:
         theme: "dark"
   - helm-repo:
-      chart: distribution/kubernetes/chart
+      charts:
+        - distribution/kubernetes/demo
+        - distribution/kubernetes/demo/charts/webgrid
       helm_repo_url: https://webgrid.dev/
   - mkdocs-simple-hooks:
       hooks:

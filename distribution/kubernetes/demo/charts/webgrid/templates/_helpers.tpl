@@ -73,30 +73,8 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
-Create the name of the persistent volume claim to use
-*/}}
-{{- define "web-grid.recordingPVCName" -}}
-{{- if .Values.recording.persistentVolumeClaim.create }}
-{{- default (include "web-grid.fullname" .) .Values.recording.persistentVolumeClaim.name }}
-{{- else }}
-{{- default "default" .Values.recording.persistentVolumeClaim.name }}
-{{- end }}
-{{- end }}
-
-{{/*
 Allow customization of the image tag used
 */}}
 {{- define "web-grid.imageTag" -}}
 {{- default .Chart.AppVersion .Values.image.tag }}
-{{- end }}
-
-{{/*
-Create the name of the telemetry endpoint
-*/}}
-{{- define "web-grid.telemetryEndpoint" -}}
-{{- if .Values.telemetry.demo }}
-{{- printf "https://%s-telemetry:4317" (include "web-grid.fullname" .) }}
-{{- else }}
-{{ .Values.telemetry.endpoint }}
-{{- end }}
 {{- end }}

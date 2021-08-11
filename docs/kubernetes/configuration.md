@@ -24,5 +24,5 @@ helm upgrade -f webgrid-chart-values.yaml example webgrid/webgrid
 Below is a reference of all default helm values with their documentations. You can also find those in the [source code](https://github.com/TilBlechschmidt/WebGrid/blob/main/distribution/kubernetes/chart/values.yaml) of the chart.
 
 <!--codeinclude-->
-[Default helm values](../../distribution/kubernetes/chart/values.yaml)
+[Default helm values](../../distribution/kubernetes/demo/charts/webgrid/values.yaml)
 <!--/codeinclude-->
