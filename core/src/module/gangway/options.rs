@@ -1,4 +1,4 @@
-use crate::module::options::{QueueingOptions, RedisOptions};
+use crate::module::options::{QueueingOptions, RedisOptions, StorageOptions};
 use structopt::StructOpt;
 
 /// Options for the gangway module
@@ -22,6 +22,10 @@ pub struct Options {
     /// When you are hitting this limit you should probably start scaling horizontally instead.
     #[structopt(long, env, default_value = "25000")]
     pub pending_request_limit: usize,
+
+    /// Options regarding storage
+    #[structopt(flatten)]
+    pub storage: StorageOptions,
 }
 
 #[derive(Debug, StructOpt)]

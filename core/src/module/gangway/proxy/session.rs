@@ -14,7 +14,7 @@ use thiserror::Error;
 use uuid::Uuid;
 
 const SESSION_PREFIX: &str = "/session/";
-const SESSION_ID_LENGTH: usize = 36; // Length of a UUID e.g. "7B43902E-7520-4AB3-AA1E-ACB4C52E6A6D"
+pub const SESSION_ID_LENGTH: usize = 36; // Length of a UUID e.g. "7B43902E-7520-4AB3-AA1E-ACB4C52E6A6D"
 
 #[derive(Debug, Error)]
 enum SessionForwardingError {

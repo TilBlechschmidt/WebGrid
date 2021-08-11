@@ -4,6 +4,7 @@
 //! their own options struct. This allows for a unified yet non-cluttered
 //! option set.
 
+use crate::library::storage::{parse_storage_backend_uri, s3::S3StorageBackend};
 use structopt::StructOpt;
 
 /// Options for connecting to the Redis server
@@ -30,4 +31,12 @@ pub struct QueueingOptions {
     /// executions!
     #[structopt(env)]
     pub id: String,
+}
+
+/// Options for connection to a storage backend
+#[derive(Debug, StructOpt)]
+pub struct StorageOptions {
+    /// Storage backend URL
+    #[structopt(name = "storage", long, env, parse(try_from_str = parse_storage_backend_uri))]
+    pub backend: Option<S3StorageBackend>,
 }

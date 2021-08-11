@@ -1,7 +1,6 @@
 use crate::domain::webdriver::{ScreenResolution, WebDriverVariant};
 use crate::library::helpers::parse_seconds;
-use crate::library::storage::{parse_storage_backend_uri, s3::S3StorageBackend};
-use crate::module::options::RedisOptions;
+use crate::module::options::{RedisOptions, StorageOptions};
 use std::path::PathBuf;
 use std::time::Duration;
 use structopt::StructOpt;
@@ -48,9 +47,9 @@ pub struct Options {
     #[structopt(long, env, default_value = "120", parse(try_from_str = parse_seconds))]
     pub bind_timeout: Duration,
 
-    /// Storage backend URL
-    #[structopt(long, env, parse(try_from_str = parse_storage_backend_uri))]
-    pub storage: Option<S3StorageBackend>,
+    /// Options regarding storage
+    #[structopt(flatten)]
+    pub storage: StorageOptions,
 }
 
 /// WebDriver related options

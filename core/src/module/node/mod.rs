@@ -111,7 +111,7 @@ impl Node {
         Some(RecordingJob::new(
             self.options.id,
             self.options.recording.generate_arguments(),
-            self.options.storage.clone()?,
+            self.options.storage.backend.clone()?,
         ))
     }
 

@@ -76,6 +76,7 @@ impl Module for Gangway {
             identifier,
             discoverer,
             creation_handle,
+            self.options.storage.backend.clone(),
         );
 
         // Schedule everything
