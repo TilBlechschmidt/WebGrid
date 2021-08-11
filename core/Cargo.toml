@@ -52,6 +52,7 @@ redis = { version = "0.20.2-alpha.0", default-features = false, features = ["tok
 # Storage dependencies
 rust-s3 = { version = "0.27.0-rc4", git = "https://github.com/durch/rust-s3" }
 http = { version = "0.2" }
+mime_guess = "2.0"
 
 # Provisioner implementations
 bollard = { version = "0.10", optional = true }

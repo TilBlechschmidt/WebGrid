@@ -3,8 +3,10 @@ use crate::library::http::{MatchableString, Responder};
 use crate::library::storage::{storage_path, StorageBackend};
 use async_trait::async_trait;
 use futures::Future;
+use http::Method;
 use hyper::http::{request::Parts, Response, StatusCode};
 use hyper::Body;
+use mime_guess::MimeGuess;
 use std::convert::Infallible;
 use std::net::IpAddr;
 use uuid::Uuid;
@@ -29,7 +31,7 @@ where
     fn new_error_response(&self, message: &str, status: StatusCode) -> Response<Body> {
         // TODO Wrap the error in a WebDriver protocol compliant JSON error (and stack using the BlackboxError type)
         // TODO Add session ID to error message for easier debugging :)
-        let error = format!("unable to forward request to session: {}", message);
+        let error = format!("unable to serve object: {}", message);
 
         Response::builder()
             .status(status)
@@ -79,11 +81,26 @@ where
             None => return next(parts, body, client_ip).await,
         };
 
+        // Handle CORS pre-flight requests
+        if parts.method == Method::OPTIONS {
+            return Ok(Response::builder()
+                .header("Access-Control-Allow-Origin", "*")
+                .header("Access-Control-Allow-Methods", "GET")
+                .body(Body::empty())
+                .unwrap());
+        }
+
         let path = storage_path(session_id, filename);
+        let mime = MimeGuess::from_path(&path)
+            .first()
+            .unwrap_or(mime_guess::mime::APPLICATION_OCTET_STREAM);
 
         if let Some(storage) = &self.storage {
             match storage.get_object(&path.to_string_lossy()).await {
                 Ok(object) => Ok(Response::builder()
+                    .header("Content-Type", mime.essence_str())
+                    .header("Access-Control-Allow-Origin", "*")
+                    .header("Access-Control-Allow-Methods", "GET")
                     .status(StatusCode::OK)
                     .body(Body::from(object))
                     .unwrap()),
