@@ -230,18 +230,21 @@ jobs:
           curl -sfL https://get.k3s.io | K3S_KUBECONFIG_MODE=777 sh -s - --docker
           mkdir -p ~/.kube
           cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
-
-          kubectl cluster-info
-          kubectl get nodes
-      - name: Run integration test in K8s
+      - name: Deploy WebGrid instance
         run: |
           stern --color always test-webgrid* &
-          helm install test ./distribution/kubernetes/chart/ --wait --set image.repository=ghcr.io/tilblechschmidt/webgrid,image.tag=sha-${GITHUB_SHA::7},image.pullPolicy=IfNotPresent
+          helm install test ./distribution/kubernetes/demo/charts/webgrid --wait --set image.repository=ghcr.io/tilblechschmidt/webgrid,image.tag=sha-${GITHUB_SHA::7},image.pullPolicy=IfNotPresent
           kubectl apply -f test/node-port.yml
-
+      - name: Print debug information
+        if: always()
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+          kubectl get jobs
           kubectl get pods
           kubectl get services
-
+      - name: Run integration test
+        run: |
           python3 test/integration.py 30007
 
   # ------------------ RELEASE ONLY JOBS ------------------
