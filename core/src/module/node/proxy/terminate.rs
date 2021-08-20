@@ -40,6 +40,10 @@ impl Responder for TerminationInterceptor {
         Fut: Future<Output = Result<Response<Body>, Infallible>> + Send,
         F: FnOnce(Parts, Body, IpAddr) -> Fut + Send,
     {
+        // Reset the lifetime
+        self.heart_stone.lock().await.reset_lifetime().await;
+
+        // Check if it is a deletion request
         let method = &parts.method;
         let path = parts.uri.path();
 

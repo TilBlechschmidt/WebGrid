@@ -130,8 +130,9 @@ pub async fn forward_request(
     proxy_identifier: &str,
     target: Uri,
 ) -> Result<Response<Body>, ForwardError> {
-    let upstream = target.host().map(|h| h.to_owned());
     let req = translate_request(source_ip, req, target, proxy_identifier)?;
+    let uri = req.uri().to_string();
+    let method = req.method().to_string();
 
     match client.request(req).await {
         Ok(mut res) => {
@@ -139,11 +140,7 @@ pub async fn forward_request(
             Ok(res)
         }
         Err(e) => {
-            log::error!(
-                "Failed to fulfill request to '{}': {}",
-                upstream.unwrap_or_default(),
-                e
-            );
+            log::error!("Failed to fulfill request '{} {}': {}", method, uri, e);
 
             Err(e.into())
         }
