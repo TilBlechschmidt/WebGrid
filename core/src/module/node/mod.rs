@@ -16,7 +16,7 @@ use crate::library::storage::s3::S3StorageBackend;
 use crate::library::{BoxedError, EmptyResult};
 use anyhow::anyhow;
 use async_trait::async_trait;
-use jatsl::{schedule_and_wait, JobScheduler};
+use jatsl::{schedule, schedule_and_wait, JobScheduler};
 use thiserror::Error;
 
 mod options;
@@ -210,7 +210,7 @@ impl Module for Node {
         let advertise_job = self.build_advertise_job();
 
         if let Some(recording_job) = self.build_recording_job() {
-            schedule_and_wait!(scheduler, self.options.bind_timeout, { recording_job });
+            schedule!(scheduler, { recording_job });
         }
 
         schedule_and_wait!(scheduler, self.options.bind_timeout, {
