@@ -225,6 +225,8 @@ impl Module for Node {
     }
 
     async fn post_shutdown(&mut self, termination_reason: ModuleTerminationReason) {
+        log::info!("Module terminated with reason: {:?}", termination_reason);
+
         // These are only best-effort cleanup attempts. They may very well fail for one reason or another.
         self.shutdown_driver().await;
         self.send_termination_notification(termination_reason.into())
