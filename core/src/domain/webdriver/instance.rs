@@ -100,7 +100,7 @@ impl WebDriverVariant {
 
     fn extra_arguments(&self) -> &[&'static str] {
         match self {
-            WebDriverVariant::Chrome => &["--port=4444", "--whitelisted-ips", "*"],
+            WebDriverVariant::Chrome => &["--port=4444"],
             WebDriverVariant::Safari => &["--diagnose", "-p", "4444"],
             WebDriverVariant::Firefox => &["-p", "4444"],
         }

@@ -1,6 +1,7 @@
 use crate::library::http::{forward_request, MatchableString, Responder};
 use async_trait::async_trait;
 use futures::Future;
+use http::header::HOST;
 use hyper::client::HttpConnector;
 use hyper::http::{
     request::{Parts, Request},
@@ -103,6 +104,7 @@ impl Responder for ForwardingResponder {
         // Reconstruct the request and force HTTP/1.1 (because WebDrivers are ancient technology :P)
         let mut req = Request::from_parts(parts, body);
         *req.version_mut() = Version::HTTP_11;
+        req.headers_mut().insert(HOST, "127.0.0.1".parse().unwrap());
 
         // Forward the request
         let forward_result =
