@@ -9,14 +9,21 @@ const QUEUE_KEY: &str = "session.terminated";
 const QUEUE_SIZE: usize = QUEUE_SIZE_STARTUP_WORKFLOW;
 
 /// Reason for a session to commence shutdown
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[serde(tag = "reason")]
 pub enum SessionTerminationReason {
     /// An error occured during the session startup or job scheduling routine
-    StartupFailed(BlackboxError),
+    StartupFailed {
+        /// Stacktrace of the error that caused the failure
+        error: BlackboxError,
+    },
     /// Either the startup or shutdown routine timed out
     ModuleTimeout,
     /// Termination was requested by the client
-    ClosedByClient(String),
+    ClosedByClient {
+        /// Description on why or how the client closed the session
+        message: String,
+    },
     /// No requests have been received within the idle timeout period
     IdleTimeoutReached,
     /// External process signals terminated the session
@@ -45,14 +52,16 @@ impl Notification for SessionTerminatedNotification {
 impl From<ModuleTerminationReason> for SessionTerminationReason {
     fn from(reason: ModuleTerminationReason) -> Self {
         match reason {
-            ModuleTerminationReason::StartupFailed(e) => {
-                SessionTerminationReason::StartupFailed(BlackboxError::from_boxed(e))
-            }
+            ModuleTerminationReason::StartupFailed(e) => SessionTerminationReason::StartupFailed {
+                error: BlackboxError::from_boxed(e),
+            },
             ModuleTerminationReason::OperationalError(e) => {
-                SessionTerminationReason::StartupFailed(BlackboxError::from_boxed(e))
+                SessionTerminationReason::StartupFailed {
+                    error: BlackboxError::from_boxed(e),
+                }
             }
-            ModuleTerminationReason::HeartDied(DeathReason::Killed(description)) => {
-                SessionTerminationReason::ClosedByClient(description)
+            ModuleTerminationReason::HeartDied(DeathReason::Killed(message)) => {
+                SessionTerminationReason::ClosedByClient { message }
             }
             ModuleTerminationReason::HeartDied(DeathReason::LifetimeExceeded) => {
                 SessionTerminationReason::IdleTimeoutReached

@@ -151,7 +151,7 @@ impl Node {
 
         // If we terminated before being "operational" then send out a SessionStartupFailedNotification, else publish a SessionTerminatedNotification
         let result = match reason {
-            SessionTerminationReason::StartupFailed(cause) => {
+            SessionTerminationReason::StartupFailed { error: cause } => {
                 let notification = SessionStartupFailedNotification {
                     id: self.options.id,
                     cause,

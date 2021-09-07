@@ -57,7 +57,7 @@ pub enum CapabilityUnhandledPromptBehavior {
 #[serde(rename_all = "camelCase")]
 pub struct CapabilitiesProxy {
     /// Indicates the type of proxy configuration.
-    pub proxy_type: String,
+    pub proxy_type: Option<String>,
     /// Defines the URL for a proxy auto-config file if proxy_type is equal to "pac".
     pub proxy_autoconfig_url: Option<String>,
     /// Defines the proxy host for FTP traffic when the proxy_type is "manual".

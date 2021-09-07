@@ -14,10 +14,8 @@ use crate::library::BoxedError;
 /// When the Error from which this is created contains another BlackboxError in its
 /// source chain, it will be consumed and integrated so that one nicely formatted
 /// stacktrace can be provided at the top-most level.
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
-pub struct BlackboxError {
-    causes: Vec<String>,
-}
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
+pub struct BlackboxError(Vec<String>);
 
 impl BlackboxError {
     /// Creates a new instance from any error type
@@ -37,7 +35,7 @@ impl BlackboxError {
 #[cfg(test)]
 impl BlackboxError {
     fn new_with_causes(causes: Vec<String>) -> Self {
-        Self { causes }
+        Self(causes)
     }
 }
 
@@ -45,7 +43,7 @@ impl Error for BlackboxError {}
 
 impl Display for BlackboxError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        if let Some(first) = self.causes.first() {
+        if let Some(first) = self.0.first() {
             writeln!(f, "Error: {}", first)?;
         } else {
             writeln!(f, "Unknown error")?;
@@ -53,7 +51,7 @@ impl Display for BlackboxError {
         }
 
         writeln!(f, "\nCaused by:")?;
-        for (index, cause) in self.causes.iter().skip(1).enumerate() {
+        for (index, cause) in self.0.iter().skip(1).enumerate() {
             writeln!(f, "    {}: {}", index, cause)?;
         }
 
@@ -69,7 +67,7 @@ impl From<&(dyn Error + 'static)> for BlackboxError {
         while let Some(error) = source {
             // Integrate any child BlackboxErrors and use ToString for anything else
             if let Some(blackbox_error) = error.downcast_ref::<BlackboxError>() {
-                let mut child_causes = blackbox_error.causes.clone();
+                let mut child_causes = blackbox_error.0.clone();
                 causes.append(&mut child_causes);
             } else {
                 causes.push(error.to_string());
@@ -78,7 +76,7 @@ impl From<&(dyn Error + 'static)> for BlackboxError {
             source = error.source();
         }
 
-        Self { causes }
+        Self(causes)
     }
 }
 
@@ -105,10 +103,7 @@ mod does {
         let middle_error = TestError::from(lower_error);
         let high_error = BlackboxError::from(&middle_error as &(dyn Error + 'static));
 
-        assert_eq!(
-            high_error.causes,
-            vec!["Internal error", "cause1", "cause2"]
-        )
+        assert_eq!(high_error.0, vec!["Internal error", "cause1", "cause2"])
     }
 
     #[test]
