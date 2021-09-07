@@ -7,8 +7,11 @@ use hyper::http::{request::Parts, Method, Response, StatusCode};
 use hyper::{body, Body};
 use std::convert::Infallible;
 use std::net::IpAddr;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 
 pub struct StorageResponder<S: StorageBackend> {
+    byte_count_total: Arc<AtomicUsize>,
     session_id: SessionIdentifier,
     storage: S,
 }
@@ -17,8 +20,13 @@ impl<S> StorageResponder<S>
 where
     S: StorageBackend,
 {
-    pub fn new(session_id: SessionIdentifier, storage: S) -> Self {
+    pub fn new(
+        session_id: SessionIdentifier,
+        storage: S,
+        byte_count_total: Arc<AtomicUsize>,
+    ) -> Self {
         Self {
+            byte_count_total,
             session_id,
             storage,
         }
@@ -65,6 +73,11 @@ where
         if client_ip.is_loopback() && parts.method == Method::PUT {
             match body::to_bytes(body).await {
                 Ok(content) => {
+                    if !parts.uri.path().ends_with(".m3u8") {
+                        self.byte_count_total
+                            .fetch_add(content.len(), Ordering::Relaxed);
+                    }
+
                     let path = storage_path(self.session_id, parts.uri.path())
                         .to_string_lossy()
                         .into_owned();

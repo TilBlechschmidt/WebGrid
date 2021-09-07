@@ -1,5 +1,8 @@
 //! Manages a WebDriver instance and translates requests
 
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
+
 use crate::domain::event::{
     SessionOperationalNotification, SessionStartupFailedNotification,
     SessionTerminatedNotification, SessionTerminationReason,
@@ -40,6 +43,7 @@ enum NodeError {
 pub struct Node {
     options: Options,
     instance: Option<WebDriverInstance>,
+    video_byte_count_total: Arc<AtomicUsize>,
 }
 
 impl Node {
@@ -48,6 +52,7 @@ impl Node {
         Self {
             options,
             instance: None,
+            video_byte_count_total: Arc::new(AtomicUsize::new(0)),
         }
     }
 
@@ -112,6 +117,7 @@ impl Node {
             self.options.id,
             self.options.recording.generate_arguments(),
             self.options.storage.backend.clone()?,
+            self.video_byte_count_total.clone(),
         ))
     }
 
@@ -171,9 +177,11 @@ impl Node {
                 publisher.publish(&notification).await
             }
             _ => {
+                let recording_bytes = self.video_byte_count_total.load(Ordering::Relaxed);
                 let notification = SessionTerminatedNotification {
                     id: self.options.id,
                     reason,
+                    recording_bytes,
                 };
 
                 publisher.publish(&notification).await

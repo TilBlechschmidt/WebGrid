@@ -10,7 +10,8 @@ use hyper::Server;
 use jatsl::Job;
 use std::io::Read;
 use std::net::SocketAddr;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::Arc;
 use storage::StorageResponder;
 use tempfile::NamedTempFile;
 use thiserror::Error;
@@ -32,18 +33,25 @@ pub struct RecordingJob<S: StorageBackend> {
     storage: S,
     session_id: SessionIdentifier,
     started: AtomicBool,
+    byte_count_total: Arc<AtomicUsize>,
 }
 
 impl<S> RecordingJob<S>
 where
     S: StorageBackend + Send + Sync + 'static,
 {
-    pub fn new(session_id: SessionIdentifier, arguments: String, storage: S) -> Self {
+    pub fn new(
+        session_id: SessionIdentifier,
+        arguments: String,
+        storage: S,
+        byte_count_total: Arc<AtomicUsize>,
+    ) -> Self {
         Self {
             arguments,
             storage,
             session_id,
             started: AtomicBool::new(false),
+            byte_count_total,
         }
     }
 }
@@ -57,7 +65,11 @@ where
     const SUPPORTS_GRACEFUL_TERMINATION: bool = true;
 
     async fn execute(&self, manager: jatsl::JobManager) -> EmptyResult {
-        let storage_responder = StorageResponder::new(self.session_id, self.storage.clone());
+        let storage_responder = StorageResponder::new(
+            self.session_id,
+            self.storage.clone(),
+            self.byte_count_total.clone(),
+        );
         let make_svc = make_responder_chain_service_fn!(storage_responder);
 
         let addr = SocketAddr::from(([127, 0, 0, 1], crate::constants::PORT_STORAGE));

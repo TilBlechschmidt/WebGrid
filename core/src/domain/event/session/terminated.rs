@@ -41,6 +41,9 @@ pub struct SessionTerminatedNotification {
 
     /// Reason for the termination
     pub reason: SessionTerminationReason,
+
+    /// Bytes of video recorded
+    pub recording_bytes: usize,
 }
 
 impl Notification for SessionTerminatedNotification {
