@@ -1,6 +1,6 @@
 use super::super::super::EmptyResult;
-use super::Notification;
 use super::{ConsumerGroupDescriptor, QueueDescriptorExtension};
+use super::{Notification, NotificationFrame};
 use super::{QueueEntry, QueueProvider, RawQueueEntry};
 use async_trait::async_trait;
 use futures::StreamExt;
@@ -20,7 +20,7 @@ pub trait Consumer {
     type Notification: Notification;
 
     /// Processes an event notification and returns whether it succeeded or failed
-    async fn consume(&self, notification: Self::Notification) -> EmptyResult;
+    async fn consume(&self, notification: NotificationFrame<Self::Notification>) -> EmptyResult;
 }
 
 /// Helper functions to aid the consumption of messages
@@ -70,7 +70,7 @@ where
             .for_each_concurrent(Some(DEFAULT_CONCURRENCY), |item| async move {
                 match item {
                     Ok(mut entry) => match entry.parse_payload::<C::Notification>() {
-                        Ok(notification) => match self.consume(notification).await {
+                        Ok(frame) => match self.consume(frame).await {
                             // TODO These warnings should also be attached to the tracing span
                             Ok(_) => {
                                 if let Err(e) = entry.acknowledge().await {

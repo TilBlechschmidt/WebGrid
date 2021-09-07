@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use super::super::{SessionCreationCommunicationHandle, StatusResponse};
 use crate::domain::event::SessionOperationalNotification;
 use crate::harness::Service;
-use crate::library::communication::event::Consumer;
+use crate::library::communication::event::{Consumer, NotificationFrame};
 use crate::library::communication::CommunicationFactory;
 use crate::library::EmptyResult;
 use async_trait::async_trait;
@@ -36,7 +36,7 @@ where
 {
     type Notification = SessionOperationalNotification;
 
-    async fn consume(&self, notification: Self::Notification) -> EmptyResult {
+    async fn consume(&self, notification: NotificationFrame<Self::Notification>) -> EmptyResult {
         if let Some(tx) = self
             .handle
             .status_listeners
@@ -44,7 +44,10 @@ where
             .await
             .pop(&notification.id)
         {
-            if tx.send(StatusResponse::Operational(notification)).is_err() {
+            if tx
+                .send(StatusResponse::Operational(notification.into_inner()))
+                .is_err()
+            {
                 log::error!("Failed to send StatusResponse: receiver has been dropped");
             }
         }

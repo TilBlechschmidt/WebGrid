@@ -1,7 +1,7 @@
 use super::ProvisioningState;
 use crate::domain::event::SessionTerminatedNotification;
 use crate::harness::Service;
-use crate::library::communication::event::Consumer;
+use crate::library::communication::event::{Consumer, NotificationFrame};
 use crate::library::communication::CommunicationFactory;
 use crate::library::EmptyResult;
 use async_trait::async_trait;
@@ -30,7 +30,7 @@ where
 impl Consumer for SessionTerminationWatcherService {
     type Notification = SessionTerminatedNotification;
 
-    async fn consume(&self, notification: Self::Notification) -> EmptyResult {
+    async fn consume(&self, notification: NotificationFrame<Self::Notification>) -> EmptyResult {
         self.state.release_permit(&notification.id).await;
         Ok(())
     }

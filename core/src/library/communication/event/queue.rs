@@ -1,4 +1,5 @@
 use super::super::super::BoxedError;
+use super::NotificationFrame;
 use crate::library::EmptyResult;
 use async_trait::async_trait;
 use serde::Deserialize;
@@ -68,7 +69,7 @@ pub trait RawQueueEntry {
 /// Useful functions for [`QueueEntry`] implementations with default implementations
 pub trait QueueEntry: RawQueueEntry {
     /// Attempts to parse the wire-format payload into a given data structure
-    fn parse_payload<'a, T>(&'a self) -> Result<T, BoxedError>
+    fn parse_payload<'a, T>(&'a self) -> Result<NotificationFrame<T>, BoxedError>
     where
         T: Deserialize<'a>;
 }

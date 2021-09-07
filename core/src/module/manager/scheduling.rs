@@ -4,7 +4,7 @@ use crate::domain::event::{
 };
 use crate::domain::request::ProvisionerMatchRequest;
 use crate::harness::Service;
-use crate::library::communication::event::{Consumer, NotificationPublisher};
+use crate::library::communication::event::{Consumer, NotificationFrame, NotificationPublisher};
 use crate::library::communication::request::{RequestError, Requestor, ResponseCollectionTimeout};
 use crate::library::communication::{BlackboxError, CommunicationFactory};
 use crate::library::EmptyResult;
@@ -94,7 +94,7 @@ where
 {
     type Notification = SessionCreatedNotification;
 
-    async fn consume(&self, notification: Self::Notification) -> EmptyResult {
+    async fn consume(&self, notification: NotificationFrame<Self::Notification>) -> EmptyResult {
         match self.handle_event(&notification).await {
             Err(SchedulingServiceError::RequestFailure(e)) => Err(e.into()),
             Err(e) => {
@@ -111,7 +111,7 @@ where
                 let provisioner_queue_extension = provisioner.to_string();
                 let job_assignment_notification = ProvisioningJobAssignedNotification {
                     session_id: notification.id,
-                    capabilities: notification.capabilities,
+                    capabilities: notification.capabilities.to_owned(),
                 };
 
                 self.publisher
@@ -184,7 +184,7 @@ mod does {
             .expect(&scheduled);
 
         SchedulingService::instantiate(factory, &())
-            .consume(created)
+            .consume(NotificationFrame::new(created))
             .await
             .unwrap();
     }
@@ -210,7 +210,7 @@ mod does {
         factory.expect(&failure);
 
         SchedulingService::instantiate(factory, &())
-            .consume(created)
+            .consume(NotificationFrame::new(created))
             .await
             .unwrap();
     }

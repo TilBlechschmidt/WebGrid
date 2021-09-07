@@ -8,7 +8,7 @@
 //! changing the marker traits.
 
 use super::super::event::{
-    Notification, NotificationPublisher, QueueDescriptorExtension, QueueEntry,
+    Notification, NotificationFrame, NotificationPublisher, QueueDescriptorExtension, QueueEntry,
     RawNotificationPublisher, RawQueueEntry,
 };
 use super::super::request::{
@@ -33,7 +33,8 @@ where
 {
     /// Serializes the notification using [`serde_json::to_string`]
     async fn publish<N: Notification + Send + Sync>(&self, notification: &N) -> EmptyResult {
-        let data = serde_json::to_string(notification)?;
+        let framed = NotificationFrame::new(notification);
+        let data = serde_json::to_string(&framed)?;
         self.publish_raw(data.as_bytes(), N::queue(), None).await
     }
 
@@ -43,7 +44,8 @@ where
         notification: &N,
         extension: QueueDescriptorExtension,
     ) -> EmptyResult {
-        let data = serde_json::to_string(notification)?;
+        let framed = NotificationFrame::new(notification);
+        let data = serde_json::to_string(&framed)?;
         self.publish_raw(data.as_bytes(), N::queue(), Some(extension))
             .await
     }
@@ -57,7 +59,7 @@ where
     E: JsonQueueEntry,
 {
     /// Parses the payload using [`serde_json::from_slice`]
-    fn parse_payload<'a, T>(&'a self) -> Result<T, BoxedError>
+    fn parse_payload<'a, T>(&'a self) -> Result<NotificationFrame<T>, BoxedError>
     where
         T: Deserialize<'a>,
     {

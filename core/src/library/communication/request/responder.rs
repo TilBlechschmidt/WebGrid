@@ -1,3 +1,5 @@
+use crate::library::communication::event::NotificationFrame;
+
 use super::super::super::BoxedError;
 use super::super::super::EmptyResult;
 use super::super::event::Consumer;
@@ -90,7 +92,7 @@ where
 {
     type Notification = R;
 
-    async fn consume(&self, request: Self::Notification) -> EmptyResult {
+    async fn consume(&self, request: NotificationFrame<Self::Notification>) -> EmptyResult {
         let location = request.reply_to();
 
         // TODO Contemplate whether a message should not be acknowledged due to a processing failure
@@ -100,7 +102,7 @@ where
         //              containing a Result should be used instead!
         if let Some(response) = self
             .processor
-            .maybe_process(request)
+            .maybe_process(request.into_inner())
             .await
             .map_err(|e| ResponderError::ProcessingFailed(e))?
         {

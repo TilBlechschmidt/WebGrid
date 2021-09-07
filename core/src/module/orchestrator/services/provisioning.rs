@@ -4,7 +4,7 @@ use crate::domain::event::{
     SessionProvisionedNotification, SessionStartupFailedNotification,
 };
 use crate::harness::Service;
-use crate::library::communication::event::{Consumer, NotificationPublisher};
+use crate::library::communication::event::{Consumer, NotificationFrame, NotificationPublisher};
 use crate::library::communication::request::RequestError;
 use crate::library::communication::{BlackboxError, CommunicationFactory};
 use crate::library::{BoxedError, EmptyResult};
@@ -81,7 +81,7 @@ where
 {
     type Notification = ProvisioningJobAssignedNotification;
 
-    async fn consume(&self, notification: Self::Notification) -> EmptyResult {
+    async fn consume(&self, notification: NotificationFrame<Self::Notification>) -> EmptyResult {
         match self.provision(&notification).await {
             Err(ProvisioningServiceError::RequestFailure(e)) => Err(e.into()),
             Err(e) => {
@@ -172,7 +172,10 @@ mod does {
             capabilities: RawCapabilitiesRequest::new("{}".into()),
         };
 
-        service.consume(notification).await.unwrap();
+        service
+            .consume(NotificationFrame::new(notification))
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
