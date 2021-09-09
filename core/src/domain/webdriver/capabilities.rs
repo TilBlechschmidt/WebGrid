@@ -203,8 +203,7 @@ impl Capabilities {
 }
 
 /// List of requested capabilities by a client
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
-#[cfg_attr(test, derive(Clone))]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CapabilitiesRequest {
     /// List of capabilites where the first matching one will be used

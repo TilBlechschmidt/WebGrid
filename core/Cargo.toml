@@ -22,7 +22,7 @@ hyper = { version = "0.14", features = ["full"] }
 paste = "1.0"
 
 # Module operation
-jatsl = "0.1.8"
+jatsl = "0.1.9"
 heim = { version = "0.1.0-rc.1", features = ["process"] }
 
 # Data serialization
@@ -49,6 +49,7 @@ opentelemetry-http = "0.4"
 
 # Data storage and stream processing
 redis = { version = "0.20.2-alpha.0", default-features = false, features = ["tokio-comp", "streams"], git = "https://github.com/TilBlechschmidt/redis-rs", branch = "webgrid-state" }
+mongodb = { version = "2.0", features = ["bson-uuid-0_8", "bson-chrono-0_4"] }
 
 # Storage dependencies
 rust-s3 = { version = "0.27.0-rc4", git = "https://github.com/durch/rust-s3" }

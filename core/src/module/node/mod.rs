@@ -1,10 +1,7 @@
 //! Manages a WebDriver instance and translates requests
 
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
-
 use crate::domain::event::{
-    SessionOperationalNotification, SessionStartupFailedNotification,
+    SessionClientMetadata, SessionOperationalNotification, SessionStartupFailedNotification,
     SessionTerminatedNotification, SessionTerminationReason,
 };
 use crate::domain::webdriver::{WebDriver, WebDriverInstance};
@@ -20,14 +17,19 @@ use crate::library::{BoxedError, EmptyResult};
 use anyhow::anyhow;
 use async_trait::async_trait;
 use jatsl::{schedule, schedule_and_wait, JobScheduler};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 use thiserror::Error;
+use tokio::sync::mpsc::{self, UnboundedSender};
 
+mod metadata;
 mod options;
 mod proxy;
 mod recording;
 
 pub use options::Options;
 
+use self::metadata::MetadataPublisherJob;
 use self::proxy::ProxyJob;
 use self::recording::RecordingJob;
 
@@ -109,6 +111,16 @@ impl Node {
             self.options.redis.url.clone(),
             WebgridServiceDescriptor::Node(self.options.id),
             endpoint,
+        )
+    }
+
+    fn build_metadata_publisher_job(
+        &self,
+    ) -> (MetadataPublisherJob, UnboundedSender<SessionClientMetadata>) {
+        let (tx, rx) = mpsc::unbounded_channel();
+        (
+            MetadataPublisherJob::new(self.options.id, rx, self.options.redis.url.clone()),
+            tx,
         )
     }
 
@@ -216,6 +228,7 @@ impl Module for Node {
 
         let proxy_job = self.build_proxy_job(stone)?;
         let advertise_job = self.build_advertise_job();
+        let (metadata_publisher_job, _metadata_tx) = self.build_metadata_publisher_job();
 
         if let Some(recording_job) = self.build_recording_job() {
             schedule!(scheduler, { recording_job });
@@ -223,7 +236,8 @@ impl Module for Node {
 
         schedule_and_wait!(scheduler, self.options.bind_timeout, {
             proxy_job,
-            advertise_job
+            advertise_job,
+            metadata_publisher_job
         });
 
         // TODO The ready-states are not yet indicative of the actual ready state as e.g. the HTTP server future is only polled after the ready signal is sent.

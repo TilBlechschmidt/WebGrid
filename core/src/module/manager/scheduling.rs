@@ -1,6 +1,7 @@
 use crate::domain::event::{
     ProvisionerIdentifier, ProvisioningJobAssignedNotification, SessionCreatedNotification,
-    SessionScheduledNotification, SessionStartupFailedNotification,
+    SessionMetadataModifiedNotification, SessionScheduledNotification,
+    SessionStartupFailedNotification,
 };
 use crate::domain::request::ProvisionerMatchRequest;
 use crate::harness::Service;
@@ -26,6 +27,9 @@ enum SchedulingServiceError {
 
     #[error("matching request failed")]
     RequestFailure(#[from] RequestError),
+
+    #[error("notification publishing failed")]
+    PublishFailure(#[from] BlackboxError),
 }
 
 /// Assigns a provisioner to a session
@@ -70,7 +74,7 @@ where
         notification: &<Self as Consumer>::Notification,
     ) -> Result<ProvisionerIdentifier, SchedulingServiceError> {
         let capabilities = notification.capabilities.parse()?;
-        let request = ProvisionerMatchRequest::new(capabilities);
+        let request = ProvisionerMatchRequest::new(capabilities.clone());
 
         let mut responses = self
             .requestor
@@ -79,6 +83,23 @@ where
 
         // Provide some laymans load balancing until load factors are implemented
         responses.shuffle(&mut thread_rng());
+
+        // Emit metadata contained in requested capabilities
+        if let Some(metadata) = capabilities
+            .into_sets()
+            .into_iter()
+            .find_map(|c| c.webgrid_options.map(|o| o.metadata).flatten())
+        {
+            let notification = SessionMetadataModifiedNotification {
+                id: notification.id,
+                metadata,
+            };
+
+            self.publisher
+                .publish(&notification)
+                .await
+                .map_err(BlackboxError::from_boxed)?;
+        }
 
         responses
             .pop()
