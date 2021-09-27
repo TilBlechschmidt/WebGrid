@@ -83,7 +83,11 @@ impl Node {
         Ok(())
     }
 
-    fn build_proxy_job(&self, heart_stone: HeartStone) -> Result<ProxyJob, NodeError> {
+    fn build_proxy_job(
+        &self,
+        heart_stone: HeartStone,
+        metadata_tx: UnboundedSender<SessionClientMetadata>,
+    ) -> Result<ProxyJob, NodeError> {
         let instance = match &self.instance {
             Some(instance) => instance,
             None => return Err(NodeError::DriverNotInitialized),
@@ -101,6 +105,7 @@ impl Node {
             session_id_internal,
             session_id_external,
             heart_stone,
+            metadata_tx,
         ))
     }
 
@@ -226,9 +231,9 @@ impl Module for Node {
 
         // TODO Spawn process monitoring for webdriver (todo find a generic solution because it won't be the last one)
 
-        let proxy_job = self.build_proxy_job(stone)?;
         let advertise_job = self.build_advertise_job();
-        let (metadata_publisher_job, _metadata_tx) = self.build_metadata_publisher_job();
+        let (metadata_publisher_job, metadata_tx) = self.build_metadata_publisher_job();
+        let proxy_job = self.build_proxy_job(stone, metadata_tx)?;
 
         if let Some(recording_job) = self.build_recording_job() {
             schedule!(scheduler, { recording_job });

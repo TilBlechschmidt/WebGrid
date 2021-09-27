@@ -2,13 +2,17 @@ use async_trait::async_trait;
 use hyper::Server;
 use jatsl::Job;
 use std::net::SocketAddr;
+use tokio::sync::mpsc::UnboundedSender;
 
 use self::forwarding::ForwardingResponder;
 use self::terminate::TerminationInterceptor;
+use crate::domain::event::SessionClientMetadata;
 use crate::harness::HeartStone;
+use crate::module::node::proxy::metadata_extension::MetadataExtensionInterceptor;
 use crate::{library::http::Responder, make_responder_chain_service_fn, responder_chain};
 
 mod forwarding;
+mod metadata_extension;
 mod terminate;
 
 pub struct ProxyJob {
@@ -18,6 +22,7 @@ pub struct ProxyJob {
     session_id_internal: String,
     session_id_external: String,
     heart_stone: HeartStone,
+    metadata_tx: UnboundedSender<SessionClientMetadata>,
 }
 
 impl ProxyJob {
@@ -28,6 +33,7 @@ impl ProxyJob {
         session_id_internal: String,
         session_id_external: String,
         heart_stone: HeartStone,
+        metadata_tx: UnboundedSender<SessionClientMetadata>,
     ) -> Self {
         Self {
             port,
@@ -36,6 +42,7 @@ impl ProxyJob {
             session_id_internal,
             session_id_external,
             heart_stone,
+            metadata_tx,
         }
     }
 }
@@ -52,6 +59,11 @@ impl Job for ProxyJob {
         let termination_interceptor =
             TerminationInterceptor::new(self.heart_stone.clone(), self.session_id_external.clone());
 
+        let metadata_extension_interceptor = MetadataExtensionInterceptor::new(
+            self.metadata_tx.clone(),
+            self.session_id_external.clone(),
+        );
+
         let forwarding_responder = ForwardingResponder::new(
             self.identifier.clone(),
             self.authority.clone(),
@@ -61,6 +73,7 @@ impl Job for ProxyJob {
 
         let make_svc = make_responder_chain_service_fn! {
             termination_interceptor,
+            metadata_extension_interceptor,
             forwarding_responder
         };
 
