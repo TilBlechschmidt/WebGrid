@@ -154,7 +154,7 @@ impl Responder for SessionCreationResponder {
             }
             Ok(StatusResponse::Failed(notification)) => Ok(self.new_error_response(
                 &id.to_string(),
-                &notification.cause.to_string(),
+                &notification.reason.to_string(),
                 StatusCode::INTERNAL_SERVER_ERROR,
             )),
             Err(_) => Ok(self.new_error_response(

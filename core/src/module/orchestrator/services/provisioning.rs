@@ -1,7 +1,7 @@
 use super::{super::provisioner::SessionProvisioner, ProvisioningState};
 use crate::domain::event::{
     ProvisionedSessionMetadata, ProvisioningJobAssignedNotification,
-    SessionProvisionedNotification, SessionStartupFailedNotification,
+    SessionProvisionedNotification, SessionTerminatedNotification,
 };
 use crate::harness::Service;
 use crate::library::communication::event::{Consumer, NotificationFrame, NotificationPublisher};
@@ -86,12 +86,13 @@ where
             Err(ProvisioningServiceError::RequestFailure(e)) => Err(e.into()),
             Err(e) => {
                 // Tell everybody that we have failed them :(
-                let failure_notification = SessionStartupFailedNotification {
-                    id: notification.session_id,
-                    cause: BlackboxError::new(e),
-                };
+                let terminated_notification =
+                    SessionTerminatedNotification::new_for_startup_failure(
+                        notification.session_id,
+                        BlackboxError::new(e),
+                    );
 
-                self.publisher.publish(&failure_notification).await
+                self.publisher.publish(&terminated_notification).await
             }
             Ok(meta) => {
                 // Notify everybody about our success
@@ -195,12 +196,12 @@ mod does {
 
     #[tokio::test]
     async fn publish_startup_failure_notification() {
-        let expected = SessionStartupFailedNotification {
-            id: *SESSION_ID,
-            cause: BlackboxError::new(ProvisioningServiceError::ProvisioningFailed(
+        let expected = SessionTerminatedNotification::new_for_startup_failure(
+            *SESSION_ID,
+            BlackboxError::new(ProvisioningServiceError::ProvisioningFailed(
                 MockError::SomeError.into(),
             )),
-        };
+        );
 
         let provisioner = MockProvisioner::new(|| Err(MockError::SomeError.into()));
         let factory = MockCommunicationFactory::default();

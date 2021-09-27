@@ -1,7 +1,7 @@
 use crate::domain::event::{
     ProvisionerIdentifier, ProvisioningJobAssignedNotification, SessionCreatedNotification,
     SessionMetadataModifiedNotification, SessionScheduledNotification,
-    SessionStartupFailedNotification,
+    SessionTerminatedNotification,
 };
 use crate::domain::request::ProvisionerMatchRequest;
 use crate::harness::Service;
@@ -38,7 +38,7 @@ enum SchedulingServiceError {
 /// - [`SessionCreatedNotification`]
 ///
 /// Publishes:
-/// - [`SessionStartupFailedNotification`]
+/// - [`SessionTerminatedNotification`]
 /// - [`ProvisioningJobAssignedNotification`]
 /// - [`SessionScheduledNotification`]
 ///
@@ -120,12 +120,12 @@ where
             Err(SchedulingServiceError::RequestFailure(e)) => Err(e.into()),
             Err(e) => {
                 // Tell everybody that we have failed them :(
-                let failure_notification = SessionStartupFailedNotification {
-                    id: notification.id,
-                    cause: BlackboxError::new(e),
-                };
+                let notification = SessionTerminatedNotification::new_for_startup_failure(
+                    notification.id,
+                    BlackboxError::new(e),
+                );
 
-                self.publisher.publish(&failure_notification).await
+                self.publisher.publish(&notification).await
             }
             Ok(provisioner) => {
                 // Let the provisioner know it has got a new job
@@ -222,10 +222,7 @@ mod does {
             capabilities,
         };
 
-        let failure = SessionStartupFailedNotification {
-            id: *SESSION_ID,
-            cause,
-        };
+        let failure = SessionTerminatedNotification::new_for_startup_failure(*SESSION_ID, cause);
 
         let factory = MockCommunicationFactory::default();
         factory.expect(&failure);

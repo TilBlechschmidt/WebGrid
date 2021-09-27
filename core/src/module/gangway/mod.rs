@@ -60,7 +60,7 @@ impl Module for Gangway {
             identifier.clone(),
             creation_handle.clone(),
         );
-        let failure_runner = ServiceRunner::<FailureListenerService<_>>::new(
+        let failure_runner = ServiceRunner::<TerminationListenerService<_>>::new(
             redis_url.clone(),
             group,
             identifier.clone(),

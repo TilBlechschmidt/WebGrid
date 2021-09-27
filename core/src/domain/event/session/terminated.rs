@@ -4,29 +4,40 @@ use crate::harness::{DeathReason, ModuleTerminationReason};
 use crate::library::communication::event::{Notification, QueueDescriptor};
 use crate::library::communication::BlackboxError;
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 
 const QUEUE_KEY: &str = "session.terminated";
 const QUEUE_SIZE: usize = QUEUE_SIZE_STARTUP_WORKFLOW;
 
 /// Reason for a session to commence shutdown
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[derive(Error, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(tag = "reason")]
 pub enum SessionTerminationReason {
-    /// An error occured during the session startup or job scheduling routine
+    /// Session failed to reach an operational state
+    ///
+    /// Whenever a component partaking in the session startup workflow encounters a
+    /// critical failure, this event is triggered. It indicates an unrecoverable error
+    /// in the startup sequence and thus the affected session may be considered dead.
+    #[error("An error occured during the session startup or job scheduling routine")]
     StartupFailed {
         /// Stacktrace of the error that caused the failure
+        #[source]
         error: BlackboxError,
     },
     /// Either the startup or shutdown routine timed out
+    #[error("Either the startup or shutdown routine timed out")]
     ModuleTimeout,
     /// Termination was requested by the client
+    #[error("Termination was requested by the client ({message})")]
     ClosedByClient {
         /// Description on why or how the client closed the session
         message: String,
     },
     /// No requests have been received within the idle timeout period
+    #[error("No requests have been received within the idle timeout period")]
     IdleTimeoutReached,
     /// External process signals terminated the session
+    #[error("External process signals terminated the session")]
     TerminatedExternally,
 }
 
@@ -49,6 +60,17 @@ pub struct SessionTerminatedNotification {
 impl Notification for SessionTerminatedNotification {
     fn queue() -> QueueDescriptor {
         QueueDescriptor::new(QUEUE_KEY.into(), QUEUE_SIZE)
+    }
+}
+
+impl SessionTerminatedNotification {
+    /// Shorthand to create a [`SessionTerminatedNotification`] for a startup failure
+    pub fn new_for_startup_failure(id: SessionIdentifier, error: BlackboxError) -> Self {
+        Self {
+            id,
+            reason: SessionTerminationReason::StartupFailed { error },
+            recording_bytes: 0,
+        }
     }
 }
 

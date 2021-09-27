@@ -1,17 +1,17 @@
 use crate::domain::event::{
     SessionCreatedNotification, SessionIdentifier, SessionOperationalNotification,
-    SessionStartupFailedNotification,
+    SessionTerminatedNotification,
 };
 use lru::LruCache;
 use std::sync::Arc;
 use tokio::sync::{mpsc, oneshot, Mutex};
 
-mod failure_listener;
 mod operational_listener;
+mod termination_listener;
 
 // TODO Those two services below are basically 1:1 copies of each other. Make a macro or smth out of them!
-pub use failure_listener::FailureListenerService;
 pub use operational_listener::OperationalListenerService;
+pub use termination_listener::TerminationListenerService;
 
 /// Wrapper struct containing communication tools for the creation of sessions.
 ///
@@ -52,6 +52,6 @@ impl SessionCreationCommunicationHandle {
 pub enum StatusResponse {
     /// Session has been created and is now operational
     Operational(SessionOperationalNotification),
-    /// Something went wrong during startup
-    Failed(SessionStartupFailedNotification),
+    /// Something went wrong
+    Failed(SessionTerminatedNotification),
 }

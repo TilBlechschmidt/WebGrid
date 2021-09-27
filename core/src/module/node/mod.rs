@@ -1,8 +1,8 @@
 //! Manages a WebDriver instance and translates requests
 
 use crate::domain::event::{
-    SessionClientMetadata, SessionOperationalNotification, SessionStartupFailedNotification,
-    SessionTerminatedNotification, SessionTerminationReason,
+    SessionClientMetadata, SessionOperationalNotification, SessionTerminatedNotification,
+    SessionTerminationReason,
 };
 use crate::domain::webdriver::{WebDriver, WebDriverInstance};
 use crate::domain::WebgridServiceDescriptor;
@@ -175,21 +175,17 @@ impl Node {
         // If we terminated before being "operational" then send out a SessionStartupFailedNotification, else publish a SessionTerminatedNotification
         let result = match reason {
             SessionTerminationReason::StartupFailed { error: cause } => {
-                let notification = SessionStartupFailedNotification {
-                    id: self.options.id,
-                    cause,
-                };
+                let notification =
+                    SessionTerminatedNotification::new_for_startup_failure(self.options.id, cause);
 
                 publisher.publish(&notification).await
             }
             SessionTerminationReason::ModuleTimeout => {
                 // Since this is run in the shutdown routine, the ModuleTimeout can only be caused by a failed startup routine
-                let notification = SessionStartupFailedNotification {
-                    id: self.options.id,
-                    cause: BlackboxError::from_boxed(
-                        anyhow!("session startup routine timed out").into(),
-                    ),
-                };
+                let notification = SessionTerminatedNotification::new_for_startup_failure(
+                    self.options.id,
+                    BlackboxError::from_boxed(anyhow!("session startup routine timed out").into()),
+                );
 
                 publisher.publish(&notification).await
             }
