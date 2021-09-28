@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "webgrid-demo.fullname" . }}-mongoexpress
+  labels:
+    dev.webgrid/component: mongoexpress
+    {{- include "webgrid-demo.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      dev.webgrid/component: mongoexpress
+      {{- include "webgrid-demo.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        dev.webgrid/component: mongoexpress
+        {{- include "webgrid-demo.selectorLabels" . | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: 10
+      {{- with .Values.nodeSelector.express }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity.express }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations.express }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: mongoexpress
+          image: mongo-express:1.0.0-alpha
+          env:
+            - name: ME_CONFIG_MONGODB_SERVER
+              value: "{{ include "call-nested" (list . "webgrid" "web-grid.mongoURL") | trimPrefix "mongodb://" | trimSuffix ":27017/" }}"
+          ports:
+            - name: express
+              containerPort: 8081
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 500Mi
+            limits:
+              cpu: 250m
+              memory: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "webgrid-demo.fullname" . }}-mongoexpress
+  labels:
+    {{- include "webgrid-demo.labels" . | nindent 4 }}
+spec:
+  ports:
+    - name: express
+      protocol: TCP
+      port: 8081
+      targetPort: 8081
+  selector:
+    dev.webgrid/component: mongoexpress
+    {{- include "webgrid-demo.selectorLabels" . | nindent 4 }}

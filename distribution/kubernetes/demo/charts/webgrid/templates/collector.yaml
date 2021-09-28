@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "web-grid.fullname" . }}-collector
+  labels:
+    dev.webgrid/component: collector
+    {{- include "web-grid.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "web-grid.fullname" . }}-collector
+  replicas: {{ .Values.replicaCount.collector }}
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      dev.webgrid/component: collector
+      {{- include "web-grid.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        dev.webgrid/component: collector
+        {{- include "web-grid.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.nodeSelector.collector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity.collector }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations.collector }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.image.pullSecret }}
+      imagePullSecrets:
+      - name: {{ .Values.image.pullSecret }}
+      {{- end }}
+      containers:
+        - image: "{{ .Values.image.repository }}/core:{{ include "web-grid.imageTag" . }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          name: {{ .Chart.Name }}-collector
+          args: ["collector", "--status-server", "47002"]
+          ports:
+            - name: status
+              containerPort: 47002
+              protocol: TCP
+          env:
+            - name: REDIS
+              value: "{{ include "web-grid.redisURL" . }}"
+            - name: RUST_LOG
+              value: {{ .Values.logLevel }}
+            - name: MONGODB
+              value: "{{ include "web-grid.mongoURL" . }}"
+            - name: DATABASE
+              value: "{{ .Values.config.collector.database }}"
+            - name: COLLECTION
+              value: "{{ .Values.config.collector.collection }}"
+            - name: STAGING_COLLECTION
+              value: "{{ .Values.config.collector.staging.collection }}"
+            - name: STAGING_TTL
+              value: "{{ .Values.config.collector.staging.ttl }}"
+            - name: SIZE_LIMIT
+              value: "{{ .Values.config.collector.sizeLimit }}"
+            - name: ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          livenessProbe:
+            tcpSocket:
+              port: status
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: status
+          resources:
+            {{- toYaml .Values.resources.collector | nindent 12 }}

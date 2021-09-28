@@ -3,6 +3,7 @@ use log::info;
 use options::Command;
 use structopt::StructOpt;
 use webgrid::harness::ModuleRunner;
+use webgrid::module::collector::Collector;
 use webgrid::module::gangway::Gangway;
 use webgrid::module::manager::Manager;
 use webgrid::module::node::Node;
@@ -20,6 +21,7 @@ async fn main() -> Result<()> {
         Command::Manager(options) => runner.run(Manager::new(options)).await,
         Command::Orchestrator(options) => runner.run(Orchestrator::new(options)).await,
         Command::Gangway(options) => runner.run(Gangway::new(options)).await,
+        Command::Collector(options) => runner.run(Collector::new(options)).await,
     };
 
     deinit();

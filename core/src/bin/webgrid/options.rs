@@ -42,4 +42,5 @@ pub enum Command {
     Manager(webgrid::module::manager::Options),
     Orchestrator(webgrid::module::orchestrator::Options),
     Gangway(webgrid::module::gangway::Options),
+    Collector(webgrid::module::collector::Options),
 }

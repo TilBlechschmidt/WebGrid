@@ -1,8 +1,20 @@
 volumeClaim:
   # How much storage should be allocated for videos and other assets
-  request: 32Gi
+  request: 16Gi
   # Which storageClass to use for the PVC
   storageClass: local-path
+
+nodeSelector:
+  storage: {}
+  express: {}
+
+tolerations:
+  storage: []
+  express: []
+
+affinity:
+  storage: {}
+  express: {}
 
 webgrid:
   config:

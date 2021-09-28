@@ -1,0 +1,88 @@
+{{- if not .Values.config.mongo.customEndpoint -}}
+{{- if ne .Values.config.mongo.storageClassName "emptyDir" }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "web-grid.fullname" . }}-mongo
+  labels:
+    dev.webgrid/component: mongo
+    {{- include "web-grid.labels" . | nindent 4 }}
+spec:
+  storageClassName: {{ .Values.config.mongo.storageClassName }}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.config.mongo.storageSize }}
+---
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "web-grid.fullname" . }}-mongo
+  labels:
+    dev.webgrid/component: mongo
+    {{- include "web-grid.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      dev.webgrid/component: mongo
+      {{- include "web-grid.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        dev.webgrid/component: mongo
+        {{- include "web-grid.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.nodeSelector.mongo }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity.mongo }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations.mongo }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: mongo-persistence
+          {{- if eq .Values.config.mongo.storageClassName "emptyDir" }}
+          emptyDir:
+            medium: Memory
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "web-grid.fullname" . }}-mongo
+          {{- end }}
+      containers:
+        - image: mongo:5.0.3
+          imagePullPolicy: IfNotPresent
+          name: {{ .Chart.Name }}-mongo
+          ports:
+            - name: mongo
+              containerPort: 27017
+              protocol: TCP
+          volumeMounts:
+            - name: mongo-persistence
+              mountPath: /data
+          resources:
+            {{- toYaml .Values.resources.mongo | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "web-grid.mongoServiceName" . }}
+  labels:
+    {{- include "web-grid.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: 27017
+      targetPort: mongo
+      protocol: TCP
+      name: mongo
+  selector:
+    dev.webgrid/component: mongo
+    {{- include "web-grid.selectorLabels" . | nindent 4 }}
+{{- end }}

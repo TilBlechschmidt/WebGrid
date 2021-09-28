@@ -7,6 +7,8 @@ pub enum ConsumerGroupIdentifier {
     Worker,
     /// Gangway instance
     Gangway,
+    /// Collector instance
+    Collector,
     /// Unknown consumer group
     Other(String),
 }
@@ -16,6 +18,7 @@ impl ToString for ConsumerGroupIdentifier {
         match self {
             Self::Worker => "worker".into(),
             Self::Gangway => "gangway".into(),
+            Self::Collector => "collector".into(),
             Self::Other(identifier) => identifier.to_owned(),
         }
     }

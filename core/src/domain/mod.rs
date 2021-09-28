@@ -7,6 +7,7 @@
 pub(self) const QUEUE_SIZE_STARTUP_WORKFLOW: usize = 5_000;
 
 mod discovery;
+mod session;
 
 pub mod container;
 pub mod event;
@@ -14,3 +15,4 @@ pub mod request;
 pub mod webdriver;
 
 pub use discovery::*;
+pub use session::SessionMetadata;

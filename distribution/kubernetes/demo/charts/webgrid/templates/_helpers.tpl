@@ -57,8 +57,28 @@ Create a name for the redis service
 {{- define "web-grid.redisServiceName" -}}
 {{- printf "%s-redis" (include "web-grid.fullname" .) }}
 {{- end }}
+
 {{- define "web-grid.redisURL" -}}
+{{- if .Values.config.redis.customEndpoint -}}
+{{- printf "%s" .Values.config.redis.customEndpoint }}
+{{- else }}
 {{- printf "redis://%s/" (include "web-grid.redisServiceName" .) }}
+{{- end }}
+{{- end }}
+
+{{/*
+Create a name for the mongo service
+*/}}
+{{- define "web-grid.mongoServiceName" -}}
+{{- printf "%s-mongo" (include "web-grid.fullname" .) }}
+{{- end }}
+
+{{- define "web-grid.mongoURL" -}}
+{{- if .Values.config.mongo.customEndpoint -}}
+{{- printf "%s" .Values.config.mongo.customEndpoint }}
+{{- else }}
+{{- printf "mongodb://%s:27017/" (include "web-grid.mongoServiceName" .) }}
+{{- end }}
 {{- end }}
 
 {{/*

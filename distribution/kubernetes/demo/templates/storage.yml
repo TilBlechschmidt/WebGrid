@@ -34,6 +34,18 @@ spec:
           persistentVolumeClaim:
             claimName: {{ include "webgrid-demo.fullname" . }}-storage
       terminationGracePeriodSeconds: 10
+      {{- with .Values.nodeSelector.storage }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity.storage }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations.storage }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: minio
           image: minio/minio@sha256:9daf9c4b2be5b19b8bf40d3cc9a6026b94d9b31582deb7365914b27c09e28573

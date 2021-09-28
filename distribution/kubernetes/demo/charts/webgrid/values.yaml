@@ -15,7 +15,18 @@ config:
   #   s3+http[s]://key:secret@endpoint/bucket[?pathStyle]
   storageBackend:
   redis:
+    # If you have your own Redis instance somewhere, you can point to it here.
+    # When left empty, the chart will deploy its own one and use it.
+    customEndpoint:
+    # Storage class to use for persisting data when customEndpoint is not set
     storageClassName: emptyDir
+  mongo:
+    # If you have your own MongoDB instance somewhere, you can point to it here.
+    # When left empty, the chart will deploy its own one and use it.
+    customEndpoint:
+    # Storage class to use for persisting data when customEndpoint is not set
+    storageClassName: emptyDir
+    storageSize: 16G
   gangway:
     # Maximum number of cached service endpoints
     cacheSize: 1000
@@ -24,6 +35,22 @@ config:
     # In reality, this variable is only here to cap the memory usage and not to actively control the requests.
     # When you are hitting this limit you should probably start scaling horizontally instead.
     pendingRequestLimit: 25000
+  collector:
+    # Name of the mongo database to use
+    database: webgrid
+    # Capped collection to use for "permanent" storage
+    collection: sessions
+    # Byte limit for the collection (quoted because Helm likes its scientific notation ...)
+    sizeLimit: "17179869184"
+    # Settings for an intermediary "staging" collection
+    # Since documents in capped collections are immutable, sessions are stored here temporarily
+    staging:
+      # Name of the collection
+      collection: sessionsStaging
+      # TTL for documents in the collection
+      # This ensures that "orphaned" metadata gets cleaned up eventually. This can happen when
+      # a session dies without sending a termination notification (e.g. during server failure)
+      ttl: 3600
   orchestrator:
     # Number of concurrent sessions allowed *per* orchestrator replica
     permits: 5
@@ -52,6 +79,7 @@ config:
 replicaCount:
   gangway: 1
   manager: 1
+  collector: 1
   orchestrator: 1
 
 image:
@@ -72,8 +100,10 @@ serviceAccount:
 
 resources:
   redis: {}
+  mongo: {}
   gangway: {}
   manager: {}
+  collector: {}
   orchestrator: {}
   node:
     limits:
@@ -84,21 +114,27 @@ resources:
 
 nodeSelector:
   redis: {}
+  mongo: {}
   gangway: {}
   manager: {}
+  collector: {}
   orchestrator: {}
   node: {}
 
 tolerations:
   redis: []
+  mongo: []
   gangway: []
   manager: []
+  collector: []
   orchestrator: []
   node: []
 
 affinity:
   redis: {}
+  mongo: {}
   gangway: {}
   manager: {}
+  collector: {}
   orchestrator: {}
   node: {}

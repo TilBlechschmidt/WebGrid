@@ -243,6 +243,8 @@ jobs:
           kubectl get jobs
           kubectl get pods
           kubectl get services
+          echo "------------------------ DESCRIBE ON PODS ------------------------"
+          kubectl describe pods
       - name: Run integration test
         run: |
           python3 test/integration.py 30007

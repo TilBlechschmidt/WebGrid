@@ -1,3 +1,4 @@
+{{- if not .Values.config.redis.customEndpoint -}}
 {{- if ne .Values.config.redis.storageClassName "emptyDir" }}
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -114,7 +115,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "web-grid.fullname" . }}-redis
+  name: {{ include "web-grid.redisServiceName" . }}
   labels:
     {{- include "web-grid.labels" . | nindent 4 }}
 spec:
@@ -126,4 +127,4 @@ spec:
   selector:
     dev.webgrid/component: redis
     {{- include "web-grid.selectorLabels" . | nindent 4 }}
-  
+{{- end }}

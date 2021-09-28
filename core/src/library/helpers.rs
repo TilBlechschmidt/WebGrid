@@ -93,3 +93,65 @@ pub async fn wait_for(url: &str, timeout_duration: Duration) -> Result<String, (
         remaining_duration -= check_interval;
     }
 }
+
+/// Wrapper around [`chrono_datetime_as_bson_datetime`](mongodb::bson::serde_helpers::chrono_datetime_as_bson_datetime) that supports `Option<DateTime>`
+pub mod option_chrono_datetime_as_bson_datetime {
+    use std::fmt;
+
+    use chrono::{DateTime, Utc};
+    use mongodb::bson::serde_helpers::chrono_datetime_as_bson_datetime;
+    use serde::{
+        de::{Error, Visitor},
+        Deserializer, Serializer,
+    };
+
+    struct OptionalDateTimeFromCustomFormatVisitor;
+
+    impl<'de> Visitor<'de> for OptionalDateTimeFromCustomFormatVisitor {
+        type Value = Option<DateTime<Utc>>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            write!(formatter, "null or a datetime string")
+        }
+
+        fn visit_none<E>(self) -> Result<Self::Value, E>
+        where
+            E: Error,
+        {
+            Ok(None)
+        }
+
+        fn visit_some<D>(self, d: D) -> Result<Option<DateTime<Utc>>, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            Ok(Some(chrono_datetime_as_bson_datetime::deserialize(d)?))
+        }
+
+        fn visit_unit<E>(self) -> Result<Self::Value, E>
+        where
+            E: Error,
+        {
+            Ok(None)
+        }
+    }
+
+    /// Serializes from [`chrono`] to [`bson`](mongodb::bson) implementation of [`DateTime`]
+    pub fn serialize<S: Serializer>(
+        val: &Option<DateTime<Utc>>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error> {
+        match val {
+            Some(date) => chrono_datetime_as_bson_datetime::serialize(date, serializer),
+            None => serializer.serialize_none(),
+        }
+    }
+
+    /// Deserializes from [`bson`](mongodb::bson) to [`chrono`] implementations of [`DateTime`]
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<DateTime<Utc>>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_option(OptionalDateTimeFromCustomFormatVisitor)
+    }
+}
