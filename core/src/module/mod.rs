@@ -2,6 +2,7 @@
 
 pub mod options;
 
+pub mod api;
 pub mod collector;
 pub mod gangway;
 pub mod manager;

@@ -5,13 +5,16 @@ use serde::{Deserialize, Serialize};
 /// [`ServiceDescriptor`] implementation for discoverable WebGrid services
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum WebgridServiceDescriptor {
-    /// [`Node`](crate::module::node::Node) instance
+    /// [`Api`](crate::module::api) instance
+    Api,
+    /// [`Node`](crate::module::node) instance
     Node(SessionIdentifier),
 }
 
 impl ServiceDescriptor for WebgridServiceDescriptor {
     fn service_identifier(&self) -> String {
         match self {
+            WebgridServiceDescriptor::Api => "api".into(),
             WebgridServiceDescriptor::Node(identifier) => format!("node-{}", identifier),
         }
     }

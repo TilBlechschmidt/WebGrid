@@ -3,4 +3,5 @@ ports:
   offsets:
     gangway: 0
     node: 1
+    api: 2
     storage: 3
