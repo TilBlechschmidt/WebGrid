@@ -30,6 +30,11 @@ services:
     platform: linux/amd64
     container_name: webgrid-collector
     command: collector DEADBEEF-0000-0000-0000-0000CAFEFEED --mongodb mongodb://root:example@webgrid-mongo:27017/
+  api:
+    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-latest}
+    platform: linux/amd64
+    container_name: webgrid-api
+    command: api --mongodb mongodb://root:example@webgrid-mongo:27017/ --host webgrid-api
   redis:
     image: redis:6.2-alpine
     container_name: webgrid-redis
@@ -50,6 +55,8 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
+    ports:
+      - 27017:27017
   mongo-express:
     image: mongo-express
     container_name: webgrid-mongoexpress

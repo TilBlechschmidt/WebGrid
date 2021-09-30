@@ -1,4 +1,4 @@
-use crate::module::options::RedisOptions;
+use crate::module::options::{MongoDBOptions, RedisOptions};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -16,4 +16,8 @@ pub struct Options {
     #[allow(missing_docs)]
     #[structopt(flatten)]
     pub redis: RedisOptions,
+
+    #[allow(missing_docs)]
+    #[structopt(flatten)]
+    pub mongo: MongoDBOptions,
 }

@@ -25,7 +25,13 @@ pub trait Module {
     async fn run(&mut self, scheduler: &JobScheduler) -> Result<Option<Heart>, BoxedError>;
 
     /// Shutdown hook executed after the core loop and all associated jobs have terminated
-    async fn post_shutdown(&mut self, _termination_reason: ModuleTerminationReason) {}
+    async fn post_shutdown(&mut self, termination_reason: ModuleTerminationReason) {
+        if let ModuleTerminationReason::ExitedNormally = termination_reason {
+            log::debug!("Module terminated normally!");
+        } else {
+            log::error!("Module terminated with an error: {:?}", termination_reason);
+        }
+    }
 }
 
 /// Reason why a module has terminated

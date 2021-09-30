@@ -1,6 +1,7 @@
 use crate::domain::WebgridServiceDescriptor;
 use crate::library::communication::discovery::ServiceDiscoverer;
 use crate::library::storage::StorageBackend;
+use crate::module::gangway::proxy::api::ApiForwardingResponder;
 use crate::module::gangway::proxy::storage::StorageResponder;
 use crate::{library::http::Responder, make_responder_chain_service_fn, responder_chain};
 use async_trait::async_trait;
@@ -11,6 +12,7 @@ use std::net::SocketAddr;
 use self::{create::SessionCreationResponder, session::SessionForwardingResponder};
 use super::SessionCreationCommunicationHandle;
 
+mod api;
 mod create;
 mod session;
 mod storage;
@@ -59,14 +61,16 @@ where
         let discoverer = self.discoverer.clone();
 
         let session_responder =
-            SessionForwardingResponder::new(self.identifier.clone(), discoverer);
+            SessionForwardingResponder::new(self.identifier.clone(), discoverer.clone());
         let creation_responder = SessionCreationResponder::new(self.handle.clone());
         let storage_responder = StorageResponder::new(self.storage.clone());
+        let api_responder = ApiForwardingResponder::new(self.identifier.clone(), discoverer);
 
         let make_svc = make_responder_chain_service_fn! {
             session_responder,
             creation_responder,
-            storage_responder
+            storage_responder,
+            api_responder
         };
 
         let addr = SocketAddr::from(([0, 0, 0, 0], self.port));
