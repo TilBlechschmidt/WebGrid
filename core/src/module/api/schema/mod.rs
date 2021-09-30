@@ -5,7 +5,7 @@ pub use query::Query;
 use crate::domain::SessionMetadata;
 
 mod query;
-// mod types;
+mod types;
 
 pub struct GqlContext {
     pub storage_collection: Collection<SessionMetadata>,

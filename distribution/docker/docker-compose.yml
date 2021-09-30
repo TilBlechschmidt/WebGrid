@@ -4,7 +4,7 @@ services:
     image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-latest}
     platform: linux/amd64
     container_name: webgrid-gangway
-    command: gangway DEADBEEF-0000-0000-0000-0000CAFEFEED
+    command: gangway DEADBEEF-0000-0000-0000-0000CAFEFEED --storage s3+http://minioadmin:minioadmin@webgrid-s3:9000/webgrid-video?pathStyle
     depends_on:
       - redis
     ports:
