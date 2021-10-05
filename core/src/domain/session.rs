@@ -17,23 +17,23 @@ pub struct SessionMetadata {
     pub id: SessionIdentifier,
 
     /// Time at which the session object was initially created
-    #[serde(with = "option_chrono_datetime_as_bson_datetime")]
+    #[serde(default, with = "option_chrono_datetime_as_bson_datetime")]
     pub created_at: Option<DateTime<Utc>>,
 
     /// Time at which the session was scheduled with a provisioner
-    #[serde(with = "option_chrono_datetime_as_bson_datetime")]
+    #[serde(default, with = "option_chrono_datetime_as_bson_datetime")]
     pub scheduled_at: Option<DateTime<Utc>>,
 
     /// Time at which the session was submitted to the infrastructure provider
-    #[serde(with = "option_chrono_datetime_as_bson_datetime")]
+    #[serde(default, with = "option_chrono_datetime_as_bson_datetime")]
     pub provisioned_at: Option<DateTime<Utc>>,
 
     /// Time at which the session reached an operational state
-    #[serde(with = "option_chrono_datetime_as_bson_datetime")]
+    #[serde(default, with = "option_chrono_datetime_as_bson_datetime")]
     pub operational_at: Option<DateTime<Utc>>,
 
     /// Time at which the session terminated
-    #[serde(with = "option_chrono_datetime_as_bson_datetime")]
+    #[serde(default, with = "option_chrono_datetime_as_bson_datetime")]
     pub terminated_at: Option<DateTime<Utc>>,
 
     /// Name as reported by the browser instance

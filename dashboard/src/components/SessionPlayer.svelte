@@ -11,8 +11,12 @@
     const session = operationStore(
         `
         query($sessionID: Uuid!) {
-            session(id: $sessionID) {
-                videoUrl
+            session {
+                fetch(id: $sessionID) {
+                    video {
+                        playlist
+                    }
+                }
             }
         }
     `,
@@ -26,7 +30,10 @@
     $: if (
         !$session.fetching &&
         ($session.error ||
-            !($session.data.session && $session.data.session.videoUrl))
+            !(
+                $session.data.session &&
+                $session.data.session.fetch.video.playlist
+            ))
     ) {
         console.error(
             "Error while requesting video URL",
@@ -39,7 +46,10 @@
         ? $session.error.message
         : $session.fetching
         ? false
-        : !($session.data.session && $session.data.session.videoUrl);
+        : !(
+              $session.data.session &&
+              $session.data.session.fetch.video.playlist
+          );
 </script>
 
 <div class="relative w-full pt-16/9 player-frame">
@@ -48,7 +58,10 @@
             <StandbyScreen message={sessionID} {loading} {error} />
         </div>
     {:else}
-        <Player {sessionID} url={host + $session.data.session.videoUrl} />
+        <Player
+            {sessionID}
+            url={host + $session.data.session.fetch.video.playlist}
+        />
     {/if}
 </div>
 
