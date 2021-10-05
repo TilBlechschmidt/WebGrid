@@ -9,11 +9,13 @@ use std::convert::Infallible;
 use std::net::IpAddr;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use tokio::sync::Semaphore;
 
 pub struct StorageResponder<S: StorageBackend> {
     byte_count_total: Arc<AtomicUsize>,
     session_id: SessionIdentifier,
     storage: S,
+    semaphore: Semaphore,
 }
 
 impl<S> StorageResponder<S>
@@ -29,6 +31,7 @@ where
             byte_count_total,
             session_id,
             storage,
+            semaphore: Semaphore::new(1),
         }
     }
 
@@ -71,6 +74,11 @@ where
         F: FnOnce(Parts, Body, IpAddr) -> Fut + Send,
     {
         if client_ip.is_loopback() && parts.method == Method::PUT {
+            log::debug!("Storage PUT {}", parts.uri.path());
+
+            // Make sure we serve all requests in-sequence to prevent race conditions
+            let _permit = self.semaphore.acquire().await;
+
             match body::to_bytes(body).await {
                 Ok(content) => {
                     if !parts.uri.path().ends_with(".m3u8") {

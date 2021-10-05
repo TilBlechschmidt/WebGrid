@@ -1,4 +1,4 @@
-FROM bitnami/minideb:buster AS base
+FROM bitnami/minideb:bullseye AS base
 
 ENV DBUS_SESSION_BUS_ADDRESS=/dev/null
 ENV RESOLUTION=1920x1080
