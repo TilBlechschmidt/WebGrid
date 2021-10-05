@@ -76,7 +76,12 @@ where
             .connection(RedisConnectionVariant::Multiplexed)
             .await?;
 
-        con.rpush(key, data).await?;
+        // Set the response and make sure it gets cleaned up at some point
+        redis::pipe()
+            .rpush(&key, data)
+            .expire(&key, 60)
+            .query_async(&mut con)
+            .await?;
 
         Ok(())
     }
