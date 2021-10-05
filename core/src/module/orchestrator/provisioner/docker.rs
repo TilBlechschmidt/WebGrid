@@ -44,6 +44,7 @@ pub struct DockerProvisioner {
     instance: Uuid,
     auto_remove: bool,
     storage: Option<String>,
+    log: String,
 }
 
 impl DockerProvisioner {
@@ -52,6 +53,7 @@ impl DockerProvisioner {
         images: ContainerImageSet,
         auto_remove: bool,
         storage: Option<String>,
+        log: String,
     ) -> Result<Self, bollard::errors::Error> {
         if images.is_empty() {
             log::warn!("No images provided! Orchestrator won't be able to schedule nodes.");
@@ -68,6 +70,7 @@ impl DockerProvisioner {
             instance,
             auto_remove,
             storage,
+            log,
         })
     }
 
@@ -116,6 +119,7 @@ impl DockerProvisioner {
             format!("ID={}", session_id),
             format!("CAPABILITIES={}", raw_capabilities.as_str()),
             format!("HOST={}", name.as_str()),
+            format!("RUST_LOG={}", self.log),
         ];
 
         if let Some(storage) = &self.storage {

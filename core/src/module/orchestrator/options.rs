@@ -63,6 +63,18 @@ pub struct DockerOptions {
     /// Storage URL which will be passed on to newly created sessions
     #[structopt(env, long)]
     pub storage: Option<String>,
+
+    /// Log level for new sessions, scopable to different modules
+    ///
+    /// Levels: trace, debug, info, warn, error
+    #[structopt(
+        name = "session-log",
+        long,
+        default_value = "info,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn",
+        env = "SESSION_LOG",
+        value_name = "sessionLevel"
+    )]
+    pub log: String,
 }
 
 #[derive(Debug, StructOpt)]
