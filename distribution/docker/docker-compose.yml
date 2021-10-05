@@ -7,6 +7,7 @@ services:
     command: gangway DEADBEEF-0000-0000-0000-0000CAFEFEED --storage s3+http://minioadmin:minioadmin@webgrid-s3:9000/webgrid-video?pathStyle
     depends_on:
       - redis
+      - s3
     ports:
       - 8080:48048
   manager:
@@ -23,6 +24,7 @@ services:
     command: orchestrator docker -p 5 --storage s3+http://minioadmin:minioadmin@webgrid-s3:9000/webgrid-video?pathStyle DEADBEEF-0000-0000-0000-0000CAFEFEED "${REPOSITORY:-webgrid}/node-firefox:${IMAGE_TAG:-latest}=firefox::68.7.0esr,${REPOSITORY:-webgrid}/node-chrome:${IMAGE_TAG:-latest}=chrome::81.0.4044.122"
     depends_on:
       - redis
+      - s3
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   collector:
@@ -30,11 +32,17 @@ services:
     platform: linux/amd64
     container_name: webgrid-collector
     command: collector DEADBEEF-0000-0000-0000-0000CAFEFEED --mongodb mongodb://root:example@webgrid-mongo:27017/
+    depends_on:
+      - redis
+      - mongo
   api:
     image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-latest}
     platform: linux/amd64
     container_name: webgrid-api
     command: api --mongodb mongodb://root:example@webgrid-mongo:27017/ --host webgrid-api
+    depends_on:
+      - redis
+      - mongo
   redis:
     image: redis:6.2-alpine
     container_name: webgrid-redis
@@ -66,6 +74,8 @@ services:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: example
       ME_CONFIG_MONGODB_URL: mongodb://root:example@webgrid-mongo:27017/
+    depends_on:
+      - mongo
 
 networks:
   default:
