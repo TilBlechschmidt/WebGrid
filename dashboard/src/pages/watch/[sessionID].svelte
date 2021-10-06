@@ -8,9 +8,14 @@
     metatags.description = "Video playback of browser session";
 </script>
 
-<p class="p-3">
-    <a href={$url("../")} class="text-lg"><ArrowLeft16 class="inline" /> Back</a
-    >
-</p>
+<div class="flex flex-col w-full h-full">
+    <p class="p-3">
+        <a href={$url("../")} class="text-lg"
+            ><ArrowLeft16 class="inline" /> Back</a
+        >
+    </p>
 
-<SessionPlayer {sessionID} />
+    <div class="flex-grow">
+        <SessionPlayer {sessionID} />
+    </div>
+</div>

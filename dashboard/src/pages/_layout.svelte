@@ -10,10 +10,18 @@
 
 <Styles />
 
-<div class="webgrid">
+<div class="webgrid w-full h-full">
     <slot />
 </div>
 
 <style global lang="postcss">
     @tailwind base;
+
+    html,
+    body,
+    #webgrid-dashboard,
+    .webgrid {
+        @apply w-full;
+        @apply h-full;
+    }
 </style>

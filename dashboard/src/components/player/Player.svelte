@@ -87,7 +87,7 @@
     bind:ended
     bind:buffered
     crossorigin="anonymous"
-    class="absolute inset-0 w-full max-h-screen"
+    class="absolute inset-0 w-full h-full"
 >
     <track
         kind="subtitles"
@@ -99,7 +99,7 @@
 </video>
 
 {#if showStandbyScreen}
-    <div class="absolute inset-0 w-full h-full max-h-screen">
+    <div class="absolute inset-0 w-full h-full">
         <StandbyScreen
             message={standbyMessage || sessionID}
             loading={standbyMessage == undefined && !error}
@@ -109,10 +109,10 @@
 {/if}
 
 <div
-    class="absolute inset-0 w-full h-full max-h-screen"
+    class="absolute inset-0 w-full h-full"
     on:mouseenter={() => (showPlayerUI = true)}
     on:mouseleave={() => (showPlayerUI = paused)}
-    on:click={() => (paused = !paused)}
+    on:click={() => (ended ? {} : (paused = !paused))}
 >
     {#if showPlayerUI}
         <div class="absolute bottom-0 w-full" on:click|stopPropagation>

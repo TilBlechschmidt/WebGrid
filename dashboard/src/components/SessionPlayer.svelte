@@ -46,7 +46,7 @@
         : !($session.data.session && $session.data.session.fetch);
 </script>
 
-<div class="relative w-full pt-16/9 player-frame">
+<div class="relative w-full h-full player-frame bg-black">
     {#if loading || error}
         <div>
             <StandbyScreen message={sessionID} {loading} {error} />
@@ -58,17 +58,3 @@
         />
     {/if}
 </div>
-
-<style lang="postcss">
-    .pt-16\/9 {
-        padding-top: 56.25%;
-    }
-
-    .player-frame > * {
-        @apply absolute;
-        @apply inset-0;
-        @apply w-full;
-        @apply h-full;
-        @apply max-h-screen;
-    }
-</style>

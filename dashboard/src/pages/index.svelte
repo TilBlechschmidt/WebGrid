@@ -9,7 +9,7 @@
     let sessionID;
 </script>
 
-<div class="w-screen h-screen flex flex-col justify-center items-center">
+<div class="w-full h-full flex flex-col justify-center items-center">
     <img
         class="w-16 h-16 lg:w-32 lg:h-32 rounded-full"
         src="https://placekitten.com/300/300"
