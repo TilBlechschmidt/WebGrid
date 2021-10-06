@@ -32,7 +32,7 @@
     />
 </div>
 
-<style>
+<style lang="postcss">
     .slider {
         margin-top: 1.5px;
         position: relative;

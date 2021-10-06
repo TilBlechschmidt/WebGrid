@@ -33,7 +33,7 @@ const serve = () => ({
 			entrypoint: `${assetsDir}/__app.html`,
 			script: `${buildDir}/main.js`
 		}
-		spassr({ ...options, port: 5000 })
+		spassr({ ...options, port: 5001 })
 	}
 })
 const copyToDist = () => ({ writeBundle() { copySync(assetsDir, distDir) } })
@@ -46,7 +46,6 @@ function generateBasePlugins(compilerOptions) {
 				autoPreprocess({
 					sourceMap: !production,
 					postcss: require('./postcss.config.js'),
-					defaults: { style: 'postcss' }
 				})
 			],
 			compilerOptions: {

@@ -57,7 +57,7 @@
     </div>
 </div>
 
-<style>
+<style lang="postcss">
     button {
         margin: 0;
         padding: 0;

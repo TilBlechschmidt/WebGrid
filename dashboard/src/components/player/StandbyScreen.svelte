@@ -26,7 +26,7 @@
     <img
         in:fade={logoFadeTransition}
         class="w-16 h-16 lg:w-32 lg:h-32 rounded-full"
-        src="http://placekitten.com/300/300"
+        src="https://placekitten.com/300/300"
         alt="WebGrid Logo"
     />
     <h2

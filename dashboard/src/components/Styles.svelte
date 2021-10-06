@@ -15,7 +15,7 @@
         if (!injected) {
             console.log("WebGrid Embed: Injecting required stylesheets.");
 
-            var link = document.createElement("link");
+            let link = document.createElement("link");
             link.href = href;
             link.type = "text/css";
             link.rel = "stylesheet";

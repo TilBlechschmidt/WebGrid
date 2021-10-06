@@ -12,7 +12,7 @@
 <div class="w-screen h-screen flex flex-col justify-center items-center">
     <img
         class="w-16 h-16 lg:w-32 lg:h-32 rounded-full"
-        src="http://placekitten.com/300/300"
+        src="https://placekitten.com/300/300"
         alt="WebGrid Logo"
     />
     <h2 class="lg:text-5xl text-3xl p-4 lg:p-8">WebGrid</h2>
@@ -41,4 +41,3 @@
     <br />
     Future functionality coming soon.
 </div>
-

@@ -3,6 +3,5 @@ module.exports = {
   contentBase: 'assets',
   publicPath: 'build',
   historyApiFallback: '__app.html',
-  port: 5000
+  port: 5001
 }
-

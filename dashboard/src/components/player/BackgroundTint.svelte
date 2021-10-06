@@ -7,7 +7,7 @@
     <div class="tint" />
 </div>
 
-<style>
+<style lang="postcss">
     .background-tint,
     .background-tint > div {
         position: absolute;

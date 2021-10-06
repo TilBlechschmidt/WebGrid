@@ -30,10 +30,7 @@
     $: if (
         !$session.fetching &&
         ($session.error ||
-            !(
-                $session.data.session &&
-                $session.data.session.fetch.video.playlist
-            ))
+            !($session.data.session && $session.data.session.fetch))
     ) {
         console.error(
             "Error while requesting video URL",
@@ -46,15 +43,12 @@
         ? $session.error.message
         : $session.fetching
         ? false
-        : !(
-              $session.data.session &&
-              $session.data.session.fetch.video.playlist
-          );
+        : !($session.data.session && $session.data.session.fetch);
 </script>
 
 <div class="relative w-full pt-16/9 player-frame">
     {#if loading || error}
-        <div class="absolute inset-0 w-full h-full max-h-screen">
+        <div>
             <StandbyScreen message={sessionID} {loading} {error} />
         </div>
     {:else}
@@ -65,7 +59,7 @@
     {/if}
 </div>
 
-<style>
+<style lang="postcss">
     .pt-16\/9 {
         padding-top: 56.25%;
     }

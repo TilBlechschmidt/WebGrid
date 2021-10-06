@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import Hls from "hls.js";
+    import Hls from "../../hls.esm";
     import StandbyScreen from "./StandbyScreen.svelte";
     import Controls from "./Controls.svelte";
 
@@ -8,7 +8,6 @@
     export let subtitleURL: string = url.replace(".m3u8", ".vtt");
     export let sessionID: string;
 
-    const hls = new Hls();
     let video;
     let error;
 
@@ -23,6 +22,8 @@
     let buffered;
 
     onMount(async () => {
+        const hls = new Hls({});
+
         hls.on(
             Hls.Events.LEVEL_LOADED,
             (_, data) => (live = data.details.live)
