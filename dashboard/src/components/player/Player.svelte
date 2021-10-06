@@ -21,6 +21,24 @@
     let ended;
     let buffered;
 
+    function handleKeypress(e) {
+        if (e.code == "Space") {
+            paused = !paused;
+            e.preventDefault();
+            return false;
+        } else if (!live && e.code == "ArrowLeft") {
+            paused = true;
+            currentTime -= e.shiftKey ? 10 : 1 / 15;
+            e.preventDefault();
+            return false;
+        } else if (!live && e.code == "ArrowRight") {
+            paused = true;
+            currentTime += e.shiftKey ? 10 : 1 / 15;
+            e.preventDefault();
+            return false;
+        }
+    }
+
     onMount(async () => {
         const hls = new Hls({});
 
@@ -48,6 +66,11 @@
 
         hls.attachMedia(video);
         hls.loadSource(url);
+
+        document.addEventListener("keydown", handleKeypress);
+        return () => {
+            document.removeEventListener("keydown", handleKeypress);
+        };
     });
 
     $: showStandbyScreen = ended || !loaded || error;
@@ -89,9 +112,10 @@
     class="absolute inset-0 w-full h-full max-h-screen"
     on:mouseenter={() => (showPlayerUI = true)}
     on:mouseleave={() => (showPlayerUI = paused)}
+    on:click={() => (paused = !paused)}
 >
     {#if showPlayerUI}
-        <div class="absolute bottom-0 w-full">
+        <div class="absolute bottom-0 w-full" on:click|stopPropagation>
             <Controls
                 bind:position={currentTime}
                 bind:duration

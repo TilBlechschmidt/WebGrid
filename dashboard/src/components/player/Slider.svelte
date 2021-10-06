@@ -1,8 +1,12 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte";
+
     export let position = 0;
     export let buffered = 0;
     export let max = 1;
     export let disabled = false;
+
+    const dispatch = createEventDispatcher();
 
     $: progress = position / max;
     $: primaryStyle = `width: ${progress * 100}%`;
@@ -10,10 +14,11 @@
     $: knobStyle = `left: ${progress * 100}%`;
 </script>
 
-{@debug buffered}
-{@debug secondaryStyle}
-
-<div class="slider">
+<div
+    class="slider"
+    on:mousedown={() => dispatch("dragstart")}
+    on:mouseup={() => dispatch("dragend")}
+>
     <div class="custom-slider">
         <div class="track fill" />
         <div class="secondary fill" style={secondaryStyle} />

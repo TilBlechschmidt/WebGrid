@@ -28,6 +28,17 @@
         return new Date(1000 * seconds).toISOString().substr(start, length);
     }
 
+    let playingBeforeDrag;
+
+    function onDragStart() {
+        playingBeforeDrag = !paused;
+        paused = true;
+    }
+
+    function onDragEnd() {
+        if (playingBeforeDrag) paused = false;
+    }
+
     $: elapsed = formatSeconds(position);
     $: remaining = `-${formatSeconds(Math.max(0, duration - position))}`;
 </script>
@@ -48,7 +59,14 @@
             <div class="flex-grow text">Live Broadcast</div>
         {:else}
             <div class="secondary-glyph time text">{elapsed}</div>
-            <Slider bind:position bind:buffered max={duration} {disabled} />
+            <Slider
+                bind:position
+                bind:buffered
+                max={duration}
+                {disabled}
+                on:dragstart={onDragStart}
+                on:dragend={onDragEnd}
+            />
             <div class="secondary-glyph time text">{remaining}</div>
         {/if}
         <button {disabled}>
