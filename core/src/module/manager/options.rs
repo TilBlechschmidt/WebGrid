@@ -16,6 +16,6 @@ pub struct Options {
 
     /// Metadata keys which clients are required to provide, separated by commas.
     /// Omitting this flag or setting an empty string will allow requests without metadata.
-    #[structopt(short, long, env, default_value = "", parse(try_from_str = parse_string_list))]
+    #[structopt(long, env, default_value = "", parse(try_from_str = parse_string_list))]
     pub required_metadata: HashSet<String>,
 }
