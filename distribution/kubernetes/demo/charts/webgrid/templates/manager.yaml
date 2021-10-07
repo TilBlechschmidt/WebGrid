@@ -49,6 +49,8 @@ spec:
               value: "{{ include "web-grid.redisURL" . }}"
             - name: RUST_LOG
               value: {{ .Values.logLevel }}
+            - name: REQUIRED_METADATA
+              value: "{{ .Values.config.manager.requiredMetadata }}"
             - name: ID
               valueFrom:
                 fieldRef:

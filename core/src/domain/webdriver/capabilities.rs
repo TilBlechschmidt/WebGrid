@@ -100,6 +100,7 @@ impl Default for WebGridOptions {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, derive(Default))]
 /// Struct containing information about the browser requested or provided
 pub struct Capabilities {
     /// Indicates if strict interactability checks should be applied to input type=file elements.
@@ -205,6 +206,7 @@ impl Capabilities {
 /// List of requested capabilities by a client
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(test, derive(Default))]
 pub struct CapabilitiesRequest {
     /// List of capabilites where the first matching one will be used
     pub first_match: Option<Vec<Capabilities>>,

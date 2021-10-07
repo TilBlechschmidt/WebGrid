@@ -11,6 +11,7 @@ use crate::library::communication::{BlackboxError, CommunicationFactory};
 use crate::library::EmptyResult;
 use async_trait::async_trait;
 use rand::{seq::SliceRandom, thread_rng};
+use std::collections::HashSet;
 use std::time::Duration;
 use thiserror::Error;
 
@@ -30,6 +31,9 @@ enum SchedulingServiceError {
 
     #[error("notification publishing failed")]
     PublishFailure(#[from] BlackboxError),
+
+    #[error("required metadata fields were not provided: {0}")]
+    MissingMandatoryMetadata(String),
 }
 
 /// Assigns a provisioner to a session
@@ -47,6 +51,7 @@ enum SchedulingServiceError {
 pub struct SchedulingService<F: CommunicationFactory> {
     publisher: <F as CommunicationFactory>::NotificationPublisher,
     requestor: <F as CommunicationFactory>::Requestor,
+    required_metadata: HashSet<String>,
 }
 
 impl<F> Service<F> for SchedulingService<F>
@@ -55,12 +60,13 @@ where
 {
     const NAME: &'static str = "SchedulingService";
     type Instance = SchedulingService<F>;
-    type Config = ();
+    type Config = HashSet<String>;
 
-    fn instantiate(factory: F, _config: &Self::Config) -> Self::Instance {
+    fn instantiate(factory: F, config: &Self::Config) -> Self::Instance {
         Self {
             publisher: factory.notification_publisher(),
             requestor: factory.requestor(),
+            required_metadata: config.clone(),
         }
     }
 }
@@ -74,22 +80,27 @@ where
         notification: &<Self as Consumer>::Notification,
     ) -> Result<ProvisionerIdentifier, SchedulingServiceError> {
         let capabilities = notification.capabilities.parse()?;
-        let request = ProvisionerMatchRequest::new(capabilities.clone());
-
-        let mut responses = self
-            .requestor
-            .request(&request, None, MATCHING_TIMEOUT)
-            .await?;
-
-        // Provide some laymans load balancing until load factors are implemented
-        responses.shuffle(&mut thread_rng());
 
         // Emit metadata contained in requested capabilities
         if let Some(metadata) = capabilities
+            .clone()
             .into_sets()
             .into_iter()
             .find_map(|c| c.webgrid_options.map(|o| o.metadata).flatten())
         {
+            let missing_keys = self
+                .required_metadata
+                .iter()
+                .filter(|key| !metadata.contains_key(*key))
+                .map(String::clone)
+                .collect::<Vec<_>>();
+
+            if !missing_keys.is_empty() {
+                return Err(SchedulingServiceError::MissingMandatoryMetadata(
+                    missing_keys.join(","),
+                ));
+            }
+
             let notification = SessionMetadataModifiedNotification {
                 id: notification.id,
                 metadata,
@@ -99,7 +110,25 @@ where
                 .publish(&notification)
                 .await
                 .map_err(BlackboxError::from_boxed)?;
+        } else if !self.required_metadata.is_empty() {
+            return Err(SchedulingServiceError::MissingMandatoryMetadata(
+                self.required_metadata
+                    .clone()
+                    .into_iter()
+                    .collect::<Vec<_>>()
+                    .join(","),
+            ));
         }
+
+        // Ask around for provisioners that can handle the requirements
+        let request = ProvisionerMatchRequest::new(capabilities);
+        let mut responses = self
+            .requestor
+            .request(&request, None, MATCHING_TIMEOUT)
+            .await?;
+
+        // Provide some laymans load balancing until load factors are implemented
+        responses.shuffle(&mut thread_rng());
 
         responses
             .pop()
@@ -156,9 +185,13 @@ where
 
 #[cfg(test)]
 mod does {
+    use std::collections::HashMap;
+
     use super::*;
     use crate::domain::request::ProvisionerMatchResponse;
-    use crate::domain::webdriver::{CapabilitiesRequest, RawCapabilitiesRequest};
+    use crate::domain::webdriver::{
+        Capabilities, CapabilitiesRequest, RawCapabilitiesRequest, WebGridOptions,
+    };
     use crate::library::communication::implementation::mock::MockCommunicationFactory;
     use lazy_static::lazy_static;
     use uuid::Uuid;
@@ -170,10 +203,7 @@ mod does {
 
     #[tokio::test]
     async fn publish_expected_notifications() {
-        let raw_capabilities = CapabilitiesRequest {
-            first_match: None,
-            always_match: None,
-        };
+        let raw_capabilities = CapabilitiesRequest::default();
         let capabilities =
             RawCapabilitiesRequest::new(serde_json::to_string(&raw_capabilities).unwrap());
 
@@ -204,7 +234,7 @@ mod does {
             .expect_with_extension(&job_assigned, PROVISIONER_ID.to_string())
             .expect(&scheduled);
 
-        SchedulingService::instantiate(factory, &())
+        SchedulingService::instantiate(factory, &HashSet::new())
             .consume(NotificationFrame::new(created))
             .await
             .unwrap();
@@ -227,7 +257,137 @@ mod does {
         let factory = MockCommunicationFactory::default();
         factory.expect(&failure);
 
-        SchedulingService::instantiate(factory, &())
+        SchedulingService::instantiate(factory, &HashSet::new())
+            .consume(NotificationFrame::new(created))
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn rejects_missing_metadata_when_required_fields_are_provided() {
+        let mut required_metadata = HashSet::new();
+        required_metadata.insert("project".into());
+
+        let raw_capabilities = CapabilitiesRequest::default();
+        let capabilities =
+            RawCapabilitiesRequest::new(serde_json::to_string(&raw_capabilities).unwrap());
+
+        let created = SessionCreatedNotification {
+            id: *SESSION_ID,
+            capabilities: capabilities.clone(),
+        };
+
+        let cause = BlackboxError::new(SchedulingServiceError::MissingMandatoryMetadata(
+            "project".into(),
+        ));
+        let failure = SessionTerminatedNotification::new_for_startup_failure(*SESSION_ID, cause);
+
+        let factory = MockCommunicationFactory::default();
+        factory.expect(&failure);
+
+        SchedulingService::instantiate(factory, &required_metadata)
+            .consume(NotificationFrame::new(created))
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn rejects_incomplete_metadata_when_required_fields_are_provided() {
+        let mut required_metadata = HashSet::new();
+        required_metadata.insert("project".into());
+
+        let mut metadata = HashMap::new();
+        metadata.insert("pipeline".into(), "1337".into());
+
+        let raw_capabilities = CapabilitiesRequest {
+            always_match: Some(Capabilities {
+                webgrid_options: Some(WebGridOptions {
+                    metadata: Some(metadata.clone()),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        let capabilities =
+            RawCapabilitiesRequest::new(serde_json::to_string(&raw_capabilities).unwrap());
+
+        let created = SessionCreatedNotification {
+            id: *SESSION_ID,
+            capabilities: capabilities.clone(),
+        };
+
+        let cause = BlackboxError::new(SchedulingServiceError::MissingMandatoryMetadata(
+            "project".into(),
+        ));
+        let failure = SessionTerminatedNotification::new_for_startup_failure(*SESSION_ID, cause);
+
+        let factory = MockCommunicationFactory::default();
+        factory.expect(&failure);
+
+        SchedulingService::instantiate(factory, &required_metadata)
+            .consume(NotificationFrame::new(created))
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn accept_metadata_when_required_fields_are_provided() {
+        let mut required_metadata = HashSet::new();
+        required_metadata.insert("project".into());
+
+        let mut metadata = HashMap::new();
+        metadata.insert("project".into(), "webgrid".into());
+
+        let raw_capabilities = CapabilitiesRequest {
+            always_match: Some(Capabilities {
+                webgrid_options: Some(WebGridOptions {
+                    metadata: Some(metadata.clone()),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        let capabilities =
+            RawCapabilitiesRequest::new(serde_json::to_string(&raw_capabilities).unwrap());
+
+        let created = SessionCreatedNotification {
+            id: *SESSION_ID,
+            capabilities: capabilities.clone(),
+        };
+
+        let scheduled = SessionScheduledNotification {
+            id: *SESSION_ID,
+            provisioner: (*PROVISIONER_ID).clone(),
+        };
+
+        let metadata_modified = SessionMetadataModifiedNotification {
+            id: *SESSION_ID,
+            metadata,
+        };
+
+        let job_assigned = ProvisioningJobAssignedNotification {
+            session_id: *SESSION_ID,
+            capabilities: capabilities.clone(),
+        };
+
+        let match_request = ProvisionerMatchRequest::new(raw_capabilities);
+        let match_response = vec![ProvisionerMatchResponse {
+            provisioner: (*PROVISIONER_ID).clone(),
+        }];
+
+        let factory = MockCommunicationFactory::default();
+
+        factory
+            .expect_and_respond(&match_request, match_response)
+            .expect(&metadata_modified)
+            .expect_with_extension(&job_assigned, PROVISIONER_ID.to_string())
+            .expect(&scheduled);
+
+        SchedulingService::instantiate(factory, &required_metadata)
             .consume(NotificationFrame::new(created))
             .await
             .unwrap();

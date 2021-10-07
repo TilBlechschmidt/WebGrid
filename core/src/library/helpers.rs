@@ -2,6 +2,8 @@
 
 use hyper::body;
 use hyper::{http::Uri, Client};
+use std::collections::HashSet;
+use std::convert::Infallible;
 use std::num::ParseIntError;
 use std::time::Duration;
 use tokio::time::{sleep, timeout};
@@ -45,6 +47,15 @@ pub fn replace_config_variable(config: String, key: &str, value: &str) -> String
 pub fn parse_seconds(src: &str) -> Result<Duration, ParseIntError> {
     let seconds = src.parse::<u64>()?;
     Ok(Duration::from_secs(seconds))
+}
+
+/// Parses a string containing a list of strings separated by commas
+/// Useful for command line parsing
+pub fn parse_string_list(src: &str) -> Result<HashSet<String>, Infallible> {
+    Ok(src
+        .split(',')
+        .map(&str::to_owned)
+        .collect::<HashSet<String>>())
 }
 
 /// Sends HTTP requests to the specified URL until either a 200 OK response is received or the timeout is reached

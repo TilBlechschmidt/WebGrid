@@ -1,4 +1,6 @@
+use crate::library::helpers::parse_string_list;
 use crate::module::options::{QueueingOptions, RedisOptions};
+use std::collections::HashSet;
 use structopt::StructOpt;
 
 /// Options for the manager module
@@ -11,4 +13,9 @@ pub struct Options {
     #[allow(missing_docs)]
     #[structopt(flatten)]
     pub redis: RedisOptions,
+
+    /// Metadata keys which clients are required to provide, separated by commas.
+    /// Omitting this flag or setting an empty string will allow requests without metadata.
+    #[structopt(short, long, env, default_value = "", parse(try_from_str = parse_string_list))]
+    pub required_metadata: HashSet<String>,
 }

@@ -27,6 +27,8 @@ config:
     # Storage class to use for persisting data when customEndpoint is not set
     storageClassName: emptyDir
     storageSize: 16G
+  manager:
+    requiredMetadata: ""
   gangway:
     # Maximum number of cached service endpoints
     cacheSize: 1000

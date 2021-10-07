@@ -3,6 +3,8 @@
 mod options;
 mod scheduling;
 
+use std::collections::HashSet;
+
 use crate::harness::{Heart, Module, ServiceRunner};
 use crate::library::communication::event::ConsumerGroupDescriptor;
 use crate::library::BoxedError;
@@ -31,7 +33,8 @@ impl Module for Manager {
         let group = ConsumerGroupDescriptor::default();
         let consumer = self.options.queueing.id.to_string();
 
-        let runner = ServiceRunner::<SchedulingService<_>>::new(redis_url, group, consumer, ());
+        let runner =
+            ServiceRunner::<SchedulingService<_>>::new(redis_url, group, consumer, HashSet::new());
         scheduler.spawn_job(runner).await;
 
         Ok(Some(Heart::without_heart_stone()))
