@@ -4,7 +4,7 @@ services:
     image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-latest}
     platform: linux/amd64
     container_name: webgrid-gangway
-    command: gangway DEADBEEF-0000-0000-0000-0000CAFEFEED --storage s3+http://minioadmin:minioadmin@webgrid-s3:9000/webgrid-video?pathStyle
+    command: gangway DEADBEEF-0000-0000-0000-0000CAFEFEED --storage s3+http://webgrid:supersecretPasswordYouShouldChange@webgrid-s3:9000/webgrid?pathStyle
     depends_on:
       - redis
       - s3
@@ -21,7 +21,7 @@ services:
     image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-latest}
     platform: linux/amd64
     container_name: webgrid-orchestrator
-    command: orchestrator docker -p 5 --storage s3+http://minioadmin:minioadmin@webgrid-s3:9000/webgrid-video?pathStyle DEADBEEF-0000-0000-0000-0000CAFEFEED "${REPOSITORY:-webgrid}/node-firefox:${IMAGE_TAG:-latest}=firefox::68.7.0esr,${REPOSITORY:-webgrid}/node-chrome:${IMAGE_TAG:-latest}=chrome::81.0.4044.122"
+    command: orchestrator docker -p 5 --storage s3+http://webgrid:supersecretPasswordYouShouldChange@webgrid-s3:9000/webgrid?pathStyle DEADBEEF-0000-0000-0000-0000CAFEFEED "${REPOSITORY:-webgrid}/node-firefox:${IMAGE_TAG:-latest}=firefox::68.7.0esr,${REPOSITORY:-webgrid}/node-chrome:${IMAGE_TAG:-latest}=chrome::81.0.4044.122"
     depends_on:
       - redis
       - s3
@@ -50,16 +50,31 @@ services:
     ports:
       - 6379:6379
   s3:
-    image: minio/minio@sha256:9daf9c4b2be5b19b8bf40d3cc9a6026b94d9b31582deb7365914b27c09e28573
+    image: minio/minio
     container_name: webgrid-s3
-    entrypoint: sh
-    command: -c 'mkdir -p /storage/webgrid-video && /usr/bin/docker-entrypoint.sh server /storage --console-address ":44095"'
+    command: server /storage/data{1...4} --console-address ":44095"
+    volumes:
+      - webgrid_video:/storage
+    environment:
+      MINIO_ROOT_USER: webgrid
+      MINIO_ROOT_PASSWORD: supersecretPasswordYouShouldChange
     ports:
       - 44095:44095
       - 9000:9000
+  s3-config:
+    image: minio/mc
+    container_name: webgrid-s3-config
+    entrypoint: sh
+    command: -c "curl --retry 10 -f --retry-connrefused --retry-delay 5 -s -o /dev/null 'http://webgrid-s3:9000' || true && mc mb --ignore-existing webgrid/webgrid && mc admin bucket quota --fifo 1g webgrid/webgrid"
+    environment:
+      MC_HOST_webgrid: http://webgrid:supersecretPasswordYouShouldChange@webgrid-s3:9000
+    depends_on:
+      - s3
   mongo:
     image: mongo
     container_name: webgrid-mongo
+    volumes:
+      - webgrid_database:/data/db
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
@@ -81,3 +96,6 @@ networks:
   default:
     external: true
     name: webgrid
+volumes:
+  webgrid_video:
+  webgrid_database:
