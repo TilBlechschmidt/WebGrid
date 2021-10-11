@@ -19,6 +19,7 @@ use async_trait::async_trait;
 use jatsl::{schedule, schedule_and_wait, JobScheduler};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::time::Duration;
 use thiserror::Error;
 use tokio::sync::mpsc::{self, UnboundedSender};
 
@@ -66,6 +67,27 @@ impl Node {
         );
 
         communication_factory.notification_publisher()
+    }
+
+    async fn build_heart(&self, capabilities: &Capabilities) -> (Heart, HeartStone) {
+        let idle_timeout = if let Some(idle_timeout_secs) = capabilities
+            .webgrid_options
+            .as_ref()
+            .map(|w| w.idle_timeout)
+            .flatten()
+        {
+            Duration::from_secs(idle_timeout_secs)
+        } else {
+            self.options.idle_timeout
+        };
+
+        let (mut heart, stone) = Heart::with_lifetime(idle_timeout);
+
+        heart
+            .reduce_next_lifetime(self.options.initial_timeout)
+            .await;
+
+        (heart, stone)
     }
 
     async fn start_driver(&mut self) -> EmptyResult {
@@ -232,11 +254,7 @@ impl Module for Node {
     async fn run(&mut self, scheduler: &JobScheduler) -> Result<Option<Heart>, BoxedError> {
         let capabilities: Capabilities =
             serde_json::from_str(&self.options.webdriver.capabilities)?;
-        let (mut heart, stone) = Heart::with_lifetime(self.options.idle_timeout);
-
-        heart
-            .reduce_next_lifetime(self.options.initial_timeout)
-            .await;
+        let (heart, stone) = self.build_heart(&capabilities).await;
 
         // TODO Spawn process monitoring for webdriver (todo find a generic solution because it won't be the last one)
 

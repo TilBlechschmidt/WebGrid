@@ -87,6 +87,11 @@ pub struct WebGridOptions {
     /// either due to a forced setting by the administrator or due to unavailable storage.
     #[serde(default)]
     pub disable_recording: bool,
+
+    /// Overwrites the default idle timeout for the session in seconds
+    ///
+    /// If no request from the client arrives within this duration, the session will terminate itself.
+    pub idle_timeout: Option<u64>,
 }
 
 impl Default for WebGridOptions {
@@ -94,6 +99,7 @@ impl Default for WebGridOptions {
         Self {
             metadata: None,
             disable_recording: false,
+            idle_timeout: None,
         }
     }
 }
