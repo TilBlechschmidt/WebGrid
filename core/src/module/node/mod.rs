@@ -4,7 +4,7 @@ use crate::domain::event::{
     SessionClientMetadata, SessionOperationalNotification, SessionTerminatedNotification,
     SessionTerminationReason,
 };
-use crate::domain::webdriver::{WebDriver, WebDriverInstance};
+use crate::domain::webdriver::{Capabilities, WebDriver, WebDriverInstance};
 use crate::domain::WebgridServiceDescriptor;
 use crate::harness::{
     DummyResourceHandleProvider, Heart, HeartStone, Module, ModuleTerminationReason,
@@ -129,13 +129,24 @@ impl Node {
         )
     }
 
-    fn build_recording_job(&self) -> Option<RecordingJob<S3StorageBackend>> {
-        Some(RecordingJob::new(
-            self.options.id,
-            self.options.recording.generate_arguments(),
-            self.options.storage.backend.clone()?,
-            self.video_byte_count_total.clone(),
-        ))
+    fn build_recording_job(
+        &self,
+        capabilities: Capabilities,
+    ) -> Option<RecordingJob<S3StorageBackend>> {
+        if capabilities
+            .webgrid_options
+            .map(|w| w.disable_recording)
+            .unwrap_or(false)
+        {
+            None
+        } else {
+            Some(RecordingJob::new(
+                self.options.id,
+                self.options.recording.generate_arguments(),
+                self.options.storage.backend.clone()?,
+                self.video_byte_count_total.clone(),
+            ))
+        }
     }
 
     async fn send_alive_notification(&self) -> Result<(), NodeError> {
@@ -219,6 +230,8 @@ impl Module for Node {
     }
 
     async fn run(&mut self, scheduler: &JobScheduler) -> Result<Option<Heart>, BoxedError> {
+        let capabilities: Capabilities =
+            serde_json::from_str(&self.options.webdriver.capabilities)?;
         let (mut heart, stone) = Heart::with_lifetime(self.options.idle_timeout);
 
         heart
@@ -231,7 +244,7 @@ impl Module for Node {
         let (metadata_publisher_job, metadata_tx) = self.build_metadata_publisher_job();
         let proxy_job = self.build_proxy_job(stone, metadata_tx)?;
 
-        if let Some(recording_job) = self.build_recording_job() {
+        if let Some(recording_job) = self.build_recording_job(capabilities) {
             schedule!(scheduler, { recording_job });
         }
 
