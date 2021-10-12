@@ -244,10 +244,6 @@ impl Node {
 impl Module for Node {
     async fn pre_startup(&mut self) -> EmptyResult {
         self.start_driver().await?;
-
-        // TODO Run post-startup bash script
-        //      NOTE: Evaluate if this is really required because it might pose a potential security hazard.
-
         Ok(())
     }
 
@@ -256,7 +252,7 @@ impl Module for Node {
             serde_json::from_str(&self.options.webdriver.capabilities)?;
         let (heart, stone) = self.build_heart(&capabilities).await;
 
-        // TODO Spawn process monitoring for webdriver (todo find a generic solution because it won't be the last one)
+        // TODO Spawn process monitoring for webdriver (find a generic solution because it won't be the last one)
 
         let advertise_job = self.build_advertise_job();
         let (metadata_publisher_job, metadata_tx) = self.build_metadata_publisher_job();

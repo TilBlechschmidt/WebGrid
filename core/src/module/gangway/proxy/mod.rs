@@ -46,7 +46,6 @@ impl<D: ServiceDiscoverer<WebgridServiceDescriptor>, S: StorageBackend> ProxyJob
 #[async_trait]
 impl<D, S> Job for ProxyJob<D, S>
 where
-    // TODO Potentially dangerous usage of 'static lifetime
     S: StorageBackend + Send + Sync + Clone + 'static,
     D: ServiceDiscoverer<WebgridServiceDescriptor> + Send + Sync + Clone + 'static,
     D::I: Send + Sync,

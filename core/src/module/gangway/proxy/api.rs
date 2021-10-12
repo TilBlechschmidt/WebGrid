@@ -38,7 +38,6 @@ where
 
     #[inline]
     fn new_error_response(&self, message: &str, status: StatusCode) -> Response<Body> {
-        // TODO Wrap the error in a WebDriver protocol compliant JSON error (and stack using the BlackboxError type)
         let error = format!("unable to forward request to API: {}", message);
 
         Response::builder()

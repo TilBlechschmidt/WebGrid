@@ -53,7 +53,6 @@ impl SessionCreationResponder {
         let response = SessionCreateResponse {
             value: SessionCreateResponseValue {
                 session_id: notification.id.to_string(),
-                // TODO Handle this unwrap!
                 capabilities,
             },
         };

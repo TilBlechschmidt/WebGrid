@@ -36,7 +36,6 @@ impl Consumer for MetadataWatcherService {
         let mut update = Document::new();
 
         for (key, value) in notification.metadata.iter() {
-            // TODO Is this susceptible to injection?
             update.insert(format!("clientMetadata.{}", key), value);
         }
 

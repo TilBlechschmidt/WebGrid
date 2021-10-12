@@ -87,8 +87,6 @@ impl Responder for TerminationInterceptor {
             (is_window_delete_request && was_last_window) || is_session_delete_request;
 
         if session_closed {
-            // TODO This is a MAJOR problem as the termination happens even before the request is forwarded to the browser!
-            //      that just ain't gonna work ... on rare occasions (not so rare actually) the whole session tears down before the response is sent.
             self.heart_stone
                 .lock()
                 .await
