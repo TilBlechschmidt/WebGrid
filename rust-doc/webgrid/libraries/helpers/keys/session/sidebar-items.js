@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["capabilities",""],["metadata",""],["orchestrator",""],["slot",""],["status",""],["storage",""]],"mod":[["heartbeat",""],["telemetry",""]],"struct":[["LIST_ACTIVE",""],["LIST_TERMINATED",""]]});

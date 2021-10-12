@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["S3StorageError","Error type for S3 specific errors"]],"struct":[["S3StorageBackend","Storage backend for AWS S3 compatible servers"],["S3StorageURL","URL for the S3 storage backend"]]});

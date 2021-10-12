@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Node","Module implementation"],["Options","Options for the manager module"]]});

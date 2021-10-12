@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["ProvisionerMatchRequest","Request to read an object from persistent storage"],["ProvisionerMatchResponse","Response to a [`ProvisionerMatchRequest`]"]]});

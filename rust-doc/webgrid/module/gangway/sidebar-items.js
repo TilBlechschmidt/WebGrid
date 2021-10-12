@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Gangway","Module implementation"],["Options","Options for the gangway module"]]});

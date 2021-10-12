@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["ServiceDescriptor",""],["ServiceDiscoveryError",""]],"struct":[["ServiceDiscoverer",""],["ServiceDiscovery",""],["ServiceDiscoveryJob",""],["ServiceDiscoveryResponse",""]]});

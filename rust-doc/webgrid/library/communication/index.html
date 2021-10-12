@@ -1,0 +1,36 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Structures to communication between services in a distributed system"><meta name="keywords" content="rust, rustlang, rust-lang, communication"><title>webgrid::library::communication - Rust</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../webgrid/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a><p class="location">Module communication</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#traits">Traits</a></li></ul></div><p class="location"><a href="../../index.html">webgrid</a>::<wbr><a href="../index.html">library</a></p><div id="sidebar-vars" data-name="communication" data-ty="mod" data-relpath="../"></div><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" height="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
+                <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" height="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Module <a href="../../index.html">webgrid</a>::<wbr><a href="../index.html">library</a>::<wbr><a class="mod" href="">communication</a><button id="copy-path" onclick="copy_path(this)">⎘</button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../../src/webgrid/library/communication/mod.rs.html#1-36" title="goto source code">[src]</a></span></h1><div class="docblock"><p>Structures to communication between services in a distributed system</p>
+<p>TODO: This doc-block is redundant and should be replaced with something more descriptive for what this module actually encompasses.</p>
+<p>In general, there are two modes of operation:</p>
+<ol>
+<li>Publish and subscribe</li>
+<li>Request and response</li>
+</ol>
+<p>The first is used primarily for event notifications which make up the
+event-driven architecture. Whenever something noteworthy happens in the
+system, a notification describing what happened will be published.
+The notification data structure implements the <a href="event/trait.Notification.html"><code>Notification</code></a> trait and
+thus describes where to expect it in a type-safe manner.
+In this mode, everybody can publish notifications and all interested parties
+can listen in and react to published event notifications. For more details and
+a more in-depth explanation, consult the <a href="event/index.html" title="event"><code>event</code></a> module.</p>
+<p>The second mode of operation is request and response. In a simple
+scenario, a component may request information from another one and thus
+one service may receive one response. However, it is also possible for
+multiple respondents to send a response as more than one service may
+serve the request simultaneously (if desired). This is implemented using
+the <a href="request/trait.Request.html"><code>Request</code></a> trait which builds on the <a href="event/trait.Notification.html"><code>Notification</code></a> trait by adding
+a response channel.</p>
+</div><h2 id="modules" class="section-header"><a href="#modules">Modules</a></h2>
+<table><tr class="module-item"><td><a class="mod" href="discovery/index.html" title="webgrid::library::communication::discovery mod">discovery</a></td><td class="docblock-short"><p>Service discovery and advertisement structures</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="event/index.html" title="webgrid::library::communication::event mod">event</a></td><td class="docblock-short"><p>Structures to realise an event-driven service architecture</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="implementation/index.html" title="webgrid::library::communication::implementation mod">implementation</a></td><td class="docblock-short"><p>Implementations of traits from this module using third-party crates</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="request/index.html" title="webgrid::library::communication::request mod">request</a></td><td class="docblock-short"><p>Structures to realise a request-response pattern</p>
+</td></tr></table><h2 id="structs" class="section-header"><a href="#structs">Structs</a></h2>
+<table><tr class="module-item"><td><a class="struct" href="struct.BlackboxError.html" title="webgrid::library::communication::BlackboxError struct">BlackboxError</a></td><td class="docblock-short"><p>Type erased, serializable error which retains the error chain information</p>
+</td></tr></table><h2 id="traits" class="section-header"><a href="#traits">Traits</a></h2>
+<table><tr class="module-item"><td><a class="trait" href="trait.CommunicationFactory.html" title="webgrid::library::communication::CommunicationFactory trait">CommunicationFactory</a></td><td class="docblock-short"><p>Factory to provide implementations for the traits from this module</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="webgrid" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div>
+    <script src="../../../main.js"></script></body></html>

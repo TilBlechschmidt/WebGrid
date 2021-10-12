@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["RequestError",""]],"fn":[["run",""]],"struct":[["Options","Endpoint for handling session creation"],["SessionReply",""],["SessionReplyError",""],["SessionReplyValue",""],["SessionRequest",""]]});

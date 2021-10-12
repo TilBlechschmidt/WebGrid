@@ -1,64 +1,101 @@
 version: "3"
 services:
-  proxy:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.5.1-beta}
+  gangway:
+    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.6.0-beta}
     platform: linux/amd64
-    container_name: webgrid-proxy
-    command: proxy --log debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn --trace-endpoint http://webgrid-otelcol:4317
-    ports:
-      - 8080:40005
+    container_name: webgrid-gangway
+    command: gangway DEADBEEF-0000-0000-0000-0000CAFEFEED --storage s3+http://webgrid:supersecretPasswordYouShouldChange@webgrid-s3:9000/webgrid?pathStyle
     depends_on:
       - redis
+      - s3
+    ports:
+      - 8080:48048
   manager:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.5.1-beta}
+    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.6.0-beta}
     platform: linux/amd64
     container_name: webgrid-manager
-    command: manager example-manager --host webgrid-manager --log debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn --trace-endpoint http://webgrid-otelcol:4317
+    command: manager DEADBEEF-0000-0000-0000-0000CAFEFEED
     depends_on:
       - redis
   orchestrator:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.5.1-beta}
+    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.6.0-beta}
     platform: linux/amd64
     container_name: webgrid-orchestrator
-    command: orchestrator --slot-count 5 example-orchestrator docker --images "${REPOSITORY:-webgrid}/node-firefox:${IMAGE_TAG:-v0.5.1-beta}=firefox::68.7.0esr,${REPOSITORY:-webgrid}/node-chrome:${IMAGE_TAG:-v0.5.1-beta}=chrome::81.0.4044.122" --log debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn --trace-endpoint http://webgrid-otelcol:4317 ${ORCHESTRATOR_FLAGS:-}
+    command: orchestrator docker -p 5 --storage s3+http://webgrid:supersecretPasswordYouShouldChange@webgrid-s3:9000/webgrid?pathStyle DEADBEEF-0000-0000-0000-0000CAFEFEED "${REPOSITORY:-webgrid}/node-firefox:${IMAGE_TAG:-v0.6.0-beta}=firefox::68.7.0esr,${REPOSITORY:-webgrid}/node-chrome:${IMAGE_TAG:-v0.6.0-beta}=chrome::81.0.4044.122"
     depends_on:
       - redis
+      - s3
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-  storage:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.5.1-beta}
+  collector:
+    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.6.0-beta}
     platform: linux/amd64
-    container_name: webgrid-storage
-    command: storage --log debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn --trace-endpoint http://webgrid-otelcol:4317 --host webgrid-storage --storage-directory /storage --size-limit 10
+    container_name: webgrid-collector
+    command: collector DEADBEEF-0000-0000-0000-0000CAFEFEED --mongodb mongodb://root:example@webgrid-mongo:27017/
     depends_on:
       - redis
-    volumes:
-      - webgrid:/storage
-  gc:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.5.1-beta}
-    platform: linux/amd64
-    container_name: webgrid-gc
-    command: gc --log debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn --trace-endpoint http://webgrid-otelcol:4317
-    depends_on:
-      - redis
+      - mongo
   api:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.5.1-beta}
+    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.6.0-beta}
     platform: linux/amd64
     container_name: webgrid-api
-    command: api --log debug,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn --trace-endpoint http://webgrid-otelcol:4317 --host webgrid-api
+    command: api --mongodb mongodb://root:example@webgrid-mongo:27017/ --host webgrid-api
     depends_on:
       - redis
+      - mongo
   redis:
     image: redis:6.2-alpine
     container_name: webgrid-redis
-    command: redis-server --notify-keyspace-events Kgx --save "" --appendonly no
+    command: redis-server --save "" --appendonly no
     ports:
       - 6379:6379
-volumes:
-  webgrid:
-    external: true
+  s3:
+    image: minio/minio
+    container_name: webgrid-s3
+    command: server /storage/data{1...4} --console-address ":44095"
+    volumes:
+      - webgrid_video:/storage
+    environment:
+      MINIO_ROOT_USER: webgrid
+      MINIO_ROOT_PASSWORD: supersecretPasswordYouShouldChange
+    ports:
+      - 44095:44095
+      - 9000:9000
+  s3-config:
+    image: minio/mc
+    container_name: webgrid-s3-config
+    entrypoint: sh
+    command: -c "curl --retry 10 -f --retry-connrefused --retry-delay 5 -s -o /dev/null 'http://webgrid-s3:9000' || true && mc mb --ignore-existing webgrid/webgrid && mc admin bucket quota --fifo 1g webgrid/webgrid"
+    environment:
+      MC_HOST_webgrid: http://webgrid:supersecretPasswordYouShouldChange@webgrid-s3:9000
+    depends_on:
+      - s3
+  mongo:
+    image: mongo
+    container_name: webgrid-mongo
+    volumes:
+      - webgrid_database:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    ports:
+      - 27017:27017
+  mongo-express:
+    image: mongo-express
+    container_name: webgrid-mongoexpress
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_URL: mongodb://root:example@webgrid-mongo:27017/
+    depends_on:
+      - mongo
 
 networks:
   default:
     external: true
     name: webgrid
+volumes:
+  webgrid_video:
+  webgrid_database:
