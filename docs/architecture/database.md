@@ -1,5 +1,8 @@
 # Database
 
+!!! warning "Outdated"
+	Due to a recent architectural overhaul, the information on this page is no longer applicable for versions beyond `v0.5.1-beta`.
+
 ## Keys
 
 All metadata is stored in a key-value in-memory database called [Redis](https://redis.io).  Below is a list of all keys that are currently in use, annotated with their type and format (if applicable).

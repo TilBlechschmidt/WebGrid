@@ -4,6 +4,4 @@ No overview of the architecture exists yet :(
 
 ![No content](https://http.cat/204)
 
-Feel free to explore the following pages on your own!
-
-You can find the [core documentation here](/rust-doc/webgrid/)
+While the following pages contain some information, large portions of it are outdated due to the recent architecture overhaul. It will take me a bit to write about the new architecture. In the meantime, you can take a look at the mostly documented code for the core services [over here](/rust-doc/webgrid/).

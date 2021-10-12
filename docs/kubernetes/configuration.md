@@ -1,8 +1,8 @@
 # Configuration
 
-To get you started as quickly as possible the helm chart uses a set of default values that work in most clusters. However, these defaults are only an entrypoint — it is very likely that these need to be adapted to your specific needs.
+To get you started as quickly as possible the helm chart uses a set of default values that work in most clusters. However, these defaults are only an entrypoint — it is very likely that these need to be adapted to your specific needs. The Helm repository contains two charts: `webgrid` and `demo`. The latter wraps the former and provides some additional tools like an instance of [Minio](http://min.io) for storing video recordings and a web UI to access the database.
 
-Other documentation topics may ask you to change values in order to enable advanced features like screen recordings. Refer the sections below to learn how to do so.
+Other documentation topics may ask you to change values in order to enable advanced features like screen recordings. Refer the sections below to learn how to do so. If you are using the `demo` Chart and want to change values, put them under the `webgrid:` key so they are forwarded to the `webgrid` Chart!
 
 ## Changing the defaults
 

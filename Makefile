@@ -10,6 +10,9 @@ builder:
 	docker build --platform linux/arm64 --build-arg TAG=arm64 -f distribution/docker/images/builder/Dockerfile -t webgrid/rust-musl-builder:arm64-root .
 	docker build --platform linux/amd64 --build-arg TAG=amd64 -f distribution/docker/images/builder/Dockerfile -t webgrid/rust-musl-builder:amd64-root .
 
+mkdocs-docker:
+	docker build -f distribution/docker/images/mkdocs/Dockerfile -t mkdocs .
+
 core:
 	cd core && ./build.sh --release
 

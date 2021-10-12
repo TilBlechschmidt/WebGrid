@@ -68,7 +68,6 @@ To run a basic grid in Docker you can use Docker Compose. Below is a bare-bones 
 
 ```bash
 # Create prerequisites
-docker volume create webgrid
 docker network create webgrid
 
 # Download compose file
@@ -88,8 +87,11 @@ For deployment to Kubernetes a Helm repository is available. The default values 
 # Add the repository
 helm repo add webgrid https://webgrid.dev/
 
+# List all available versions
+helm search repo --versions --devel webgrid/demo
+
 # Install the chart
-helm install example webgrid/webgrid
+helm install example webgrid/demo --version "<pick-a-version-from-the-list>"
 
 # Make it accessible locally for evaluation
 kubectl port-forward service/example-webgrid 8080:80

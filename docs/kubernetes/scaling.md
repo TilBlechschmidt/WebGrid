@@ -13,11 +13,11 @@ To change the number of concurrent sessions allowed (in this case `5`) merge and
 ```yaml
 config:
   orchestrator:
-    maxSessions: 5
+    permits: 5
 ```
 
 !!! note
-    Make sure that your K8s service account has a sufficient quota available to create the required number of pods for the sessions.
+    Make sure that your K8s service account has a sufficient quota available to create the required number of jobs and pods for the sessions.
 
 ## Traffic congestion
 

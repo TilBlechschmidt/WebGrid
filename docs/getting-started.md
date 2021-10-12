@@ -7,10 +7,9 @@ Below are guides to get you started as quickly as possible on your specific plat
 If you want to run a grid locally for simple testing purposes that require multiple isolated browsers or just want to evaluate this tool this is the right choice.
 Make sure you have [Docker](https://www.docker.com/get-started) installed and configured properly.
 
-Before you can start the grid in Docker you have to create a network and volume for it:
+Before you can start the grid in Docker you have to create a network for it:
 
 ```bash
-docker volume create webgrid
 docker network create webgrid
 ```
 
@@ -35,8 +34,11 @@ You can change the name of the release in the second command or add other option
 # Add the repository
 helm repo add webgrid https://webgrid.dev/
 
+# List all available versions
+helm search repo --versions --devel webgrid/demo
+
 # Install the chart
-helm install example webgrid/webgrid
+helm install example webgrid/demo --version "<pick-a-version-from-the-list>"
 ```
 
 ## Using the grid

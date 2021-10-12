@@ -4,16 +4,17 @@ This guide will explain how to get a basic but feature-complete instance of WebG
 
 ## Installing with Helm
 
-Since video recording is disabled by default, we have to set a config value to enable it. For this guide it is not required to modify any other variables as the defaults are suited for K3s. However, this may differ if you deploy to a non-K3s cluster. Consult the [storage documentation](../kubernetes/storage.md) for more details.
-
-To set the value, we will use the `--set` command line option but a values file would work the same way.
+To get started quickly, we will be deploying the `demo` chart. It contains the core grid along with external services that are required to get additional features like video recordings running.
 
 ```bash
 # Add the repository
 helm repo add webgrid https://webgrid.dev/
 
+# List all available versions
+helm search repo --versions --devel webgrid/demo
+
 # Install the chart
-helm install k3s-guide-deployment webgrid/webgrid --set recording.enabled=true
+helm install k3s-guide-deployment webgrid/demo --version "<pick-a-version-from-the-list>"
 ```
 
 ## Gaining access
@@ -53,7 +54,7 @@ The grid is now fully operational and available on port `30007` of your cluster!
 docker run --rm -it \
     -e ENDPOINT=http://<your-grid-endpoint>:30007 \
     -e FORKS=3 \
-    ghcr.io/tilblechschmidt/parallelseleniumtest:sha-14540b77
+    ghcr.io/tilblechschmidt/parallelseleniumtest:sha-fa30ad9
 ```
 
 After experimenting a bit with it, you can visit your grid in a browser — just put the same URL in that you use for your Selenium clients — to view the screen recordings for your sessions!

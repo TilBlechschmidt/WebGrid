@@ -11,29 +11,19 @@ http://<your-webgrid-address>/api
 
 ## Session metadata
 
-When creating a session, you can attach additional metadata which you can later use to query for your session. To do so, set one or both of the following keys in your client libraries `DesiredCapabilities` object.
+If you have attached metadata to your session as described [over here](./capabilities.md#attaching-metadata), you can search for your session by using regular expressions. To do so, you can use a query that looks like this:
 
-=== "Java"
-    ```java
-    DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
-    ...
-    final Map<String, String> webgridOptions = new HashMap<>();
-    webgridOptions.put("name", "<your-test-name>");
-    webgridOptions.put("build", "<your-build-id>");
-    desiredCapabilities.setCapability("webgrid:options", webgridOptions);
-    ...
-    ```
-
-To query session objects which match your name, use a query like this:
-
-```javascript
+```graphql
 query {
-  sessions(name: "test-name") {
-    id
-    metadata {
-      name
-      build
+  session {
+    query(fields: [
+      { key: "project", regex: "^tardis$" },
+      { key: "answer", regex: "\\d+" },
+    ]) {
+      id
     }
   }
 }
 ```
+
+You can also fetch the latest sessions or retrieve details of a session given its identifier. For more details, consult the self-documenting API at `/api`.

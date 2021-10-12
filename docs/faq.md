@@ -43,7 +43,7 @@ Let's just say that we haven't reached any performance limits yet in our interna
 
 ### What is this sorcery?! 🧙‍♂️
 
-No magic, just standardization and a efficient architecture 😉
+No magic, just standardization and an efficient architecture 😉
 
 WebGrid relies on the [WebDriver](https://www.w3.org/TR/webdriver1/) specification. When you execute a Selenium Test, you are effectively speaking to an implementation of this protocol. Almost all browser vendors provide such an API for their browser. Both Selenium Grid and WebGrid are just intermediates who delegate your requests to a browser.
 

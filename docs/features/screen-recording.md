@@ -46,14 +46,21 @@ In order to view or embed a video you need to retrieve its unique session identi
 
     ```graphql
     query {
-        sessions {
-            id
-            alive
+      session {
+        latest {
+        id
+        metadata {
+            client {
+            key
+            value
+            }
         }
+        }
+      }
     }
     ```
 
-    It returns you a list of all sessions with their corresponding identifiers and whether or not they are currently alive. To identify your session uniquely using metadata, head over to the [API documentation](./api.md#session-metadata).
+    It returns you a list of all sessions with their corresponding identifiers and user-assigned metadata. To identify your session uniquely using metadata, head over to the [API documentation](./api.md#session-metadata).
 
 ## Embedding
 

@@ -1,5 +1,8 @@
 # Workflows
 
+!!! warning "Outdated"
+	Due to a recent architectural overhaul, the information on this page is no longer applicable for versions beyond `v0.5.1-beta`.
+
 Below is a list of common process workflows that happen within WebGrid. They may help understanding how the grid operates internally.
 
 ## Scheduling workflow

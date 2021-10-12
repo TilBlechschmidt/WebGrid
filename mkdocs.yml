@@ -20,6 +20,7 @@ nav:
       - "faq.md"
   - "Features":
       - "features/api.md"
+      - "features/capabilities.md"
       - "features/screen-recording.md"
       - "features/hybrid-grid.md"
   - "Kubernetes":
