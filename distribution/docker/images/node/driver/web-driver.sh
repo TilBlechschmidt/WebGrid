@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-GECKO_VERSION=0.29.1
+GECKO_VERSION=0.30.0
 CHROME_VERSION=93.0.4577.15
 PREV_PWD=$(pwd)
 TMP_DIR=$(mktemp -d)
