@@ -66,7 +66,7 @@ spec:
               protocol: TCP
           volumeMounts:
             - name: mongo-persistence
-              mountPath: /data
+              mountPath: /data/db
           resources:
             {{- toYaml .Values.resources.mongo | nindent 12 }}
 ---

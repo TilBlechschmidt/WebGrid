@@ -101,6 +101,7 @@ serviceAccount:
   name: ""
 
 resources:
+  api: {}
   redis: {}
   mongo: {}
   gangway: {}
@@ -115,6 +116,7 @@ resources:
       memory: 4000Mi
 
 nodeSelector:
+  api: {}
   redis: {}
   mongo: {}
   gangway: {}
@@ -124,6 +126,7 @@ nodeSelector:
   node: {}
 
 tolerations:
+  api: []
   redis: []
   mongo: []
   gangway: []
@@ -133,6 +136,7 @@ tolerations:
   node: []
 
 affinity:
+  api: {}
   redis: {}
   mongo: {}
   gangway: {}
