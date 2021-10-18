@@ -1,8 +1,10 @@
 use super::super::{SessionCreationCommunicationHandle, StatusResponse};
-use crate::domain::event::{SessionCreatedNotification, SessionOperationalNotification};
+use crate::domain::event::{
+    SessionCreatedNotification, SessionIdentifier, SessionOperationalNotification,
+};
 use crate::domain::webdriver::{
     RawCapabilitiesRequest, SessionCreateResponse, SessionCreateResponseValue,
-    SessionCreationRequest,
+    SessionCreationRequest, WebdriverErrorCode,
 };
 use crate::library::communication::BlackboxError;
 use crate::library::http::Responder;
@@ -12,10 +14,37 @@ use hyper::http::{request::Parts, Method, Response, StatusCode};
 use hyper::{body, Body};
 use std::convert::Infallible;
 use std::net::IpAddr;
+use thiserror::Error;
 use tokio::sync::oneshot;
 use uuid::Uuid;
 
 const SESSION_CREATION_PATH: &str = "/session";
+
+#[derive(Debug, Error)]
+enum SessionCreationResponderError {
+    #[error("unable to parse actual capabilities")]
+    InvalidActualCapabilities(#[source] serde_json::Error),
+    #[error("unable to serialize response")]
+    ResponseSerializationFailed(#[source] serde_json::Error),
+    #[error("request body invalid")]
+    InvalidRequestBody(#[source] hyper::Error),
+    #[error("request content is invalid")]
+    InvalidRequestContent(#[source] serde_json::Error),
+    #[error("unable to submit session creation request")]
+    CreationNotificationPublishFailed,
+    #[error("session did not start up properly")]
+    SessionStartupFailed(#[source] BlackboxError),
+    #[error("pending request limit exceeded")]
+    PendingRequestLimitExceeded,
+}
+
+use SessionCreationResponderError::*;
+
+#[derive(Debug, Error)]
+enum SessionCreationError {
+    #[error("unable to create session {0}")]
+    SessionCreationFailed(SessionIdentifier, #[source] SessionCreationResponderError),
+}
 
 pub struct SessionCreationResponder {
     handle: SessionCreationCommunicationHandle,
@@ -27,14 +56,15 @@ impl SessionCreationResponder {
     }
 
     #[inline]
-    fn new_error_response(&self, id: &str, message: &str, status: StatusCode) -> Response<Body> {
-        // TODO Wrap the error in a WebDriver protocol compliant JSON error (and stack using the BlackboxError type)
-        let error = format!("unable to create session {}: {}", id, message);
+    fn new_error_response(
+        &self,
+        id: SessionIdentifier,
+        error: SessionCreationResponderError,
+    ) -> Response<Body> {
+        let error = SessionCreationError::SessionCreationFailed(id, error);
+        let blackbox = BlackboxError::new(error);
 
-        Response::builder()
-            .status(status)
-            .body(Body::from(error))
-            .unwrap()
+        super::error::new_error_response(WebdriverErrorCode::SessionNotCreated, blackbox)
     }
 
     #[inline]
@@ -42,11 +72,7 @@ impl SessionCreationResponder {
         let capabilities = match serde_json::from_str(&notification.actual_capabilities) {
             Ok(value) => value,
             Err(e) => {
-                return self.new_error_response(
-                    &notification.id.to_string(),
-                    &e.to_string(),
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                )
+                return self.new_error_response(notification.id, InvalidActualCapabilities(e))
             }
         };
 
@@ -60,11 +86,7 @@ impl SessionCreationResponder {
         let serialized_response = match serde_json::to_string(&response) {
             Ok(serialized) => serialized,
             Err(e) => {
-                return self.new_error_response(
-                    &notification.id.to_string(),
-                    &e.to_string(),
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                )
+                return self.new_error_response(notification.id, ResponseSerializationFailed(e))
             }
         };
 
@@ -100,38 +122,20 @@ impl Responder for SessionCreationResponder {
         // TODO Limit the number of pending requests by using a Semaphore. This prevents DDoS attacks (somewhat) and limits the number of open connections!
 
         // Generate/extract necessary data
+        let id = Uuid::new_v4();
         // TODO Ensure that a content-length header is set and has a value lower than a certain threshold to prevent OOM attacks!
         let bytes = match body::to_bytes(body).await {
             Ok(bytes) => bytes,
-            Err(e) => {
-                return Ok(self.new_error_response(
-                    "-",
-                    &e.to_string(),
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                ))
-            }
+            Err(e) => return Ok(self.new_error_response(id, InvalidRequestBody(e))),
         };
         let capabilities = match serde_json::from_slice::<SessionCreationRequest>(&bytes)
             .map(|r| serde_json::to_string(&r.capabilities))
         {
             Ok(Ok(raw)) => RawCapabilitiesRequest::new(raw),
-            Ok(Err(e)) => {
-                return Ok(self.new_error_response(
-                    "-",
-                    &e.to_string(),
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                ))
-            }
-            Err(e) => {
-                return Ok(self.new_error_response(
-                    "-",
-                    &e.to_string(),
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                ))
-            }
+            Ok(Err(e)) => return Ok(self.new_error_response(id, InvalidRequestContent(e))),
+            Err(e) => return Ok(self.new_error_response(id, InvalidRequestContent(e))),
         };
 
-        let id = Uuid::new_v4();
         let notification = SessionCreatedNotification { id, capabilities };
 
         // Create a channel for receiving the status and register it
@@ -139,12 +143,8 @@ impl Responder for SessionCreationResponder {
         self.handle.status_listeners.lock().await.put(id, status_tx);
 
         // Send the notification and handle potential errors
-        if let Err(e) = self.handle.creation_tx.send(notification) {
-            return Ok(self.new_error_response(
-                &id.to_string(),
-                &e.to_string(),
-                StatusCode::INTERNAL_SERVER_ERROR,
-            ));
+        if self.handle.creation_tx.send(notification).is_err() {
+            return Ok(self.new_error_response(id, CreationNotificationPublishFailed));
         }
 
         // Wait for either a failed or successful startup
@@ -153,15 +153,10 @@ impl Responder for SessionCreationResponder {
                 Ok(self.new_success_response(notification))
             }
             Ok(StatusResponse::Failed(notification)) => Ok(self.new_error_response(
-                &id.to_string(),
-                &BlackboxError::new(notification.reason).to_string(),
-                StatusCode::INTERNAL_SERVER_ERROR,
+                id,
+                SessionStartupFailed(BlackboxError::new(notification.reason)),
             )),
-            Err(_) => Ok(self.new_error_response(
-                &id.to_string(),
-                "gangway has exceeded the maximum pending request limit",
-                StatusCode::INTERNAL_SERVER_ERROR,
-            )),
+            Err(_) => Ok(self.new_error_response(id, PendingRequestLimitExceeded)),
         }
     }
 }

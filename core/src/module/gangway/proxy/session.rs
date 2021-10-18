@@ -1,12 +1,16 @@
 use crate::domain::event::SessionIdentifier;
+use crate::domain::webdriver::WebdriverErrorCode;
 use crate::domain::WebgridServiceDescriptor;
 use crate::library::communication::discovery::{DiscoveredServiceEndpoint, ServiceDiscoverer};
-use crate::library::http::{forward_request, uri_with_authority, MatchableString, Responder};
+use crate::library::communication::BlackboxError;
+use crate::library::http::{
+    forward_request, uri_with_authority, ForwardError, MatchableString, Responder,
+};
 use crate::library::BoxedError;
 use async_trait::async_trait;
 use futures::{Future, TryStreamExt};
 use hyper::client::HttpConnector;
-use hyper::http::{request::Parts, Request, Response, StatusCode, Version};
+use hyper::http::{request::Parts, Request, Response, Version};
 use hyper::{Body, Client};
 use std::convert::Infallible;
 use std::net::IpAddr;
@@ -17,9 +21,23 @@ const SESSION_PREFIX: &str = "/session/";
 pub const SESSION_ID_LENGTH: usize = 36; // Length of a UUID e.g. "7B43902E-7520-4AB3-AA1E-ACB4C52E6A6D"
 
 #[derive(Debug, Error)]
+enum SessionForwardingResponderError {
+    #[error("endpoint discovery failed")]
+    EndpointDiscoveryFailure(#[source] BoxedError),
+    #[error("no endpoint available")]
+    NoEndpoint,
+    #[error("unable to construct destination URI")]
+    URIConstructionFailed(#[source] hyper::http::Error),
+    #[error("unable to forward request")]
+    UnableToForward(#[source] ForwardError),
+}
+
+use SessionForwardingResponderError::*;
+
+#[derive(Debug, Error)]
 enum SessionForwardingError {
-    #[error("no endpoint available for session {0}")]
-    NoEndpoint(SessionIdentifier),
+    #[error("unable to forward request to session {0}")]
+    ForwardFailed(SessionIdentifier, #[source] SessionForwardingResponderError),
 }
 
 pub struct SessionForwardingResponder<D: ServiceDiscoverer<WebgridServiceDescriptor>> {
@@ -42,15 +60,15 @@ where
     }
 
     #[inline]
-    fn new_error_response(&self, message: &str, status: StatusCode) -> Response<Body> {
-        // TODO Wrap the error in a WebDriver protocol compliant JSON error (and stack using the BlackboxError type)
-        // TODO Add session ID to error message for easier debugging :)
-        let error = format!("unable to forward request to session: {}", message);
+    fn new_error_response(
+        &self,
+        id: SessionIdentifier,
+        error: SessionForwardingResponderError,
+    ) -> Response<Body> {
+        let error = SessionForwardingError::ForwardFailed(id, error);
+        let blackbox = BlackboxError::new(error);
 
-        Response::builder()
-            .status(status)
-            .body(Body::from(error))
-            .unwrap()
+        super::error::new_error_response(WebdriverErrorCode::UnknownError, blackbox)
     }
 
     #[inline]
@@ -71,10 +89,18 @@ where
         }
     }
 
-    async fn discover_endpoint(&self, identifier: SessionIdentifier) -> Result<D::I, BoxedError> {
+    async fn discover_endpoint(
+        &self,
+        identifier: SessionIdentifier,
+    ) -> Result<D::I, SessionForwardingResponderError> {
         let descriptor = WebgridServiceDescriptor::Node(identifier);
-        let endpoint = self.discoverer.discover(descriptor).try_next().await?;
-        endpoint.ok_or_else(|| SessionForwardingError::NoEndpoint(identifier).into())
+        let endpoint = self
+            .discoverer
+            .discover(descriptor)
+            .try_next()
+            .await
+            .map_err(|e| EndpointDiscoveryFailure(e))?;
+        endpoint.ok_or(NoEndpoint)
     }
 }
 
@@ -105,7 +131,7 @@ where
         // Search for an endpoint
         let endpoint = match self.discover_endpoint(identifier).await {
             Ok(endpoint) => endpoint,
-            Err(e) => return Ok(self.new_error_response(&e.to_string(), StatusCode::BAD_GATEWAY)),
+            Err(e) => return Ok(self.new_error_response(identifier, e)),
         };
 
         // Reconstruct the request and force HTTP/2 for SPEEEEEED :P
@@ -115,11 +141,7 @@ where
         // Build a URI from the parts
         let uri = match uri_with_authority(&req, &endpoint) {
             Ok(uri) => uri,
-            Err(e) => {
-                return Ok(
-                    self.new_error_response(&e.to_string(), StatusCode::INTERNAL_SERVER_ERROR)
-                )
-            }
+            Err(e) => return Ok(self.new_error_response(identifier, URIConstructionFailed(e))),
         };
 
         // Forward the request
@@ -131,7 +153,7 @@ where
             Ok(r) => r,
             Err(e) => {
                 endpoint.flag_unreachable().await;
-                self.new_error_response(&e.to_string(), StatusCode::BAD_GATEWAY)
+                self.new_error_response(identifier, UnableToForward(e))
             }
         };
 

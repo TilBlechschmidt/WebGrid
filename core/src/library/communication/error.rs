@@ -30,6 +30,11 @@ impl BlackboxError {
     pub fn from_boxed(e: BoxedError) -> Self {
         (e.as_ref() as &(dyn Error + 'static)).into()
     }
+
+    /// Consumes the error and returns the underlying list of causes
+    pub fn into_causes(self) -> Vec<String> {
+        self.0
+    }
 }
 
 #[cfg(test)]

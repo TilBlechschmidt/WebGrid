@@ -14,6 +14,7 @@ use super::SessionCreationCommunicationHandle;
 
 mod api;
 mod create;
+mod error;
 mod session;
 mod storage;
 
