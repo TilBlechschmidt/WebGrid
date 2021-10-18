@@ -82,7 +82,16 @@ When you run hundreds of sessions on the grid and do not have a way to store ses
 
 ### Modifying metadata at runtime
 
-Setting metadata up-front is nice. However, in certain scenarios you might want to attach additional or modify existing metadata while the session is running. For this, an extension command is available at `/<session-id>/webgrid/metadata`. You can either make a POST request to this URL with a JSON object as the request body, or use your libraries support for extension commands if available. In the future, support for legacy libraries which do not support extension commands will be added (using cookies with special names).
+Setting metadata up-front is nice. However, in certain scenarios you might want to attach additional or modify existing metadata while the session is running. For this, an extension command is available at `/session/<id>/webgrid/metadata`. You can either make a POST request to this URL with a JSON object as the request body, or use your libraries support for extension commands if available. In the future, support for legacy libraries which do not support extension commands will be added (using cookies with special names).
+
+=== "cURL"
+    This simple example uses the popular cURL command line utility. While it is recommended to use extension commands with your driver, this is technically possible 😉
+    ```bash
+    curl --request POST \
+         --header "Content-Type: application/json" \
+         --data '{ "status": "success" }'
+         http://<your-grid>/session/<your-session-id>/webgrid/metadata
+    ```
 
 === "Rust"
     Below is an example implementation of a metadata modification extension command for the [`thirtyfour`](https://github.com/stevepryde/thirtyfour) Rust library.
