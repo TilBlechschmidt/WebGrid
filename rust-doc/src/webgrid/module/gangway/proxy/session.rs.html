@@ -141,16 +141,42 @@
 <span id="138">138</span>
 <span id="139">139</span>
 <span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::domain::event::SessionIdentifier</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::domain::webdriver::WebdriverErrorCode</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::domain::WebgridServiceDescriptor</span>;
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::library::communication::discovery</span>::{<span class="ident">DiscoveredServiceEndpoint</span>, <span class="ident">ServiceDiscoverer</span>};
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::library::http</span>::{<span class="ident">forward_request</span>, <span class="ident">uri_with_authority</span>, <span class="ident">MatchableString</span>, <span class="ident">Responder</span>};
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::library::communication::BlackboxError</span>;
+<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::library::http</span>::{
+    <span class="ident">forward_request</span>, <span class="ident">uri_with_authority</span>, <span class="ident">ForwardError</span>, <span class="ident">MatchableString</span>, <span class="ident">Responder</span>,
+};
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::library::BoxedError</span>;
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">futures</span>::{<span class="ident">Future</span>, <span class="ident">TryStreamExt</span>};
 <span class="kw">use</span> <span class="ident">hyper::client::HttpConnector</span>;
-<span class="kw">use</span> <span class="ident">hyper::http</span>::{<span class="ident">request::Parts</span>, <span class="ident">Request</span>, <span class="ident">Response</span>, <span class="ident">StatusCode</span>, <span class="ident">Version</span>};
+<span class="kw">use</span> <span class="ident">hyper::http</span>::{<span class="ident">request::Parts</span>, <span class="ident">Request</span>, <span class="ident">Response</span>, <span class="ident">Version</span>};
 <span class="kw">use</span> <span class="ident">hyper</span>::{<span class="ident">Body</span>, <span class="ident">Client</span>};
 <span class="kw">use</span> <span class="ident">std::convert::Infallible</span>;
 <span class="kw">use</span> <span class="ident">std::net::IpAddr</span>;
@@ -161,9 +187,23 @@
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">SESSION_ID_LENGTH</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">36</span>; <span class="comment">// Length of a UUID e.g. &quot;7B43902E-7520-4AB3-AA1E-ACB4C52E6A6D&quot;</span>
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Error</span>)]</span>
+<span class="kw">enum</span> <span class="ident">SessionForwardingResponderError</span> {
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;endpoint discovery failed&quot;</span>)]</span>
+    <span class="ident">EndpointDiscoveryFailure</span>(<span class="attribute">#[<span class="ident">source</span>]</span> <span class="ident">BoxedError</span>),
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;no endpoint available&quot;</span>)]</span>
+    <span class="ident">NoEndpoint</span>,
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;unable to construct destination URI&quot;</span>)]</span>
+    <span class="ident">URIConstructionFailed</span>(<span class="attribute">#[<span class="ident">source</span>]</span> <span class="ident">hyper::http::Error</span>),
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;unable to forward request&quot;</span>)]</span>
+    <span class="ident">UnableToForward</span>(<span class="attribute">#[<span class="ident">source</span>]</span> <span class="ident">ForwardError</span>),
+}
+
+<span class="kw">use</span> <span class="ident">SessionForwardingResponderError</span>::<span class="kw-2">*</span>;
+
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Error</span>)]</span>
 <span class="kw">enum</span> <span class="ident">SessionForwardingError</span> {
-    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;no endpoint available for session {0}&quot;</span>)]</span>
-    <span class="ident">NoEndpoint</span>(<span class="ident">SessionIdentifier</span>),
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;unable to forward request to session {0}&quot;</span>)]</span>
+    <span class="ident">ForwardFailed</span>(<span class="ident">SessionIdentifier</span>, <span class="attribute">#[<span class="ident">source</span>]</span> <span class="ident">SessionForwardingResponderError</span>),
 }
 
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SessionForwardingResponder</span><span class="op">&lt;</span><span class="ident">D</span>: <span class="ident">ServiceDiscoverer</span><span class="op">&lt;</span><span class="ident">WebgridServiceDescriptor</span><span class="op">&gt;</span><span class="op">&gt;</span> {
@@ -186,15 +226,15 @@
     }
 
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">fn</span> <span class="ident">new_error_response</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">message</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>, <span class="ident">status</span>: <span class="ident">StatusCode</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Response</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span> {
-        <span class="comment">// TODO Wrap the error in a WebDriver protocol compliant JSON error (and stack using the BlackboxError type)</span>
-        <span class="comment">// TODO Add session ID to error message for easier debugging :)</span>
-        <span class="kw">let</span> <span class="ident">error</span> <span class="op">=</span> <span class="macro">format!</span>(<span class="string">&quot;unable to forward request to session: {}&quot;</span>, <span class="ident">message</span>);
+    <span class="kw">fn</span> <span class="ident">new_error_response</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">id</span>: <span class="ident">SessionIdentifier</span>,
+        <span class="ident">error</span>: <span class="ident">SessionForwardingResponderError</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Response</span><span class="op">&lt;</span><span class="ident">Body</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="ident">error</span> <span class="op">=</span> <span class="ident">SessionForwardingError::ForwardFailed</span>(<span class="ident">id</span>, <span class="ident">error</span>);
+        <span class="kw">let</span> <span class="ident">blackbox</span> <span class="op">=</span> <span class="ident">BlackboxError::new</span>(<span class="ident">error</span>);
 
-        <span class="ident">Response::builder</span>()
-            .<span class="ident">status</span>(<span class="ident">status</span>)
-            .<span class="ident">body</span>(<span class="ident">Body::from</span>(<span class="ident">error</span>))
-            .<span class="ident">unwrap</span>()
+        <span class="kw">super</span><span class="ident">::error::new_error_response</span>(<span class="ident">WebdriverErrorCode::UnknownError</span>, <span class="ident">blackbox</span>)
     }
 
     <span class="attribute">#[<span class="ident">inline</span>]</span>
@@ -215,10 +255,18 @@
         }
     }
 
-    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">discover_endpoint</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">identifier</span>: <span class="ident">SessionIdentifier</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">D::I</span>, <span class="ident">BoxedError</span><span class="op">&gt;</span> {
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">discover_endpoint</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">identifier</span>: <span class="ident">SessionIdentifier</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">D::I</span>, <span class="ident">SessionForwardingResponderError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">descriptor</span> <span class="op">=</span> <span class="ident">WebgridServiceDescriptor::Node</span>(<span class="ident">identifier</span>);
-        <span class="kw">let</span> <span class="ident">endpoint</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">discoverer</span>.<span class="ident">discover</span>(<span class="ident">descriptor</span>).<span class="ident">try_next</span>().<span class="kw">await</span><span class="question-mark">?</span>;
-        <span class="ident">endpoint</span>.<span class="ident">ok_or_else</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">SessionForwardingError::NoEndpoint</span>(<span class="ident">identifier</span>).<span class="ident">into</span>())
+        <span class="kw">let</span> <span class="ident">endpoint</span> <span class="op">=</span> <span class="self">self</span>
+            .<span class="ident">discoverer</span>
+            .<span class="ident">discover</span>(<span class="ident">descriptor</span>)
+            .<span class="ident">try_next</span>()
+            .<span class="kw">await</span>
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="ident">EndpointDiscoveryFailure</span>(<span class="ident">e</span>))<span class="question-mark">?</span>;
+        <span class="ident">endpoint</span>.<span class="ident">ok_or</span>(<span class="ident">NoEndpoint</span>)
     }
 }
 
@@ -249,7 +297,7 @@
         <span class="comment">// Search for an endpoint</span>
         <span class="kw">let</span> <span class="ident">endpoint</span> <span class="op">=</span> <span class="kw">match</span> <span class="self">self</span>.<span class="ident">discover_endpoint</span>(<span class="ident">identifier</span>).<span class="kw">await</span> {
             <span class="prelude-val">Ok</span>(<span class="ident">endpoint</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">endpoint</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">new_error_response</span>(<span class="kw-2">&amp;</span><span class="ident">e</span>.<span class="ident">to_string</span>(), <span class="ident">StatusCode::BAD_GATEWAY</span>)),
+            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">new_error_response</span>(<span class="ident">identifier</span>, <span class="ident">e</span>)),
         };
 
         <span class="comment">// Reconstruct the request and force HTTP/2 for SPEEEEEED :P</span>
@@ -259,11 +307,7 @@
         <span class="comment">// Build a URI from the parts</span>
         <span class="kw">let</span> <span class="ident">uri</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">uri_with_authority</span>(<span class="kw-2">&amp;</span><span class="ident">req</span>, <span class="kw-2">&amp;</span><span class="ident">endpoint</span>) {
             <span class="prelude-val">Ok</span>(<span class="ident">uri</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">uri</span>,
-            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">return</span> <span class="prelude-val">Ok</span>(
-                    <span class="self">self</span>.<span class="ident">new_error_response</span>(<span class="kw-2">&amp;</span><span class="ident">e</span>.<span class="ident">to_string</span>(), <span class="ident">StatusCode::INTERNAL_SERVER_ERROR</span>)
-                )
-            }
+            <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="self">self</span>.<span class="ident">new_error_response</span>(<span class="ident">identifier</span>, <span class="ident">URIConstructionFailed</span>(<span class="ident">e</span>))),
         };
 
         <span class="comment">// Forward the request</span>
@@ -275,7 +319,7 @@
             <span class="prelude-val">Ok</span>(<span class="ident">r</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">r</span>,
             <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="ident">endpoint</span>.<span class="ident">flag_unreachable</span>().<span class="kw">await</span>;
-                <span class="self">self</span>.<span class="ident">new_error_response</span>(<span class="kw-2">&amp;</span><span class="ident">e</span>.<span class="ident">to_string</span>(), <span class="ident">StatusCode::BAD_GATEWAY</span>)
+                <span class="self">self</span>.<span class="ident">new_error_response</span>(<span class="ident">identifier</span>, <span class="ident">UnableToForward</span>(<span class="ident">e</span>))
             }
         };
 

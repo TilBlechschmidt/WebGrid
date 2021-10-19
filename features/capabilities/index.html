@@ -9,9 +9,9 @@
 <meta content="Til Blechschmidt" name="author"/>
 <link href="https://webgrid.dev/features/capabilities/" rel="canonical"/>
 <link href="../../assets/images/favicon.png" rel="icon"/>
-<meta content="mkdocs-1.2.2, mkdocs-material-7.3.3" name="generator"/>
+<meta content="mkdocs-1.2.3, mkdocs-material-7.3.4" name="generator"/>
 <title>Extensions &amp; Metadata - WebGrid</title>
-<link href="../../assets/stylesheets/main.5143246d.min.css" rel="stylesheet"/>
+<link href="../../assets/stylesheets/main.db9e7362.min.css" rel="stylesheet"/>
 <link href="../../assets/stylesheets/palette.3f5d1f46.min.css" rel="stylesheet"/>
 <meta content="#009485" name="theme-color"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -579,8 +579,16 @@
 </div>
 </input></input></div>
 <h3 id="modifying-metadata-at-runtime">Modifying metadata at runtime<a class="headerlink" href="#modifying-metadata-at-runtime" title="Permanent link">¶</a></h3>
-<p>Setting metadata up-front is nice. However, in certain scenarios you might want to attach additional or modify existing metadata while the session is running. For this, an extension command is available at <code>/&lt;session-id&gt;/webgrid/metadata</code>. You can either make a POST request to this URL with a JSON object as the request body, or use your libraries support for extension commands if available. In the future, support for legacy libraries which do not support extension commands will be added (using cookies with special names).</p>
-<div class="tabbed-set" data-tabs="5:1"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio"><label for="__tabbed_5_1">Rust</label><div class="tabbed-content">
+<p>Setting metadata up-front is nice. However, in certain scenarios you might want to attach additional or modify existing metadata while the session is running. For this, an extension command is available at <code>/session/&lt;id&gt;/webgrid/metadata</code>. You can either make a POST request to this URL with a JSON object as the request body, or use your libraries support for extension commands if available. In the future, support for legacy libraries which do not support extension commands will be added (using cookies with special names).</p>
+<div class="tabbed-set" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio"><label for="__tabbed_5_1">cURL</label><div class="tabbed-content">
+<p>This simple example uses the popular cURL command line utility. While it is recommended to use extension commands with your driver, this is technically possible 😉
+<div class="highlight"><pre><span></span><code>curl --request POST <span class="se">\</span>
+     --header <span class="s2">"Content-Type: application/json"</span> <span class="se">\</span>
+     --data <span class="s1">'{ "status": "success" }'</span>
+     http://&lt;your-grid&gt;/session/&lt;your-session-id&gt;/webgrid/metadata
+</code></pre></div></p>
+</div>
+<input id="__tabbed_5_2" name="__tabbed_5" type="radio"><label for="__tabbed_5_2">Rust</label><div class="tabbed-content">
 <p>Below is an example implementation of a metadata modification extension command for the <a href="https://github.com/stevepryde/thirtyfour"><code>thirtyfour</code></a> Rust library.
 <div class="highlight"><pre><span></span><code><span class="k">struct</span> <span class="nc">WebgridMetadataCommand</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
 <span class="w">    </span><span class="n">fields</span>: <span class="nc">HashMap</span><span class="o">&lt;</span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="nb">String</span><span class="o">&gt;</span><span class="p">,</span><span class="w"></span>
@@ -623,12 +631,12 @@
 <span class="n">driver</span><span class="p">.</span><span class="n">extension_command</span><span class="p">(</span><span class="n">metadata_command</span><span class="p">).</span><span class="k">await</span><span class="p">.</span><span class="n">ok</span><span class="p">();</span><span class="w"></span>
 </code></pre></div></p>
 </div>
-</input></div>
+</input></input></div>
 <hr/>
 <div class="md-source-date">
 <small>
     
-      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">October 12, 2021</span>
+      Last update: <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">October 18, 2021</span>
 </small>
 </div>
 </article>
@@ -699,7 +707,7 @@
 <div class="md-dialog__inner md-typeset"></div>
 </div>
 <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../assets/javascripts/workers/search.8397ff9e.min.js", "version": null}</script>
-<script src="../../assets/javascripts/bundle.f89c2efe.min.js"></script>
+<script src="../../assets/javascripts/bundle.1e84347e.min.js"></script>
 <script src="https://unpkg.com/mermaid@8.5.0/dist/mermaid.min.js"></script>
 </body>
 </html>

@@ -2,127 +2,127 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://webgrid.dev/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/faq/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/getting-started/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/architecture/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/architecture/database/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/architecture/discovery/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/architecture/error-handling/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/architecture/services/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/architecture/structure/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/architecture/workflows/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/contribute/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/contribute/code-contrib/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/contribute/code-of-conduct/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/contribute/dev-environment/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/contribute/issues/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/contribute/release/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/features/api/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/features/capabilities/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/features/hybrid-grid/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/features/screen-recording/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/guides/k3s/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/kubernetes/access/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/kubernetes/configuration/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/kubernetes/scaling/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://webgrid.dev/kubernetes/storage/</loc>
-         <lastmod>2021-10-12</lastmod>
+         <lastmod>2021-10-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>

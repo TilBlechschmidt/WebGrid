@@ -122,6 +122,7 @@
 <span id="119">119</span>
 <span id="120">120</span>
 <span id="121">121</span>
+<span id="122">122</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::library::http</span>::{<span class="ident">forward_request</span>, <span class="ident">MatchableString</span>, <span class="ident">Responder</span>};
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
@@ -229,7 +230,8 @@
         <span class="comment">// Reconstruct the request and force HTTP/1.1 (because WebDrivers are ancient technology :P)</span>
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">req</span> <span class="op">=</span> <span class="ident">Request::from_parts</span>(<span class="ident">parts</span>, <span class="ident">body</span>);
         <span class="kw-2">*</span><span class="ident">req</span>.<span class="ident">version_mut</span>() <span class="op">=</span> <span class="ident">Version::HTTP_11</span>;
-        <span class="ident">req</span>.<span class="ident">headers_mut</span>().<span class="ident">insert</span>(<span class="ident">HOST</span>, <span class="string">&quot;127.0.0.1&quot;</span>.<span class="ident">parse</span>().<span class="ident">unwrap</span>());
+        <span class="ident">req</span>.<span class="ident">headers_mut</span>()
+            .<span class="ident">insert</span>(<span class="ident">HOST</span>, <span class="self">self</span>.<span class="ident">authority</span>.<span class="ident">as_str</span>().<span class="ident">parse</span>().<span class="ident">unwrap</span>());
 
         <span class="comment">// Forward the request</span>
         <span class="kw">let</span> <span class="ident">forward_result</span> <span class="op">=</span>
