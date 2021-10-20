@@ -52,8 +52,10 @@ impl Module for Gangway {
             );
 
         // Create the ServiceRunner instances for all services
-        let group =
-            ConsumerGroupDescriptor::new(ConsumerGroupIdentifier::Gangway, QueueLocation::Tail);
+        let group = ConsumerGroupDescriptor::new(
+            ConsumerGroupIdentifier::Gangway(self.options.queueing.id.clone()),
+            QueueLocation::Tail,
+        );
         let operational_runner = ServiceRunner::<OperationalListenerService<_>>::new(
             redis_url.clone(),
             group.clone(),

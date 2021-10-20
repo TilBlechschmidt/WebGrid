@@ -48,7 +48,7 @@ impl QueueDescriptor {
 pub type QueueDescriptorExtension = String;
 
 /// Location within the queue
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum QueueLocation {
     /// Start of the queue (not necessarily the first notification as a queue is limited in length)
     Head,

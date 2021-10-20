@@ -1,12 +1,12 @@
 use super::QueueLocation;
 
 /// Unique identifier for a group of consumers
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum ConsumerGroupIdentifier {
     /// Generic worker group in a work queue
     Worker,
     /// Gangway instance
-    Gangway,
+    Gangway(String),
     /// Collector instance
     Collector,
     /// Unknown consumer group
@@ -17,7 +17,7 @@ impl ToString for ConsumerGroupIdentifier {
     fn to_string(&self) -> String {
         match self {
             Self::Worker => "worker".into(),
-            Self::Gangway => "gangway".into(),
+            Self::Gangway(id) => format!("gangway-{}", id),
             Self::Collector => "collector".into(),
             Self::Other(identifier) => identifier.to_owned(),
         }
@@ -30,7 +30,7 @@ impl ToString for ConsumerGroupIdentifier {
 /// Each message is only delivered to one consumer within the same group, identified
 /// by a [`ConsumerGroupIdentifier`]. When it is created, they start processing messages
 /// from the provided [`QueueLocation`].
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ConsumerGroupDescriptor {
     identifier: ConsumerGroupIdentifier,
     start: QueueLocation,
