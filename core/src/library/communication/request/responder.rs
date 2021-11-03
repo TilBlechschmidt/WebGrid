@@ -1,12 +1,12 @@
-use crate::library::communication::event::NotificationFrame;
-
 use super::super::super::BoxedError;
 use super::super::super::EmptyResult;
 use super::super::event::Consumer;
 use super::Request;
 use super::ResponsePublisher;
+use crate::library::communication::event::NotificationFrame;
 use async_trait::async_trait;
 use thiserror::Error;
+use tracing::instrument;
 
 /// Error that may be thrown while responding to a request
 #[derive(Error, Debug)]
@@ -92,6 +92,7 @@ where
 {
     type Notification = R;
 
+    #[instrument(skip(self, request), fields(request = std::any::type_name::<Self::Notification>()))]
     async fn consume(&self, request: NotificationFrame<Self::Notification>) -> EmptyResult {
         let location = request.reply_to();
 

@@ -75,7 +75,7 @@ pub struct CapabilitiesProxy {
 }
 
 /// Extension capabilities specific to WebGrid
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct WebGridOptions {
     /// Arbitrary metadata which can be set by the client and later fetched through the API.
@@ -92,16 +92,6 @@ pub struct WebGridOptions {
     ///
     /// If no request from the client arrives within this duration, the session will terminate itself.
     pub idle_timeout: Option<u64>,
-}
-
-impl Default for WebGridOptions {
-    fn default() -> Self {
-        Self {
-            metadata: None,
-            disable_recording: false,
-            idle_timeout: None,
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -182,6 +172,19 @@ impl Capabilities {
 
     /// Combines two capabilities objects
     pub fn merge(&self, other: Self) -> Self {
+        let mut extension_capabilities = HashMap::new();
+        extension_capabilities.extend(
+            self.extension_capabilities
+                .iter()
+                .map(|(k, v)| (k.clone(), v.clone())),
+        );
+        extension_capabilities.extend(
+            other
+                .extension_capabilities
+                .iter()
+                .map(|(k, v)| (k.clone(), v.clone())),
+        );
+
         Capabilities {
             strict_file_interactability: self
                 .strict_file_interactability
@@ -203,8 +206,7 @@ impl Capabilities {
                 .xor(other.unhandled_prompt_behavior),
 
             webgrid_options: self.webgrid_options.clone().xor(other.webgrid_options),
-            // TODO Merge the extension capabilities
-            extension_capabilities: self.extension_capabilities.clone(),
+            extension_capabilities,
         }
     }
 }

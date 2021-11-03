@@ -1,7 +1,13 @@
-use structopt::StructOpt;
+use structopt::{clap::arg_enum, StructOpt};
 
-// #[cfg(feature = "storage")]
-// use webgrid::components::storage;
+arg_enum! {
+    #[derive(Debug)]
+    pub enum LogFormat {
+        Text,
+        Compact,
+        Json
+    }
+}
 
 #[derive(Debug, StructOpt)]
 #[structopt(
@@ -21,6 +27,10 @@ pub struct MainOptions {
         value_name = "level"
     )]
     pub log: String,
+
+    /// Formatting style for log outputs
+    #[structopt(long, global = true, env, possible_values = &LogFormat::variants(), case_insensitive = true, default_value = "Compact")]
+    pub log_format: LogFormat,
 
     /// OpenTelemetry collector endpoint
     ///

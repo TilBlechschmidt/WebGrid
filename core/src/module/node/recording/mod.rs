@@ -1,5 +1,5 @@
-use crate::domain::event::SessionIdentifier;
-use crate::library::storage::{storage_path, StorageBackend};
+use crate::domain::{event::SessionIdentifier, storage_path};
+use crate::library::storage::StorageBackend;
 use crate::library::EmptyResult;
 use crate::{library::http::Responder, make_responder_chain_service_fn, responder_chain};
 use async_trait::async_trait;
@@ -17,6 +17,7 @@ use tempfile::NamedTempFile;
 use thiserror::Error;
 use tokio::process::Command;
 use tokio::sync::oneshot;
+use tracing::{error, info};
 
 mod storage;
 
@@ -88,7 +89,7 @@ where
 
         // Spawn the recording subprocess
         let args: Vec<&str> = self.arguments.split_whitespace().collect();
-        log::info!("Launching ffmpeg {}", args.join(" "));
+        info!("Launching ffmpeg {}", args.join(" "));
         let mut ffmpeg = Command::new("ffmpeg")
             .args(&args)
             .stderr(log_file_writeable.into_file())
@@ -108,17 +109,17 @@ where
         let termination_request = async move {
             manager.termination_signal().await;
             if let Err(e) = process.signal(Signal::Term).await {
-                log::error!("Failed to send SIGTERM to ffmepg: {}", e);
+                error!("Failed to send SIGTERM to ffmepg: {}", e);
             }
         };
 
         // 2. Wait for ffmpeg to finish up the recording in response to the SIGTERM
         let ffmpeg_termination = async move {
             if let Err(e) = ffmpeg.wait().await {
-                log::error!("Failed to await ffmpeg termination: {}", e);
+                error!("Failed to await ffmpeg termination: {}", e);
             }
             if shutdown_tx.send(()).is_err() {
-                log::error!("Failed to trigger shutdown of video forwarding HTTP server");
+                error!("Failed to trigger shutdown of video forwarding HTTP server");
             }
         };
 
@@ -127,13 +128,13 @@ where
             let shutdown_result = server
                 .with_graceful_shutdown(async move {
                     if shutdown_rx.await.is_err() {
-                        log::error!("Failed to receive video forwarding termination signal");
+                        error!("Failed to receive video forwarding termination signal");
                     }
                 })
                 .await;
 
             if let Err(e) = shutdown_result {
-                log::error!("Video forwarding server terminated with error: {}", e);
+                error!("Video forwarding server terminated with error: {}", e);
             }
         };
 

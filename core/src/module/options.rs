@@ -12,6 +12,7 @@ use mongodb::options::{CreateCollectionOptions, CreateIndexOptions, IndexOptions
 use mongodb::{Client, Collection, Database, IndexModel};
 use std::time::Duration;
 use structopt::StructOpt;
+use tracing::{trace, warn};
 
 /// Options for connecting to the Redis server
 #[derive(Debug, StructOpt)]
@@ -100,12 +101,16 @@ impl MongoDBOptions {
             .build();
 
         let upsert_collection = async {
+            trace!("Attempting to create main collection");
             if let Err(e) = database.create_collection(&self.collection, options).await {
                 if let ErrorKind::Command(ce) = (*e.kind).clone() {
                     if ce.code == 48 {
+                        trace!("Main collection already exists");
                         return Ok(());
                     }
                 }
+
+                warn!(error = ?e, "Failed to create main collection");
                 return Err(e);
             }
 
@@ -121,15 +126,19 @@ impl MongoDBOptions {
         database: &Database,
     ) -> mongodb::error::Result<Collection<SessionMetadata>> {
         let upsert_collection = async {
+            trace!("Attempting to create staging collection");
             if let Err(e) = database
                 .create_collection(&self.staging_collection, CreateCollectionOptions::default())
                 .await
             {
                 if let ErrorKind::Command(ce) = (*e.kind).clone() {
                     if ce.code == 48 {
+                        trace!("Staging collection already exists");
                         return Ok(());
                     }
                 }
+
+                warn!(error = ?e, "Failed to create staging collection");
                 return Err(e);
             }
 
@@ -148,6 +157,7 @@ impl MongoDBOptions {
             )
             .build();
 
+        trace!("Ensuring that staging TTL index exists");
         collection
             .create_index(index_model, CreateIndexOptions::default())
             .await?;

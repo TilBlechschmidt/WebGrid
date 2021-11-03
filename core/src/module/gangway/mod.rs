@@ -23,6 +23,7 @@ mod services;
 
 pub use options::Options;
 use services::*;
+use tracing::debug;
 
 /// Module implementation
 pub struct Gangway {
@@ -82,6 +83,7 @@ impl Module for Gangway {
         );
 
         // Schedule everything
+        debug!("Scheduling jobs");
         schedule!(scheduler, {
             discovery_job,
             proxy_job,

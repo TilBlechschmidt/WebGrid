@@ -8,6 +8,7 @@ use async_trait::async_trait;
 use hyper::Server;
 use jatsl::Job;
 use std::net::SocketAddr;
+use tracing::info;
 
 use self::{create::SessionCreationResponder, session::SessionForwardingResponder};
 use super::SessionCreationCommunicationHandle;
@@ -77,6 +78,7 @@ where
         let server = Server::try_bind(&addr)?.serve(make_svc);
         let graceful = server.with_graceful_shutdown(manager.termination_signal());
 
+        info!(?addr, "Serving WebGrid");
         manager.ready().await;
         graceful.await?;
 

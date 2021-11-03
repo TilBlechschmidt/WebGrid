@@ -35,8 +35,13 @@ macro_rules! responder_chain {
     };
 
     ($parts:expr, $body:expr, $ip:expr, { $last:ident$(,)? }) => {
-        $last.respond($parts, $body, $ip, move |_, _, _| async move {
+        $last.respond($parts, $body, $ip, move |parts, _, ip| async move {
             use hyper::http::{Response, StatusCode};
+            use tracing::warn;
+
+            let method = parts.method.to_string();
+            let path = parts.uri.path_and_query().map(|p| p.to_string()).unwrap_or_default();
+            warn!(?ip, ?method, ?path, "No responder handled request");
 
             Ok(Response::builder()
                 .status(StatusCode::NOT_FOUND)
@@ -55,6 +60,7 @@ macro_rules! make_responder_chain_service_fn {
         {
             use hyper::{server::conn::AddrStream, service::{make_service_fn, service_fn}};
             use std::{sync::Arc, convert::Infallible};
+            use tracing::debug;
 
             paste::paste! {
                 $(
@@ -81,6 +87,8 @@ macro_rules! make_responder_chain_service_fn {
                             async move {
                                 let (parts, body) = req.into_parts();
                                 let ip = addr.ip();
+
+                                debug!(?ip, method = ?parts.method.to_string(), path = ?parts.uri.path_and_query().map(|p| p.to_string()).unwrap_or_default(), "Received request");
 
                                 responder_chain!(parts, body, ip, {
                                     $(

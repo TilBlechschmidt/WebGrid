@@ -6,6 +6,7 @@ use jatsl::{Job, JobManager};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::sleep;
+use tracing::debug;
 
 /// Ensures the internal managed session list is in agreement with the hardware
 pub struct HardwareSynchronisationService<S: SessionProvisioner> {
@@ -40,14 +41,16 @@ where
         loop {
             sleep(self.interval).await;
 
-            if let Err(e) = self.provisioner.purge_terminated().await {
-                log::warn!("Failed to purge terminated jobs: {}", e);
-            }
+            self.provisioner.purge_terminated().await?;
 
-            match self.provisioner.alive_sessions().await {
-                Ok(alive_sessions) => self.state.release_dead_sessions(alive_sessions).await,
-                Err(e) => log::warn!("Failed to fetch alive sessions from provisioner: {}", e),
-            }
+            let alive_sessions = self.provisioner.alive_sessions().await?;
+            let count = alive_sessions.len();
+            self.state.release_dead_sessions(alive_sessions).await;
+
+            debug!(
+                alive_count = count,
+                "Executed hardware synchronization cycle"
+            );
         }
     }
 }

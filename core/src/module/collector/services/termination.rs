@@ -6,6 +6,7 @@ use crate::library::communication::CommunicationFactory;
 use crate::library::EmptyResult;
 use async_trait::async_trait;
 use mongodb::Collection;
+use tracing::debug;
 
 pub struct TerminationWatcherService {
     collection: Collection<SessionMetadata>,
@@ -34,6 +35,8 @@ impl Consumer for TerminationWatcherService {
     type Notification = SessionTerminatedNotification;
 
     async fn consume(&self, notification: NotificationFrame<Self::Notification>) -> EmptyResult {
+        debug!(id = ?notification.id, terminated_at = ?notification.publication_time(), reason = ?notification.reason, "Session terminated");
+
         let query = mongodb::bson::doc! { "_id": notification.id };
         let mut metadata = self
             .staging_collection

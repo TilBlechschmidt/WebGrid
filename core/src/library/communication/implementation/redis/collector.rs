@@ -14,6 +14,7 @@ use redis::AsyncCommands;
 use std::convert::TryInto;
 use std::time::Duration;
 use std::time::Instant;
+use tracing::{instrument, trace, warn};
 
 /// Response collector implementation using [Redis Lists](https://redis.io/topics/data-types#lists)
 pub struct RedisResponseCollector<F: RedisFactory> {
@@ -32,28 +33,36 @@ impl<F> RawResponseCollector for RedisResponseCollector<F>
 where
     F: RedisFactory + Send + Sync,
 {
+    #[instrument(err, skip(self))]
     async fn collect_raw(
         &self,
         location: ResponseLocation,
         limit: Option<usize>,
         timeout: ResponseCollectionTimeout,
     ) -> Result<BoxStream<Result<Vec<u8>, BoxedError>>, BoxedError> {
+        trace!("Acquiring connection");
         let connection = self
             .connection_factory
             .connection(RedisConnectionVariant::Pooled)
             .await?;
         let timeout_tracker = TimeoutTracker::new(timeout);
 
+        trace!("Building stream");
         let stream = stream::unfold(
             (connection, timeout_tracker, limit),
             move |(mut con, mut timeout_tracker, mut remaining_limit)| {
                 let key = format!("{}{}", RESPONSE_KEY_PREFIX, location);
+                trace!(?key, "Collecting next item");
+
                 async move {
                     if remaining_limit == Some(0) {
+                        trace!("Hit collection limit");
                         None
                     } else if let Some(remaining_timeout) = timeout_tracker.current_timeout_secs() {
                         let remaining_timeout: usize =
                             remaining_timeout.try_into().unwrap_or_default();
+
+                        trace!(remaining_timeout, "Awaiting next result");
 
                         let result = con
                             .blpop::<_, Option<(String, Vec<u8>)>>(&key, remaining_timeout)
@@ -70,12 +79,21 @@ where
                         // Handle the timeout expiring while we are blocking (aka Ok(None))
                         match result {
                             Ok(Some(response)) => {
+                                trace!(byte_count = response.len(), "Emitting response");
                                 Some((Ok(response), (con, timeout_tracker, remaining_limit)))
                             }
-                            Err(e) => Some((Err(e), (con, timeout_tracker, remaining_limit))),
-                            /* Ok(None) */ _ => None,
+                            Err(error) => {
+                                warn!(?error, "Encountered error while collecting response");
+                                Some((Err(error), (con, timeout_tracker, remaining_limit)))
+                            }
+                            /* Ok(None) */
+                            _ => {
+                                trace!("Encountered timeout while collecting response");
+                                None
+                            }
                         }
                     } else {
+                        trace!("Hit collection timeout");
                         None
                     }
                 }

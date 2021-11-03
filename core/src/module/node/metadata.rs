@@ -10,6 +10,7 @@ use async_trait::async_trait;
 use jatsl::{Job, JobManager};
 use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
+use tracing::trace;
 
 pub struct MetadataPublisherJob {
     id: SessionIdentifier,
@@ -30,7 +31,7 @@ impl MetadataPublisherJob {
         }
     }
 
-    async fn publish_notifications<P: NotificationPublisher>(&self, publisher: P) {
+    async fn publish_notifications<P: NotificationPublisher>(&self, publisher: P) -> EmptyResult {
         let mut receiver = self.receiver.lock().await;
 
         while let Some(metadata) = receiver.recv().await {
@@ -39,13 +40,11 @@ impl MetadataPublisherJob {
                 metadata,
             };
 
-            if let Err(e) = publisher.publish(&notification).await {
-                log::error!(
-                    "Failed to publish SessionMetadataModifiedNotification: {}",
-                    e
-                );
-            }
+            trace!("Publishing metadata modificatio notification");
+            publisher.publish(&notification).await?;
         }
+
+        Ok(())
     }
 }
 
@@ -61,7 +60,7 @@ impl Job for MetadataPublisherJob {
 
         manager.ready().await;
 
-        self.publish_notifications(publisher).await;
+        self.publish_notifications(publisher).await?;
 
         if manager.termination_signal_triggered() {
             Ok(())

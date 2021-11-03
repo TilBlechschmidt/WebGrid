@@ -1,6 +1,6 @@
-use crate::domain::event::SessionIdentifier;
+use crate::domain::{event::SessionIdentifier, storage_path};
 use crate::library::http::{MatchableString, Responder};
-use crate::library::storage::{storage_path, StorageBackend};
+use crate::library::storage::StorageBackend;
 use async_trait::async_trait;
 use futures::Future;
 use http::Method;

@@ -173,12 +173,11 @@ impl Drop for MockNotificationPublisher {
         if !std::thread::panicking() {
             let remaining = self.remaining.load(Ordering::SeqCst);
 
-            if self.mode != ExpectationMode::Ignore && remaining > 0 {
-                panic!(
-                    "MockNotificationPublisher was dropped with {} expected notifications remaining",
-                    remaining
-                );
-            }
+            assert!(
+                !(self.mode != ExpectationMode::Ignore && remaining > 0),
+                "MockNotificationPublisher was dropped with {} expected notifications remaining",
+                remaining
+            );
         }
     }
 }

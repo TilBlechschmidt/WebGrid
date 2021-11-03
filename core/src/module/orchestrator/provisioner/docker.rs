@@ -16,7 +16,7 @@ use bollard::models::HostConfig;
 use bollard::Docker;
 use futures::StreamExt;
 use thiserror::Error;
-use tracing::debug;
+use tracing::{debug, instrument, warn};
 use uuid::Uuid;
 
 #[derive(Error, Debug)]
@@ -56,13 +56,11 @@ impl DockerProvisioner {
         log: String,
     ) -> Result<Self, bollard::errors::Error> {
         if images.is_empty() {
-            log::warn!("No images provided! Orchestrator won't be able to schedule nodes.");
+            warn!("No images provided to provisioner. It won't be able to launch any sessions!");
         }
 
         let connection = Docker::connect_with_local_defaults()?;
         let instance = Uuid::new_v4();
-
-        log::info!("Operating with provisioner instance ID {}", instance);
 
         Ok(Self {
             docker: connection,
@@ -74,6 +72,7 @@ impl DockerProvisioner {
         })
     }
 
+    #[instrument(err, skip(self))]
     async fn pull_image(&self, image: &str) -> Result<(), bollard::errors::Error> {
         let options = Some(CreateImageOptions {
             from_image: image,
@@ -82,10 +81,8 @@ impl DockerProvisioner {
 
         // Check if the image is available locally
         if self.docker.inspect_image(image).await.is_ok() {
-            log::debug!("Using locally cached image for {}", image);
+            debug!("Image available locally");
             return Ok(());
-        } else {
-            log::debug!("Pulling image for {}", image);
         }
 
         // Attempt to pull the requested image
@@ -98,6 +95,7 @@ impl DockerProvisioner {
         Ok(())
     }
 
+    #[instrument(err, skip(self, raw_capabilities))]
     async fn create_container(
         &self,
         session_id: &SessionIdentifier,
@@ -150,12 +148,13 @@ impl DockerProvisioner {
             ..Default::default()
         };
 
-        debug!("Creating docker container {}", name);
+        debug!(?name, "Creating docker container");
         self.docker
             .create_container(options, config)
             .await
             .map_err(DockerProvisionerError::CreateContainerError)?;
 
+        debug!(?name, "Starting docker container");
         self.docker
             .start_container(&name, None::<StartContainerOptions<String>>)
             .await
@@ -168,11 +167,7 @@ impl DockerProvisioner {
     async fn list_running_containers(
         &self,
     ) -> Result<Vec<SessionIdentifier>, bollard::errors::Error> {
-        let instance_label_filter = format!(
-            "{}={}",
-            PROVISIONER_INSTANCE_LABEL,
-            self.instance.to_string()
-        );
+        let instance_label_filter = format!("{}={}", PROVISIONER_INSTANCE_LABEL, self.instance);
 
         let mut filters = HashMap::<&str, Vec<&str>>::new();
         filters.insert("label", vec![&instance_label_filter]);
@@ -182,7 +177,8 @@ impl DockerProvisioner {
             ..Default::default()
         };
 
-        Ok(self.docker
+        Ok(self
+            .docker
             .list_containers(Some(options))
             .await?
             .into_iter()
@@ -193,11 +189,7 @@ impl DockerProvisioner {
                     .map(|id| {
                         Uuid::from_str(id)
                             .map_err(|e| {
-                                log::warn!(
-                                    "Failed to parse session id from container label value '{}': {}",
-                                    id,
-                                    e
-                                )
+                                warn!(?id, ?e, "Failed to parse session id from container label",)
                             })
                             .ok()
                     })

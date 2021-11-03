@@ -1,12 +1,13 @@
 //! Various small helper functions
-
 use hyper::body;
 use hyper::{http::Uri, Client};
 use std::collections::HashSet;
 use std::convert::Infallible;
+use std::io::Read;
 use std::num::ParseIntError;
 use std::time::Duration;
 use tokio::time::{sleep, timeout};
+use tracing::{debug, instrument, trace};
 
 /// Splits the input string into two parts at the first occurence of the separator
 pub fn split_into_two(input: &str, separator: &'static str) -> Option<(String, String)> {
@@ -25,14 +26,18 @@ pub fn parse_browser_string(input: &str) -> Option<(String, String)> {
 }
 
 /// Reads a config file by name from the default config directory or one that is specified by the `WEBGRID_CONFIG_DIR` env variable.
+#[instrument]
 pub fn load_config(name: &str) -> Result<String, std::io::Error> {
-    use std::io::Read;
-
     let directory = std::env::var("WEBGRID_CONFIG_DIR").unwrap_or_else(|_| "/configs".to_string());
     let path = std::path::Path::new(&directory).join(name);
+
+    debug!(?path, "Loading config");
+
     let mut file = std::fs::File::open(path)?;
     let mut data = String::new();
     file.read_to_string(&mut data)?;
+
+    debug!(bytes = data.len(), "Loaded config");
 
     Ok(data)
 }
@@ -59,6 +64,7 @@ pub fn parse_string_list(src: &str) -> Result<HashSet<String>, Infallible> {
 }
 
 /// Sends HTTP requests to the specified URL until either a 200 OK response is received or the timeout is reached
+#[instrument]
 pub async fn wait_for(url: &str, timeout_duration: Duration) -> Result<String, ()> {
     let client = Client::new();
 
@@ -68,38 +74,40 @@ pub async fn wait_for(url: &str, timeout_duration: Duration) -> Result<String, (
     let request_timeout = Duration::from_millis(1000);
     let mut remaining_duration = timeout_duration;
 
-    log::debug!("Awaiting 200 OK response from {}", url);
+    debug!("Awaiting OK response");
 
     loop {
         let mut req = hyper::Request::new(hyper::Body::default());
         *req.uri_mut() = url.clone();
 
+        trace!("Sending request");
         let request = client.request(req);
-
-        log::trace!("Sending health-check request");
         let response = timeout(request_timeout, request).await;
 
-        // TODO Replace this once language support lands: Rust does not yet support boolean and let in the same IF statement.
-        if let Ok(Ok(res)) = response {
-            if res.status() == 200 {
-                return match body::to_bytes(res.into_body()).await {
-                    Ok(bytes) => {
-                        Ok(String::from_utf8(bytes.to_vec()).unwrap_or_else(|_| "".to_string()))
-                    }
-                    Err(_) => Ok("".to_string()),
-                };
-            }
+        match response {
+            Ok(Ok(res)) => {
+                trace!(status = ?res.status(), "Received response");
 
-            log::trace!("Received response with status != 200");
-        } else {
-            log::trace!("Unable to send request to node! {:?}", response);
+                if res.status() == 200 {
+                    debug!("Endpoint became healthy");
+                    return match body::to_bytes(res.into_body()).await {
+                        Ok(bytes) => Ok(
+                            String::from_utf8(bytes.to_vec()).unwrap_or_else(|_| "".to_string())
+                        ),
+                        Err(_) => Ok("".to_string()),
+                    };
+                }
+            }
+            Ok(Err(error)) => trace!(?error, "Request failed"),
+            Err(_) => trace!("Request timed out"),
         }
 
         if remaining_duration.as_secs() == 0 {
-            log::debug!("Timeout while waiting for {}", url);
+            debug!("Wait timeout reached");
             return Err(());
         }
 
+        trace!(delay = check_interval.as_secs(), "Delaying next request");
         sleep(check_interval).await;
         remaining_duration -= check_interval;
     }

@@ -143,6 +143,7 @@ impl Responder for SessionCreationResponder {
         self.handle.status_listeners.lock().await.put(id, status_tx);
 
         // Send the notification and handle potential errors
+        #[allow(clippy::question_mark)]
         if self.handle.creation_tx.send(notification).is_err() {
             return Ok(self.new_error_response(id, CreationNotificationPublishFailed));
         }

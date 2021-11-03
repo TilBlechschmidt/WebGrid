@@ -1,6 +1,6 @@
-use crate::domain::event::SessionIdentifier;
+use crate::domain::{event::SessionIdentifier, storage_path};
 use crate::library::http::Responder;
-use crate::library::storage::{storage_path, StorageBackend};
+use crate::library::storage::StorageBackend;
 use async_trait::async_trait;
 use futures::Future;
 use hyper::http::{request::Parts, Method, Response, StatusCode};
@@ -10,6 +10,7 @@ use std::net::IpAddr;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use tokio::sync::Semaphore;
+use tracing::{trace, warn};
 
 pub struct StorageResponder<S: StorageBackend> {
     byte_count_total: Arc<AtomicUsize>,
@@ -38,8 +39,6 @@ where
     #[inline]
     fn new_error_response(&self, message: &str) -> Response<Body> {
         let error = format!("unable to process request: {}", message);
-
-        log::warn!("Unable to store video file: {}", message);
 
         Response::builder()
             .status(StatusCode::INTERNAL_SERVER_ERROR)
@@ -74,8 +73,6 @@ where
         F: FnOnce(Parts, Body, IpAddr) -> Fut + Send,
     {
         if client_ip.is_loopback() && parts.method == Method::PUT {
-            log::debug!("Storage PUT {}", parts.uri.path());
-
             // Make sure we serve all requests in-sequence to prevent race conditions
             let _permit = self.semaphore.acquire().await;
 
@@ -91,8 +88,10 @@ where
                         .into_owned();
 
                     if let Err(e) = self.storage.put_object(&path, &content).await {
+                        warn!(error = ?e, "Failed to write video fragment");
                         Ok(self.new_error_response(&format!("object not writable {}", e)))
                     } else {
+                        trace!(?path, "Stored video fragment");
                         Ok(self.new_response())
                     }
                 }

@@ -1,7 +1,7 @@
 use anyhow::Result;
-use log::info;
-use options::Command;
+use options::{Command, LogFormat};
 use structopt::StructOpt;
+use tracing::info;
 use webgrid::harness::ModuleRunner;
 use webgrid::module::api::Api;
 use webgrid::module::collector::Collector;
@@ -11,7 +11,6 @@ use webgrid::module::node::Node;
 use webgrid::module::orchestrator::Orchestrator;
 
 mod options;
-mod telemetry;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -34,24 +33,22 @@ async fn main() -> Result<()> {
 async fn init() -> Result<(options::Command, ModuleRunner)> {
     let options = options::MainOptions::from_args();
 
-    pretty_env_logger::formatted_timed_builder()
-        .parse_filters(&options.log)
-        .try_init()?;
+    let formatter = tracing_subscriber::fmt().with_env_filter(options.log);
 
-    if let Some(telemetry_endpoint) = options.telemetry_endpoint {
-        telemetry::try_init(&telemetry_endpoint)?;
-    }
+    match options.log_format {
+        LogFormat::Text => formatter.init(),
+        LogFormat::Compact => formatter.compact().init(),
+        LogFormat::Json => formatter.json().init(),
+    };
 
     let runner = match options.status_server {
         Some(port) => ModuleRunner::new_with_status_server(port),
         None => ModuleRunner::default(),
     };
 
-    info!("{}", env!("WEBGRID_VERSION"));
+    info!("WebGrid {}", env!("WEBGRID_VERSION"));
 
     Ok((options.command, runner))
 }
 
-fn deinit() {
-    telemetry::flush();
-}
+fn deinit() {}

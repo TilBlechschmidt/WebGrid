@@ -7,6 +7,7 @@ use crate::library::EmptyResult;
 use async_trait::async_trait;
 use mongodb::bson::Document;
 use mongodb::Collection;
+use tracing::{debug, trace};
 
 pub struct MetadataWatcherService {
     collection: Collection<SessionMetadata>,
@@ -35,6 +36,8 @@ impl Consumer for MetadataWatcherService {
     async fn consume(&self, notification: NotificationFrame<Self::Notification>) -> EmptyResult {
         let mut update = Document::new();
 
+        debug!(id = ?notification.id, metadata = ?notification.metadata, "Received session metadata patch");
+
         for (key, value) in notification.metadata.iter() {
             update.insert(format!("clientMetadata.{}", key), value);
         }
@@ -48,6 +51,8 @@ impl Consumer for MetadataWatcherService {
                 None,
             )
             .await?;
+
+        trace!("Patched metadata object");
 
         Ok(())
     }

@@ -38,8 +38,10 @@ pub struct OrchestratorOptions {
 #[derive(Debug, StructOpt)]
 pub enum ProvisionerCommand {
     /// Utilizes K8s Jobs to provision browsers
+    #[cfg(feature = "kubernetes")]
     Kubernetes(KubernetesOptions),
     /// Creates browsers by dispatching docker containers
+    #[cfg(feature = "docker")]
     Docker(DockerOptions),
 }
 

@@ -1,4 +1,5 @@
 use crate::domain::event::SessionClientMetadata;
+use crate::harness::HeartStone;
 use crate::library::http::Responder;
 use async_trait::async_trait;
 use futures::Future;
@@ -10,8 +11,11 @@ use hyper::{
 use serde_json::json;
 use std::convert::Infallible;
 use std::net::IpAddr;
+use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::mpsc::UnboundedSender;
+use tokio::sync::Mutex;
+use tracing::debug;
 
 #[derive(Debug, Error)]
 enum MetadataExtensionInterceptorError {
@@ -26,13 +30,19 @@ enum MetadataExtensionInterceptorError {
 pub struct MetadataExtensionInterceptor {
     metadata_tx: UnboundedSender<SessionClientMetadata>,
     session_id: String,
+    heart_stone: Arc<Mutex<HeartStone>>,
 }
 
 impl MetadataExtensionInterceptor {
-    pub fn new(metadata_tx: UnboundedSender<SessionClientMetadata>, session_id: String) -> Self {
+    pub fn new(
+        metadata_tx: UnboundedSender<SessionClientMetadata>,
+        heart_stone: HeartStone,
+        session_id: String,
+    ) -> Self {
         Self {
             metadata_tx,
             session_id,
+            heart_stone: Arc::new(Mutex::new(heart_stone)),
         }
     }
 
@@ -40,6 +50,7 @@ impl MetadataExtensionInterceptor {
         let bytes = to_bytes(body).await?;
         let metadata: SessionClientMetadata = serde_json::from_slice(&bytes)?;
 
+        debug!(?metadata, "Received metadata from client");
         self.metadata_tx.send(metadata)?;
 
         Ok(())
@@ -60,6 +71,9 @@ impl Responder for MetadataExtensionInterceptor {
         Fut: Future<Output = Result<Response<Body>, Infallible>> + Send,
         F: FnOnce(Parts, Body, IpAddr) -> Fut + Send,
     {
+        // Reset the lifetime
+        self.heart_stone.lock().await.reset_lifetime().await;
+
         // Verify the method is POST
         if parts.method != Method::POST {
             return next(parts, body, client_ip).await;

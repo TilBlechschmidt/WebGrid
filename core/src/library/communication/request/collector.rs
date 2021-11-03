@@ -7,7 +7,7 @@ use serde::de::DeserializeOwned;
 use std::time::Duration;
 
 /// Timeout structure for response collection
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum ResponseCollectionTimeout {
     /// Block until the provided limit is reached
     None,

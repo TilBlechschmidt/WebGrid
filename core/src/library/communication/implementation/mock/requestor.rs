@@ -121,12 +121,11 @@ impl Drop for MockRequestor {
         if !std::thread::panicking() {
             let remaining = self.remaining.load(Ordering::SeqCst);
 
-            if remaining > 0 {
-                panic!(
-                    "MockRequestor was dropped with {} expected requests remaining",
-                    remaining
-                );
-            }
+            assert!(
+                remaining == 0,
+                "MockRequestor was dropped with {} expected requests remaining",
+                remaining
+            );
         }
     }
 }

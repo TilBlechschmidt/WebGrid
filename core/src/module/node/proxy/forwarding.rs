@@ -1,3 +1,4 @@
+use crate::harness::HeartStone;
 use crate::library::http::{forward_request, MatchableString, Responder};
 use async_trait::async_trait;
 use futures::Future;
@@ -10,6 +11,8 @@ use hyper::http::{
 use hyper::{Body, Client, StatusCode};
 use std::convert::Infallible;
 use std::net::IpAddr;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 const SESSION_PREFIX: &str = "/session/";
 
@@ -19,6 +22,7 @@ pub struct ForwardingResponder {
     authority: String,
     session_id_internal: String,
     session_id_external: String,
+    heart_stone: Arc<Mutex<HeartStone>>,
 }
 
 impl ForwardingResponder {
@@ -27,6 +31,7 @@ impl ForwardingResponder {
         authority: String,
         session_id_internal: String,
         session_id_external: String,
+        heart_stone: HeartStone,
     ) -> Self {
         Self {
             client: Client::new(),
@@ -34,6 +39,7 @@ impl ForwardingResponder {
             authority,
             session_id_internal,
             session_id_external,
+            heart_stone: Arc::new(Mutex::new(heart_stone)),
         }
     }
 
@@ -92,6 +98,9 @@ impl Responder for ForwardingResponder {
         Fut: Future<Output = Result<Response<Body>, Infallible>> + Send,
         F: FnOnce(Parts, Body, IpAddr) -> Fut + Send,
     {
+        // Reset the lifetime
+        self.heart_stone.lock().await.reset_lifetime().await;
+
         // Check if we have a matching path and build the target URI
         let matched_uri = self.match_request(&parts).map(|r| self.build_uri(r));
 

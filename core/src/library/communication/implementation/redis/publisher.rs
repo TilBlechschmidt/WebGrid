@@ -9,6 +9,7 @@ use super::{RedisConnectionVariant, RedisFactory};
 use async_trait::async_trait;
 use redis::streams::StreamMaxlen;
 use redis::AsyncCommands;
+use tracing::{instrument, trace};
 
 use super::STREAM_ID_NEW;
 use super::STREAM_PAYLOAD_KEY;
@@ -40,6 +41,7 @@ impl<F> RawNotificationPublisher for RedisPublisher<F>
 where
     F: RedisFactory + Send + Sync,
 {
+    #[instrument(skip(self, data, descriptor, extension))]
     async fn publish_raw(
         &self,
         data: &[u8],
@@ -52,11 +54,13 @@ where
             None => descriptor.key().to_owned(),
         };
 
+        trace!("Acquiring connection to publish raw notification");
         let mut con = self
             .factory
             .connection(RedisConnectionVariant::Multiplexed)
             .await?;
 
+        trace!(?key, "Adding notification item to stream");
         con.xadd_maxlen::<_, _, _, _, ()>(key, limit, STREAM_ID_NEW, &[(STREAM_PAYLOAD_KEY, data)])
             .await?;
 
@@ -69,14 +73,18 @@ impl<F> RawResponsePublisher for RedisPublisher<F>
 where
     F: RedisFactory + Send + Sync,
 {
+    #[instrument(skip(self, data, location))]
     async fn publish_raw(&self, data: &[u8], location: ResponseLocation) -> EmptyResult {
         let key = format!("{}{}", RESPONSE_KEY_PREFIX, location);
+
+        trace!("Acquiring connection to publish raw notification");
         let mut con = self
             .factory
             .connection(RedisConnectionVariant::Multiplexed)
             .await?;
 
         // Set the response and make sure it gets cleaned up at some point
+        trace!(?key, "Setting response");
         redis::pipe()
             .rpush(&key, data)
             .expire(&key, 60)

@@ -22,6 +22,7 @@ use futures::StreamExt;
 use futures::TryStreamExt;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use tracing::{instrument, trace};
 
 /// Marker trait providing a default [`NotificationPublisher`] implementation based on [`serde_json`]
 pub trait JsonNotificationPublisher: RawNotificationPublisher + Send + Sync {}
@@ -32,19 +33,23 @@ where
     P: JsonNotificationPublisher,
 {
     /// Serializes the notification using [`serde_json::to_string`]
+    #[instrument(err, skip(self))]
     async fn publish<N: Notification + Send + Sync>(&self, notification: &N) -> EmptyResult {
         let framed = NotificationFrame::new(notification);
+        trace!("Serializing notification");
         let data = serde_json::to_string(&framed)?;
         self.publish_raw(data.as_bytes(), N::queue(), None).await
     }
 
     /// Serializes the notification using [`serde_json::to_string`]
+    #[instrument(err, skip(self))]
     async fn publish_with_extension<N: Notification + Send + Sync>(
         &self,
         notification: &N,
         extension: QueueDescriptorExtension,
     ) -> EmptyResult {
         let framed = NotificationFrame::new(notification);
+        trace!("Serializing notification");
         let data = serde_json::to_string(&framed)?;
         self.publish_raw(data.as_bytes(), N::queue(), Some(extension))
             .await
@@ -59,10 +64,12 @@ where
     E: JsonQueueEntry,
 {
     /// Parses the payload using [`serde_json::from_slice`]
+    #[instrument(err, skip(self), fields(payload = std::any::type_name::<T>()))]
     fn parse_payload<'a, T>(&'a self) -> Result<NotificationFrame<T>, BoxedError>
     where
         T: Deserialize<'a>,
     {
+        trace!("Deserializing payload");
         serde_json::from_slice(self.payload()).map_err(Into::into)
     }
 }
@@ -76,16 +83,21 @@ where
     C: JsonResponseCollector,
 {
     /// Parses the payload using [`serde_json::from_slice`]
+    #[instrument(err, skip(self), fields(response = std::any::type_name::<R>()))]
     async fn collect<R: DeserializeOwned + Send + Sync>(
         &self,
         location: ResponseLocation,
         limit: Option<usize>,
         timeout: ResponseCollectionTimeout,
     ) -> Result<BoxStream<Result<R, BoxedError>>, BoxedError> {
+        trace!("Creating response stream");
         let stream = self
             .collect_raw(location, limit, timeout)
             .await?
-            .and_then(|bytes| async move { serde_json::from_slice(&bytes).map_err(Into::into) })
+            .and_then(|bytes| async move {
+                trace!("Deserializing response");
+                serde_json::from_slice(&bytes).map_err(Into::into)
+            })
             .boxed();
 
         Ok(stream)
@@ -101,11 +113,13 @@ where
     P: JsonResponsePublisher,
 {
     /// Serializes the response using [`serde_json::to_string`]
+    #[instrument(skip(self, response), fields(response = std::any::type_name::<R>()))]
     async fn publish<R: Send + Sync + Serialize>(
         &self,
         response: &R,
         location: ResponseLocation,
     ) -> EmptyResult {
+        trace!("Serializing response");
         let data = serde_json::to_string(response)?;
         self.publish_raw(data.as_bytes(), location).await
     }

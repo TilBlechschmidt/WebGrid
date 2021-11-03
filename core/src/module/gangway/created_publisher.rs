@@ -8,6 +8,7 @@ use async_trait::async_trait;
 use jatsl::{Job, JobManager};
 use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
+use tracing::{error, trace};
 
 pub struct CreatedNotificationPublisherJob {
     receiver: Mutex<mpsc::UnboundedReceiver<SessionCreatedNotification>>,
@@ -29,8 +30,9 @@ impl CreatedNotificationPublisherJob {
         let mut receiver = self.receiver.lock().await;
 
         while let Some(notification) = receiver.recv().await {
-            if let Err(e) = publisher.publish(&notification).await {
-                log::error!("Failed to publish SessionCreatedNotification: {}", e);
+            trace!(id = ?notification.id, "Publishing created notification");
+            if let Err(error) = publisher.publish(&notification).await {
+                error!(?error, "Failed to publish SessionCreatedNotification");
             }
         }
     }

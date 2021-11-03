@@ -7,7 +7,6 @@ use futures::{
     prelude::*,
     select,
 };
-use log::{debug, error, info};
 use std::{
     fmt,
     fmt::{Error as FmtError, Formatter},
@@ -19,6 +18,7 @@ use tokio::signal::{
     unix::{signal, SignalKind},
 };
 use tokio::time::sleep;
+use tracing::{debug, error, instrument, trace, warn};
 
 /// Reason why the heart stopped beating
 #[derive(Debug, Clone)]
@@ -78,28 +78,32 @@ impl Heart {
 
     /// Reduces the next lifetime timeout by artificially shifting the beginning of the current period.
     /// This allows e.g. shorter initial lifetimes.
-    pub async fn reduce_next_lifetime(&mut self, new_lifetime: Duration) {
+    #[instrument(skip(self))]
+    pub async fn reduce_next_lifetime(&mut self, next_lifetime: Duration) {
         if let Some(lifetime) = self.lifetime {
-            *self.lifetime_start.lock().await = Instant::now() - lifetime + new_lifetime;
+            debug!("Reducing next lifetime");
+            *self.lifetime_start.lock().await = Instant::now() - lifetime + next_lifetime;
         } else {
-            log::error!("Attempted to reduce non-existent lifetime");
+            warn!("Attempted to reduce non-existent lifetime");
         }
     }
 
     /// Future that waits until the heart dies for the returned reason
+    #[instrument(skip(self))]
     pub async fn death(&mut self) -> DeathReason {
+        debug!("Awaiting death of heart");
+
         let mut age_future = match self.lifetime {
             Some(lifetime) => Heart::lifetime_watch(lifetime, self.lifetime_start.clone()).boxed(),
             None => futures::future::pending().boxed(),
         }
         .fuse();
 
-        debug!("Heart starts beating");
-
         loop {
             select! {
                 interaction = self.rx.next() => {
                     if let Some(interaction) = interaction {
+                        trace!(?interaction, "Received interaction with heart");
                         match interaction {
                             HeartInteraction::Kill(reason) => return DeathReason::Killed(reason),
                             HeartInteraction::Rejuvenate => {
@@ -108,17 +112,19 @@ impl Heart {
                         }
                     }
                 },
-                () = age_future => return DeathReason::LifetimeExceeded,
-                () = Heart::termination_signal().fuse() => return DeathReason::Terminated,
+                () = age_future => {
+                    debug!("Lifetime of heart has been exceeded");
+                    return DeathReason::LifetimeExceeded
+                },
+                () = Heart::termination_signal().fuse() => {
+                    debug!("Heart has been terminated externally");
+                    return DeathReason::Terminated
+                },
             };
         }
     }
 
     fn internal_new(lifetime: Option<Duration>) -> (Self, HeartStone) {
-        if let Some(lifetime) = lifetime {
-            info!("Lifetime set to {} seconds", lifetime.as_secs());
-        }
-
         let (tx, rx) = channel(2);
         let heart = Self {
             rx,
@@ -168,18 +174,24 @@ impl HeartStone {
     }
 
     /// Kill the associated heart
+    #[instrument(skip(self))]
     pub async fn kill(&mut self, reason: String) {
+        debug!(?reason, "Killing heart");
         self.send(HeartInteraction::Kill(reason)).await;
     }
 
     /// Reset the lifetime of the associated heart
+    #[instrument(skip(self))]
     pub async fn reset_lifetime(&mut self) {
+        debug!("Rejuvenating heart");
         self.send(HeartInteraction::Rejuvenate).await;
     }
 
+    #[instrument(skip(self))]
     async fn send(&mut self, interaction: HeartInteraction) {
-        if let Err(e) = self.remote.send(interaction).await {
-            error!("Failed to interact with Heart: {}", e);
+        trace!("Sending interaction to heart");
+        if let Err(error) = self.remote.send(interaction).await {
+            error!(?error, "Failed to send interaction to heart");
         }
     }
 }

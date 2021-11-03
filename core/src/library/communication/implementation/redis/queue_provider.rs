@@ -13,7 +13,6 @@ use futures::{
     stream::{self, BoxStream},
     StreamExt,
 };
-use log::error;
 use redis::aio::ConnectionLike;
 use redis::streams::StreamId;
 use redis::streams::StreamReadOptions;
@@ -22,6 +21,7 @@ use redis::AsyncCommands;
 use redis::RedisResult;
 use std::convert::TryInto;
 use std::time::Duration;
+use tracing::{debug, error, instrument, trace, warn};
 
 /// Queue provider implementation using [Redis Streams](https://redis.io/topics/streams-intro)
 pub struct RedisQueueProvider<F: RedisFactory + Send + Sync> {
@@ -49,6 +49,7 @@ where
     /// 2. Start streaming entries from the PEL until the queue head is reached
     /// 3. Wait for and stream new entries in a blocking manner
     /// 4. Bail if no messages has been received within `idle_timeout` or block indefinitely
+    #[instrument(skip(self, extension, queue))]
     async fn consume(
         &self,
         queue: QueueDescriptor,
@@ -63,13 +64,17 @@ where
             None => queue.key().to_owned(),
         };
 
+        debug!(?key, "Consuming redis stream");
+
         // Create a redis connection for the blocking XREADGROUP command
+        trace!("Acquiring redis connection for stream consumption");
         let mut con = self
             .factory
             .connection(RedisConnectionVariant::Owned)
             .await?;
 
         // Create the group if it does not exist
+        trace!("Creating consumer group");
         create_consumer_group(&mut con, &key, group).await;
 
         // Create the options for reading from the stream
@@ -83,13 +88,16 @@ where
             .block(block_duration);
 
         // Create a consumer for reading from the stream
+        trace!("Creating consumer");
         let entry_stream = xread_stream(con, read_options, key.clone());
 
         // Create an auxiliary stream that infinitely creates handles to a shared redis connection
         // It will be used to associate a connection with the QueueItems in order to acknowledge them
+        trace!("Acquiring acknowledge connection stream");
         let ack_con_stream = shared_redis_stream(&self.factory);
 
         // Combine the two streams and assemble the QueueItem from all the parts
+        trace!("Assembling final stream");
         let stream = entry_stream
             .zip(ack_con_stream)
             .map(build_redis_queue_entry(key, group))
@@ -157,6 +165,7 @@ fn xread_stream<'a, C: ConnectionLike + Send + Sync + 'a>(
         let key = key.to_owned();
 
         async move {
+            trace!(?key, "Awaiting XREAD_OPTIONS");
             let result = con
                 .xread_options::<_, _, StreamReadReply>(&[&key], &[&id], &options)
                 .await;
@@ -168,27 +177,31 @@ fn xread_stream<'a, C: ConnectionLike + Send + Sync + 'a>(
 
                         // If we are already operating on "latest" then continue doing so
                         if id == STREAM_ID_ADDITIONS {
+                            debug!("Received queue item from stream tail");
                             Some((Ok(stream.ids), (con, options, id)))
                         }
                         // If we are processing pending messages after a crash and have more, run through them
                         else if let Some(next_id) =
                             stream.ids.last().map(|entry| entry.id.to_owned())
                         {
+                            debug!("Received pending messages, more remaining");
                             Some((Ok(stream.ids), (con, options, next_id)))
                         }
                         // If we have finished processing pending messages after a crash, move to "latest"
                         else {
+                            debug!("Finished processing pending messages, switching to latest");
                             Some((
                                 Ok(stream.ids),
                                 (con, options, STREAM_ID_ADDITIONS.to_string()),
                             ))
                         }
                     } else {
+                        warn!("Received empty StreamReadReply");
                         None
                     }
                 }
-                Err(e) => {
-                    error!("Encountered error reading from redis stream {:?}", e);
+                Err(error) => {
+                    error!(?error, "Encountered error while receiving stream items");
                     None
                 }
             }

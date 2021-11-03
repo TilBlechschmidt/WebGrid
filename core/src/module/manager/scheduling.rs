@@ -14,6 +14,7 @@ use rand::{seq::SliceRandom, thread_rng};
 use std::collections::HashSet;
 use std::time::Duration;
 use thiserror::Error;
+use tracing::{debug, info, instrument, warn};
 
 const MATCHING_TIMEOUT: ResponseCollectionTimeout =
     ResponseCollectionTimeout::Split(Duration::from_secs(10), Duration::from_millis(100));
@@ -101,6 +102,8 @@ where
                 ));
             }
 
+            debug!(count = metadata.len(), "Publishing metadata values");
+
             let notification = SessionMetadataModifiedNotification {
                 id: notification.id,
                 metadata,
@@ -111,6 +114,7 @@ where
                 .await
                 .map_err(BlackboxError::from_boxed)?;
         } else if !self.required_metadata.is_empty() {
+            debug!("Required metadata is missing");
             return Err(SchedulingServiceError::MissingMandatoryMetadata(
                 self.required_metadata
                     .clone()
@@ -121,6 +125,7 @@ where
         }
 
         // Ask around for provisioners that can handle the requirements
+        debug!("Requesting available provisioners");
         let request = ProvisionerMatchRequest::new(capabilities);
         let mut responses = self
             .requestor
@@ -128,6 +133,7 @@ where
             .await?;
 
         // Provide some laymans load balancing until load factors are implemented
+        debug!(count = responses.len(), "Received available provisioners");
         responses.shuffle(&mut thread_rng());
 
         responses
@@ -144,11 +150,18 @@ where
 {
     type Notification = SessionCreatedNotification;
 
+    #[instrument(skip(self, notification), fields(id = ?notification.id))]
     async fn consume(&self, notification: NotificationFrame<Self::Notification>) -> EmptyResult {
+        debug!("Handling session creation");
+
         match self.handle_event(&notification).await {
-            Err(SchedulingServiceError::RequestFailure(e)) => Err(e.into()),
+            Err(SchedulingServiceError::RequestFailure(e)) => {
+                warn!(error = ?e, "Session scheduling failed");
+                Err(e.into())
+            }
             Err(e) => {
                 // Tell everybody that we have failed them :(
+                warn!(error = ?e, "Session scheduling failed");
                 let notification = SessionTerminatedNotification::new_for_startup_failure(
                     notification.id,
                     BlackboxError::new(e),
@@ -157,6 +170,8 @@ where
                 self.publisher.publish(&notification).await
             }
             Ok(provisioner) => {
+                info!(?provisioner, "Scheduled session");
+
                 // Let the provisioner know it has got a new job
                 let provisioner_queue_extension = provisioner.to_string();
                 let job_assignment_notification = ProvisioningJobAssignedNotification {

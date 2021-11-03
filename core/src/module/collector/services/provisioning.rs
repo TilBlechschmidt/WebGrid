@@ -6,6 +6,7 @@ use crate::library::communication::CommunicationFactory;
 use crate::library::EmptyResult;
 use async_trait::async_trait;
 use mongodb::Collection;
+use tracing::{debug, trace};
 
 pub struct ProvisioningWatcherService {
     collection: Collection<SessionMetadata>,
@@ -32,6 +33,8 @@ impl Consumer for ProvisioningWatcherService {
     type Notification = SessionProvisionedNotification;
 
     async fn consume(&self, notification: NotificationFrame<Self::Notification>) -> EmptyResult {
+        debug!(id = ?notification.id, provisioned_at = ?notification.publication_time(), "Session provisioned");
+
         self.collection
             .update_one(
                 mongodb::bson::doc! { "_id": notification.id },
@@ -43,6 +46,8 @@ impl Consumer for ProvisioningWatcherService {
                 None,
             )
             .await?;
+
+        trace!("Patched metadata object");
 
         Ok(())
     }

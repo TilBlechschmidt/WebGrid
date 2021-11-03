@@ -21,6 +21,7 @@ use tokio::{
     sync::{broadcast, mpsc, Mutex},
     time::{sleep_until, Instant},
 };
+use tracing::{debug, instrument, trace, warn};
 
 const MAX_DISCOVERY_RETRIES: u8 = 4;
 const DISCOVERY_REQUEST_TIMEOUT: Duration = Duration::from_millis(500);
@@ -55,6 +56,7 @@ where
 {
     /// Main loop which handles outgoing service queries and incoming announcements
     /// as well as cache operations.
+    #[instrument(skip(self, backend), fields(backend = std::any::type_name::<B>()))]
     pub async fn daemon_loop<B>(&self, backend: B)
     where
         B: PubSubServiceDiscoveryBackend<D>,
@@ -69,22 +71,36 @@ where
             select! {
                 request = request_rx.recv().fuse() => {
                     match request {
-                        Some(request) => backend.query(&request).await,
-                        None => break
+                        Some(request) => {
+                            trace!(request.service = ?request.service_identifier(), "Received service discovery request");
+                            backend.query(&request).await
+                        },
+                        None => {
+                            warn!("Service discovery request stream ended");
+                            break
+                        }
                     }
                 }
                 response = response_stream.next() => {
                     match response {
-                        Some(response) => self.handle_response(response).await,
-                        None => break
+                        Some(response) => {
+                            trace!(response.service = ?response.service.service_identifier(), ?response.endpoint, "Received service discovery response");
+                            self.handle_response(response).await
+                        },
+                        None => {
+                            warn!("Service discovery response stream ended");
+                            break
+                        }
                     }
                 }
             }
         }
     }
 
+    #[instrument(skip(self, response), fields(response.service = ?response.service.service_identifier(), ?response.endpoint))]
     async fn handle_response(&self, response: ServiceAnnouncement<D>) {
         // Insert the value into the cache
+        trace!("Inserting endpoint into cache");
         let mut cache = self.cache.lock().await;
         if let Some(entry) = cache.get_mut(&response.service) {
             entry.insert(response.endpoint.clone());
@@ -95,6 +111,7 @@ where
         }
 
         // Notify anybody waiting for the response
+        trace!("Notifying tasks waiting for response");
         self.response_tx.send(response).ok();
     }
 }
@@ -146,10 +163,12 @@ where
 {
     type I = PubSubDiscoveredServiceEndpoint<D>;
 
+    #[instrument(skip(self, descriptor), fields(service = ?descriptor.service_identifier()))]
     fn discover<'a>(&self, descriptor: D) -> BoxStream<'a, Result<Self::I, BoxedError>>
     where
         D: 'a,
     {
+        debug!("Starting new discovery workflow");
         let workflow = ServiceDiscoveryWorkflow {
             service: descriptor,
             cache: self.cache.clone(),
@@ -157,7 +176,6 @@ where
             response_rx: self.response_tx.subscribe(),
             request_tx: self.request_tx.clone(),
 
-            retries: 0,
             max_retries: MAX_DISCOVERY_RETRIES,
         };
 
@@ -183,7 +201,6 @@ struct ServiceDiscoveryWorkflow<D: ServiceDescriptor> {
     response_rx: broadcast::Receiver<ServiceAnnouncement<D>>,
     request_tx: mpsc::Sender<D>,
 
-    retries: u8,
     max_retries: u8,
 }
 
@@ -208,51 +225,60 @@ where
     /// Starts by looking at the cache, if that fails it sends out a discovery request.
     /// If no response is received within a certain timeframe, the process repeats.
     /// When the cache is empty and multiple active discovery attempts have been made, an error is returned.
+    #[instrument(skip(self), fields(service = ?self.service.service_identifier(), max_retries = self.max_retries))]
     async fn discover(
         &mut self,
     ) -> Result<PubSubDiscoveredServiceEndpoint<D>, ServiceDiscoveryError> {
-        while self.retries < self.max_retries {
-            log::trace!("Discover {:?}, try #{}", self.service, self.retries);
+        let mut retries = 0;
 
+        debug!("Starting endpoint discovery loop");
+
+        while retries < self.max_retries {
+            debug!(attempt = retries + 1, "Endpoint discovery");
             // Try discovering a new endpoint, retry when we hit a timeout
             // (but increase the number of retries to set an upper limit)
             match self.discover_once().await {
                 Ok(endpoint) => {
-                    log::trace!("Discover {:?}, success", self.service);
+                    debug!(?endpoint, "Discovery successful");
                     return Ok(PubSubDiscoveredServiceEndpoint {
                         endpoint,
                         service: self.service.clone(),
                         cache: self.cache.clone(),
                     });
                 }
-                Err(ServiceDiscoveryError::Timeout) => self.retries += 1,
-                Err(e) => {
-                    log::debug!("Discover {:?}, error {}", self.service, e);
-                    return Err(e);
+                Err(ServiceDiscoveryError::Timeout) => {
+                    debug!("Discovery attempt timed out");
+                    retries += 1;
+                }
+                Err(error) => {
+                    warn!(?error, "Service discovery failed");
+                    return Err(error);
                 }
             }
         }
 
-        log::trace!("Discover {:?}, retries exceeded", self.service);
+        debug!("Maximum number of service discovery retries exceeded");
+
         Err(ServiceDiscoveryError::RetriesExceeded)
     }
 
+    #[instrument(skip(self))]
     async fn discover_once(&mut self) -> Result<ServiceEndpoint, ServiceDiscoveryError> {
         // Try fetching a random element from cache
         if let Some(endpoints) = self.cache.lock().await.get(&self.service) {
             let mut rng = thread_rng();
             if let Some(endpoint) = endpoints.iter().choose(&mut rng) {
+                trace!(?endpoint, "Cache hit");
                 return Ok(endpoint.clone());
             }
         }
 
-        log::trace!("Discover {:?}, cache miss", self.service);
-
         // On cache miss, send out a discovery request
-        if self.request_tx.send(self.service.clone()).await.is_err() {
-            // There is only ever one possible error cause so no need to pass it on
-            return Err(ServiceDiscoveryError::RequestFailed);
-        }
+        trace!("Cache miss, sending discovery request");
+        self.request_tx
+            .send(self.service.clone())
+            .await
+            .map_err(|_| ServiceDiscoveryError::RequestFailed)?;
 
         // Wait for a response, but not forever
         let deadline = Instant::now() + DISCOVERY_REQUEST_TIMEOUT;
@@ -291,9 +317,13 @@ impl<D> DiscoveredServiceEndpoint for PubSubDiscoveredServiceEndpoint<D>
 where
     D: ServiceDescriptor + Eq + Hash + Send + Sync,
 {
+    #[instrument(skip(self), fields(service = ?self.service.service_identifier()))]
     async fn flag_unreachable(&self) {
+        debug!(endpoint = ?self.endpoint, "Flagging endpoint as unreachable");
         if let Some(endpoints) = self.cache.lock().await.get_mut(&self.service) {
             endpoints.remove(&self.endpoint);
+        } else {
+            warn!("Attempted to flag non-existent endpoint as unreachable");
         }
     }
 }

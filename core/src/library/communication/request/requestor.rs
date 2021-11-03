@@ -5,6 +5,7 @@ use super::{Request, ResponseCollector};
 use async_trait::async_trait;
 use futures::TryStreamExt;
 use thiserror::Error;
+use tracing::{debug, instrument, trace};
 
 /// Error type for sending requests
 #[derive(Error, Debug)]
@@ -64,6 +65,7 @@ where
     C: ResponseCollector + Send + Sync,
 {
     /// Sends a request by delegating to a [`NotificationPublisher`] and collects responses using a [`ResponseCollector`]
+    #[instrument(skip(self, request), fields(request = std::any::type_name::<R>()))]
     async fn request<R>(
         &self,
         request: &R,
@@ -80,12 +82,14 @@ where
         );
 
         // Send the request
+        trace!("Publishing request");
         self.publisher
             .publish(request)
             .await
             .map_err(|e| RequestError::SendingFailure(e))?;
 
         // Create a stream for receiving responses
+        trace!("Creating response collector stream");
         let stream = self
             .collector
             .collect::<R::Response>(request.reply_to(), limit, timeout)
@@ -96,10 +100,13 @@ where
         // TODO Contemplate whether a single erroneous response should poison all the other responses
         //      Pro: Makes the error explicit and propagates the fact that there is an issue instead of it rotting in some log
         //      Con: Reduces the resilience as the service may have been able to continue operation by just using the remaining, valid responses
+        trace!("Awaiting responses");
         let responses = stream
             .try_collect::<Vec<_>>()
             .await
             .map_err(|e| RequestError::ReceptionFailed(e))?;
+
+        debug!(count = responses.len(), "Received responses");
 
         Ok(responses)
     }

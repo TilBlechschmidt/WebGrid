@@ -5,6 +5,7 @@ use crate::library::communication::event::{Consumer, NotificationFrame};
 use crate::library::communication::CommunicationFactory;
 use crate::library::EmptyResult;
 use async_trait::async_trait;
+use tracing::debug;
 
 /// Watches for terminated sessions and releases the semaphore permits held by them
 pub struct SessionTerminationWatcherService {
@@ -31,6 +32,7 @@ impl Consumer for SessionTerminationWatcherService {
     type Notification = SessionTerminatedNotification;
 
     async fn consume(&self, notification: NotificationFrame<Self::Notification>) -> EmptyResult {
+        debug!(id = ?notification.id, "Session terminated, releasing permit");
         self.state.release_permit(&notification.id).await;
         Ok(())
     }

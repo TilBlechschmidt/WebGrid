@@ -12,6 +12,7 @@ use std::str::FromStr;
 use std::time::Duration;
 use thiserror::Error;
 use tokio::process::{Child, Command};
+use tracing::{debug, info, instrument, trace};
 
 struct WebDriverState {
     internal_session_id: String,
@@ -108,6 +109,7 @@ impl WebDriverVariant {
 }
 
 /// Builder for a webdriver instance
+#[derive(Debug)]
 pub struct WebDriver<'a> {
     binary: &'a Path,
     variant: WebDriverVariant,
@@ -160,15 +162,20 @@ impl<'a> WebDriver<'a> {
     }
 
     /// Spawns an instance of the webdriver executable, creates a new session, and resizes the window
+    #[instrument(err)]
     pub async fn launch(self) -> Result<WebDriverInstance, WebDriverError> {
-        log::debug!("Spawning webdriver process");
+        info!("Launching webdriver");
+
+        debug!("Spawning WebDriver");
         let process = self.spawn_process()?;
 
-        log::debug!("Awaiting driver startup");
+        debug!("Awaiting WebDriver startup");
         self.startup().await?;
-        log::debug!("Creating local session");
+
+        debug!("Creating local session");
         let state = self.create_local_session().await?;
-        log::debug!("Resizing window");
+
+        debug!("Resizing window");
         self.resize_window(&state.internal_session_id).await?;
 
         Ok(WebDriverInstance {
@@ -183,8 +190,11 @@ impl<'a> WebDriver<'a> {
         ([127, 0, 0, 1], self.variant.port()).into()
     }
 
+    #[instrument(err)]
     fn spawn_process(&self) -> Result<Child, IoError> {
         let args = self.variant.extra_arguments();
+
+        trace!(?args, "Collected driver specific arguments");
 
         Command::new(&self.binary)
             .args(args)
@@ -197,21 +207,19 @@ impl<'a> WebDriver<'a> {
             .spawn()
     }
 
+    #[instrument(err)]
     async fn startup(&self) -> Result<(), WebDriverError> {
         let url = format!("http://{}/status", self.socket_addr());
 
+        trace!(?url, "Polling driver status endpoint");
+
         match wait_for(&url, self.startup_timeout).await {
-            Ok(_) => {
-                log::info!("Driver became responsive");
-                Ok(())
-            }
-            Err(_) => {
-                log::error!("Timeout waiting for driver startup");
-                Err(WebDriverError::StartupTimeout)
-            }
+            Ok(_) => Ok(()),
+            Err(_) => Err(WebDriverError::StartupTimeout),
         }
     }
 
+    #[instrument(err)]
     async fn create_local_session(&self) -> Result<WebDriverState, WebDriverError> {
         let uri = format!("http://{}/session", self.socket_addr());
         let body: Body = format!("{{\"capabilities\": {} }}", self.capabilities).into();
@@ -219,19 +227,28 @@ impl<'a> WebDriver<'a> {
         let client = Client::new();
         let req = Request::builder()
             .method(Method::POST)
-            .uri(uri)
+            .uri(&uri)
             .header("Content-Type", "application/json")
             .body(body)?;
 
+        trace!(?uri, "Sending session creation request");
         let res = client.request(req).await?;
 
+        trace!("Parsing response body");
         let body = hyper::body::to_bytes(res.into_body()).await?;
         let response: SessionCreateResponse = serde_json::from_slice(&body).map_err(|e| {
             WebDriverError::ParseFailure(String::from_utf8_lossy(&body).to_string(), e)
         })?;
+
+        trace!("Parsing resulting capabilities");
         let capabilities = serde_json::to_string(&response.value.capabilities).map_err(|e| {
             WebDriverError::ParseFailure(String::from_utf8_lossy(&body).to_string(), e)
         })?;
+
+        debug!(
+            id = ?response.value.session_id,
+            ?capabilities, "Local session created"
+        );
 
         Ok(WebDriverState {
             internal_session_id: response.value.session_id,
@@ -239,6 +256,7 @@ impl<'a> WebDriver<'a> {
         })
     }
 
+    #[instrument(err)]
     async fn resize_window(&self, session_id: &str) -> Result<(), WebDriverError> {
         let url = format!(
             "http://{}/session/{}/window/rect",
@@ -253,10 +271,11 @@ impl<'a> WebDriver<'a> {
         let client = Client::new();
         let req = Request::builder()
             .method(Method::POST)
-            .uri(url)
+            .uri(&url)
             .header("Content-Type", "application/json")
             .body(Body::from(body_string))?;
 
+        trace!(?url, "Sending window resize request");
         client.request(req).await?;
 
         Ok(())
@@ -287,7 +306,9 @@ impl WebDriverInstance {
     }
 
     /// Attempts to kill the webdriver and waits for it to die in agony
+    #[instrument(err, skip(self), fields(pid = ?self.process.id(), addr = ?self.socket_addr))]
     pub async fn kill(mut self) -> Result<(), IoError> {
+        debug!("Killing webdriver process");
         self.process.kill().await
     }
 }

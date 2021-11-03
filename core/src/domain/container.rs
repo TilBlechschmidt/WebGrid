@@ -1,10 +1,10 @@
 //! Logic related to container images
 
-use super::webdriver::{Browser, BrowserParseError, CapabilitiesRequest};
+use super::webdriver::{Browser, BrowserParseError, Capabilities, CapabilitiesRequest};
 use crate::library::helpers::split_into_two;
 use std::str::FromStr;
 use thiserror::Error;
-use tracing::{debug, trace};
+use tracing::{debug, instrument, trace};
 
 /// Error thrown while parsing a container image definition from string
 #[derive(Debug, Error)]
@@ -92,47 +92,62 @@ impl ContainerImageSet {
     /// Browser names are compared by a direct string equality check. Meanwhile, versions are instead relying
     /// on a string prefix check. This allows e.g. a requested version of `81` to match an image version string
     /// containing `81.0.4044.122` which is very common.
+    #[instrument]
     pub fn match_against_capabilities(
         &self,
         request: CapabilitiesRequest,
     ) -> Option<&ContainerImage> {
+        debug!("Matching capability request against image set");
+
         let first_image = self.0.first();
         let capability_sets = request.into_sets();
 
         // Short circuit if no capabilities are given
         if capability_sets.is_empty() {
+            debug!("No capabilities provided, returning first image");
             return first_image;
         }
 
-        capability_sets.into_iter().find_map(|capability_set| {
-            // Short circuit if no specific browser is requested
-            if capability_set.browser_name.is_none() && capability_set.browser_version.is_none() {
-                return first_image;
+        capability_sets
+            .into_iter()
+            .find_map(|c| self.match_against_capability_set(first_image, c))
+    }
+
+    #[instrument(skip(first_image))]
+    fn match_against_capability_set<'a>(
+        &'a self,
+        first_image: Option<&'a ContainerImage>,
+        capability_set: Capabilities,
+    ) -> Option<&'a ContainerImage> {
+        // Short circuit if no specific browser is requested
+        if capability_set.browser_name.is_none() && capability_set.browser_version.is_none() {
+            debug!("No browser name or version provided, returning first image");
+            return first_image;
+        }
+
+        for image in self.0.iter() {
+            trace!(?image, "Matching capability set against image");
+
+            let mut version_match = true;
+            let mut browser_match = true;
+
+            if let Some(requested_name) = &capability_set.browser_name {
+                browser_match = requested_name == &image.browser.name;
             }
 
-            for image in self.0.iter() {
-                debug!("Matching {:?} against {:?}", capability_set, image);
-
-                let mut version_match = true;
-                let mut browser_match = true;
-
-                if let Some(requested_name) = &capability_set.browser_name {
-                    browser_match = requested_name == &image.browser.name;
-                }
-
-                if let Some(requested_version) = &capability_set.browser_version {
-                    version_match = image.browser.version.find(requested_version) == Some(0);
-                }
-
-                trace!("Match result {} {}", browser_match, version_match);
-
-                if version_match && browser_match {
-                    return Some(image);
-                }
+            if let Some(requested_version) = &capability_set.browser_version {
+                version_match = image.browser.version.find(requested_version) == Some(0);
             }
 
-            None
-        })
+            trace!(browser_match, version_match, "Match results collected");
+
+            if version_match && browser_match {
+                trace!(?image, browser_match, version_match, "Match completed");
+                return Some(image);
+            }
+        }
+
+        None
     }
 }
 

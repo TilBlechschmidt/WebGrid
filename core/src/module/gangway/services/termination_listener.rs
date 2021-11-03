@@ -7,6 +7,7 @@ use crate::library::communication::event::{Consumer, NotificationFrame};
 use crate::library::communication::CommunicationFactory;
 use crate::library::EmptyResult;
 use async_trait::async_trait;
+use tracing::trace;
 
 pub struct TerminationListenerService<F: CommunicationFactory> {
     phantom: PhantomData<F>,
@@ -44,12 +45,9 @@ where
             .await
             .pop(&notification.id)
         {
-            if tx
-                .send(StatusResponse::Failed(notification.into_inner()))
-                .is_err()
-            {
-                log::error!("Failed to send StatusResponse: receiver has been dropped");
-            }
+            trace!(id = ?notification.id, "Forwarding terminated notification");
+            tx.send(StatusResponse::Failed(notification.into_inner()))
+                .ok();
         }
 
         Ok(())

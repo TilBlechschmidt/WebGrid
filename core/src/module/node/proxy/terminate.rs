@@ -11,6 +11,7 @@ use std::convert::Infallible;
 use std::net::IpAddr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use tracing::info;
 
 pub struct TerminationInterceptor {
     heart_stone: Arc<Mutex<HeartStone>>,
@@ -87,6 +88,7 @@ impl Responder for TerminationInterceptor {
             (is_window_delete_request && was_last_window) || is_session_delete_request;
 
         if session_closed {
+            info!("Received termination request from client");
             self.heart_stone
                 .lock()
                 .await

@@ -3,6 +3,7 @@ use hyper::Server;
 use jatsl::Job;
 use std::net::SocketAddr;
 use tokio::sync::mpsc::UnboundedSender;
+use tracing::info;
 
 use self::forwarding::ForwardingResponder;
 use self::terminate::TerminationInterceptor;
@@ -61,6 +62,7 @@ impl Job for ProxyJob {
 
         let metadata_extension_interceptor = MetadataExtensionInterceptor::new(
             self.metadata_tx.clone(),
+            self.heart_stone.clone(),
             self.session_id_external.clone(),
         );
 
@@ -69,6 +71,7 @@ impl Job for ProxyJob {
             self.authority.clone(),
             self.session_id_internal.clone(),
             self.session_id_external.clone(),
+            self.heart_stone.clone(),
         );
 
         let make_svc = make_responder_chain_service_fn! {
@@ -81,6 +84,7 @@ impl Job for ProxyJob {
         let server = Server::try_bind(&addr)?.http2_only(true).serve(make_svc);
         let graceful = server.with_graceful_shutdown(manager.termination_signal());
 
+        info!(?addr, "Serving WebDriver API");
         manager.ready().await;
         graceful.await?;
 

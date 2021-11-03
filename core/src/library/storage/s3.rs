@@ -1,8 +1,7 @@
 //! Trait implementations for [Amazon S3](https://aws.amazon.com/s3/) compatible storage providers
 
-use crate::library::BoxedError;
-
 use super::{StorageBackend, StorageURL};
+use crate::library::BoxedError;
 use async_trait::async_trait;
 use http::header::CONTENT_TYPE;
 use http::{HeaderMap, StatusCode, Uri};
@@ -10,6 +9,7 @@ use s3::creds::Credentials;
 use s3::{Bucket, Region};
 use std::error::Error as StdError;
 use thiserror::Error;
+use tracing::instrument;
 
 /// Error type for S3 specific errors
 #[derive(Error, Debug)]
@@ -124,6 +124,7 @@ impl StorageBackend for S3StorageBackend {
         Ok(Self::new(region, credentials, &url.bucket, url.path_style)?)
     }
 
+    #[instrument(skip(self))]
     fn presign_get(
         &self,
         path: &str,
@@ -132,6 +133,7 @@ impl StorageBackend for S3StorageBackend {
         Ok(self.bucket.presign_get(path, expiry_secs)?)
     }
 
+    #[instrument(skip(self))]
     fn presign_put(
         &self,
         path: &str,
@@ -144,11 +146,13 @@ impl StorageBackend for S3StorageBackend {
         Ok(self.bucket.presign_put(path, expiry_secs, None)?)
     }
 
+    #[instrument(skip(self))]
     async fn get_object(&self, path: &str) -> Result<Vec<u8>, Box<dyn StdError + Send + Sync>> {
         let response = self.bucket.get_object(path).await?;
         Ok(self.handle_response(response)?)
     }
 
+    #[instrument(skip(self, content), fields(bytes = content.len()))]
     async fn put_object(
         &self,
         path: &str,

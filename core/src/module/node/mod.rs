@@ -22,6 +22,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
 use tokio::sync::mpsc::{self, UnboundedSender};
+use tracing::{error, info};
 
 mod metadata;
 mod options;
@@ -91,6 +92,7 @@ impl Node {
     }
 
     async fn start_driver(&mut self) -> EmptyResult {
+        info!("Starting webdriver");
         let webdriver = WebDriver::default()
             .binary(&self.options.webdriver.binary)
             .variant(self.options.webdriver.variant)
@@ -172,6 +174,7 @@ impl Node {
     }
 
     async fn send_alive_notification(&self) -> Result<(), NodeError> {
+        info!("Reached operational state");
         if let Some(driver) = &self.instance {
             let publisher = self.create_oneshot_notification_publisher();
             let notification = SessionOperationalNotification {
@@ -182,7 +185,6 @@ impl Node {
             if let Err(e) = publisher.publish(&notification).await {
                 // TODO Maybe retry instead of bailing out. It is quite expensive to get a session up and running,
                 //      so discarding it due to a potentially intermittent network failure seems like a waste.
-                log::error!("Failed to send SessionOperationalNotification: {}", e);
                 Err(NodeError::OperationalNotificationUndeliverable(e))
             } else {
                 Ok(())
@@ -193,16 +195,14 @@ impl Node {
     }
 
     async fn shutdown_driver(&mut self) {
+        info!("Shutting down driver");
         if let Some(driver) = self.instance.take() {
-            if let Err(e) = driver.kill().await {
-                log::error!("Failed to kill webdriver instance: {}", e);
-            }
-        } else {
-            log::error!("Attempted to kill an uninitialized webdriver instance!");
+            driver.kill().await.ok();
         }
     }
 
     async fn send_termination_notification(&self, reason: SessionTerminationReason) {
+        info!("Publishing termination notification");
         let publisher = self.create_oneshot_notification_publisher();
 
         // If we terminated before being "operational" then send out a SessionStartupFailedNotification, else publish a SessionTerminatedNotification
@@ -234,8 +234,8 @@ impl Node {
             }
         };
 
-        if let Err(e) = result {
-            log::error!("Failed to send SessionTerminatedNotification: {}", e);
+        if let Err(error) = result {
+            error!(?error, "Failed to broadcast termination notification");
         }
     }
 }
@@ -275,8 +275,6 @@ impl Module for Node {
     }
 
     async fn post_shutdown(&mut self, termination_reason: ModuleTerminationReason) {
-        log::info!("Module terminated with reason: {:?}", termination_reason);
-
         // These are only best-effort cleanup attempts. They may very well fail for one reason or another.
         self.shutdown_driver().await;
         self.send_termination_notification(termination_reason.into())

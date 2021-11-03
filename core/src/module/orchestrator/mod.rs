@@ -2,7 +2,11 @@
 
 use std::sync::Arc;
 
-use self::provisioner::{DockerProvisioner, KubernetesProvisioner, SessionProvisioner};
+#[cfg(feature = "docker")]
+use self::provisioner::DockerProvisioner;
+#[cfg(feature = "kubernetes")]
+use self::provisioner::KubernetesProvisioner;
+use self::provisioner::SessionProvisioner;
 use crate::harness::{Heart, Module, ServiceRunner};
 use crate::library::communication::event::ConsumerGroupDescriptor;
 use crate::library::BoxedError;
@@ -10,6 +14,7 @@ use async_trait::async_trait;
 use jatsl::{schedule, JobScheduler};
 use options::{OrchestratorOptions, ProvisionerCommand};
 use services::*;
+use tracing::debug;
 
 mod options;
 mod provisioner;
@@ -35,6 +40,7 @@ impl Orchestrator {
             BoxedProvisioner,
             BoxedMatchingStrategy,
         ) = match command.provisioner {
+            #[cfg(feature = "kubernetes")]
             ProvisionerCommand::Kubernetes(provisioner_options) => {
                 let provisioner = KubernetesProvisioner::new(provisioner_options.images.clone());
 
@@ -46,6 +52,7 @@ impl Orchestrator {
                     ))),
                 )
             }
+            #[cfg(feature = "docker")]
             ProvisionerCommand::Docker(provisioner_options) => {
                 let provisioner = DockerProvisioner::new(
                     provisioner_options.images.clone(),
@@ -111,6 +118,7 @@ impl Module for Orchestrator {
             self.options.cleanup_interval,
         );
 
+        debug!("Scheduling jobs");
         schedule!(scheduler, {
             matching_service,
             provisioning_service,

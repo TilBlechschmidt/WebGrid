@@ -1,9 +1,9 @@
 use async_trait::async_trait;
 use jatsl::{Job, JobManager};
-use log::info;
 use mongodb::Collection;
 use std::net::SocketAddr;
 use std::path::PathBuf;
+use tracing::info;
 use warp::Filter;
 
 use super::schema::schema;
@@ -55,13 +55,18 @@ impl Job for ServerJob {
 
         let graphql_route = warp::post()
             .and(graphql_filter)
-            .with(cors.clone().allow_method("POST"));
-        let playground_route = warp::get().and(juniper_warp::playground_filter("/api", None));
+            .with(cors.clone().allow_method("POST"))
+            .with(warp::trace::named("gql"));
+        let playground_route = warp::get()
+            .and(juniper_warp::playground_filter("/api", None))
+            .with(warp::trace::named("playground"));
         let api_routes = warp::path("api").and(playground_route.or(graphql_route));
 
         // Define file serving routes
         let file_serving_path = &self.web_root;
-        let directory_route = warp::get().and(warp::fs::dir(file_serving_path.clone()));
+        let directory_route = warp::get()
+            .and(warp::fs::dir(file_serving_path.clone()))
+            .with(warp::trace::named("files_dir"));
         let embed_script_route = warp::any()
             .and(warp::path("embed"))
             .and(warp::path::end())
@@ -69,7 +74,8 @@ impl Job for ServerJob {
                 warp::get()
                     .and(warp::fs::file(file_serving_path.join("embed.js")))
                     .with(cors.clone().allow_method("GET")),
-            );
+            )
+            .with(warp::trace::named("embed_script"));
         let embed_styles_route = warp::any()
             .and(warp::path("embed.css"))
             .and(warp::path::end())
@@ -77,25 +83,28 @@ impl Job for ServerJob {
                 warp::get()
                     .and(warp::fs::file(file_serving_path.join("embed.css")))
                     .with(cors.clone().allow_method("GET")),
-            );
-        // .with(cors.allow_method("GET"));
-        let fallback_route = warp::get().and(warp::fs::file(file_serving_path.join("__app.html")));
+            )
+            .with(warp::trace::named("embed_styles"));
+
+        let fallback_route = warp::get()
+            .and(warp::fs::file(file_serving_path.join("__app.html")))
+            .with(warp::trace::named("fallback"));
 
         // Put everything together
         let routes = api_routes
             .or(embed_script_route)
             .or(embed_styles_route)
             .or(directory_route)
-            .or(fallback_route);
+            .or(fallback_route)
+            .with(warp::trace::request());
 
         // Piece the server together
         let source_addr: SocketAddr = ([0, 0, 0, 0], self.port).into();
         let (addr, server) = warp::serve(routes)
             .bind_with_graceful_shutdown(source_addr, manager.termination_signal());
 
-        info!("Serving files and API at {}", addr);
+        info!(?addr, "Serving files and API");
         manager.ready().await;
-
         server.await;
 
         Ok(())

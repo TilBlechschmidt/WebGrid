@@ -13,6 +13,7 @@ use jatsl::JobScheduler;
 use scheduling::SchedulingService;
 
 pub use options::Options;
+use tracing::{debug, instrument};
 
 /// Module implementation
 pub struct Manager {
@@ -28,6 +29,7 @@ impl Manager {
 
 #[async_trait]
 impl Module for Manager {
+    #[instrument(skip(self, scheduler))]
     async fn run(&mut self, scheduler: &JobScheduler) -> Result<Option<Heart>, BoxedError> {
         let redis_url = self.options.redis.url.clone();
         let group = ConsumerGroupDescriptor::default();
@@ -35,6 +37,8 @@ impl Module for Manager {
 
         let runner =
             ServiceRunner::<SchedulingService<_>>::new(redis_url, group, consumer, HashSet::new());
+
+        debug!("Scheduling service");
         scheduler.spawn_job(runner).await;
 
         Ok(Some(Heart::without_heart_stone()))

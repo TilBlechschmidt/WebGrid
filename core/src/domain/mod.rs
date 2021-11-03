@@ -16,3 +16,8 @@ pub mod webdriver;
 
 pub use discovery::*;
 pub use session::SessionMetadata;
+
+/// Creates a storage path within a sessions namespace
+pub fn storage_path(session_id: event::SessionIdentifier, filename: &str) -> std::path::PathBuf {
+    std::path::PathBuf::from(session_id.to_string()).join(filename.trim_start_matches('/'))
+}

@@ -8,6 +8,7 @@ use crate::library::communication::request::{OptionalRequestProcessor, Request, 
 use crate::library::communication::CommunicationFactory;
 use crate::library::BoxedError;
 use async_trait::async_trait;
+use tracing::trace;
 
 /// Matches a provisioner using a [`MatchingStrategy`]
 ///
@@ -57,6 +58,7 @@ where
         &self,
         request: Self::Request,
     ) -> Result<Option<<Self::Request as Request>::Response>, BoxedError> {
+        trace!(?request.capabilities, "Matching request");
         let response = if self.strategy.matches(request.capabilities) {
             Some(ProvisionerMatchResponse {
                 provisioner: self.provisioner.clone(),

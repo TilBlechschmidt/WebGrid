@@ -7,6 +7,7 @@ use crate::library::EmptyResult;
 use async_trait::async_trait;
 use jatsl::{Job, JobManager};
 use std::sync::Arc;
+use tracing::{debug, instrument};
 
 /// Structure which can be instantiated with a [`CommunicationFactory`]
 pub trait Service<F: CommunicationFactory + Send + Sync> {
@@ -78,6 +79,7 @@ where
         format!("{}({})", Self::NAME, S::NAME)
     }
 
+    #[instrument(name = "service_runner", err, skip(self, manager), fields(service = ?S::NAME))]
     async fn execute(&self, manager: JobManager) -> EmptyResult {
         let handle_provider = Arc::new(manager.clone());
         let factory = RedisCommunicationFactory::new(self.redis_url.clone(), handle_provider);
@@ -88,9 +90,13 @@ where
         //      Maybe by adding a "ready()" method to it that under the hood runs a ping against the server.
         manager.ready().await;
 
+        debug!("Executing service");
+
         service
             .consume_queue(provider, &self.group, &self.consumer, &self.extension)
             .await?;
+
+        debug!("Queue consumption finished");
 
         Ok(())
     }

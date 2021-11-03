@@ -1,5 +1,4 @@
 //! Functions for forwarding HTTP requests to remote endpoints
-
 use hyper::client::HttpConnector;
 use hyper::http::{
     header::{
@@ -12,6 +11,7 @@ use hyper::{Body, Client};
 use lazy_static::lazy_static;
 use std::net::IpAddr;
 use thiserror::Error;
+use tracing::{instrument, trace, warn};
 
 lazy_static! {
     static ref HOP_HEADERS: [HeaderName; 7] = [
@@ -123,6 +123,7 @@ pub fn uri_with_authority<B>(req: &Request<B>, authority: &str) -> Result<Uri, h
 /// Additional information provided (e.g. client IP, proxy identifier) will be attached to the
 /// requests [`VIA`] and [`FORWARDED`] header.
 #[inline]
+#[instrument(skip(client, req, source_ip, proxy_identifier, target), fields(method = ?req.method().to_string(), uri = ?req.uri().to_string(), target = ?target.to_string()))]
 pub async fn forward_request(
     client: &Client<HttpConnector>,
     req: Request<Body>,
@@ -130,19 +131,19 @@ pub async fn forward_request(
     proxy_identifier: &str,
     target: Uri,
 ) -> Result<Response<Body>, ForwardError> {
+    trace!("Translating request");
     let req = translate_request(source_ip, req, target, proxy_identifier)?;
-    let uri = req.uri().to_string();
-    let method = req.method().to_string();
 
+    trace!("Forwarding request");
     match client.request(req).await {
         Ok(mut res) => {
+            trace!("Stripping response hop headers");
             strip_hop_headers(res.headers_mut());
             Ok(res)
         }
-        Err(e) => {
-            log::error!("Failed to fulfill request '{} {}': {}", method, uri, e);
-
-            Err(e.into())
+        Err(error) => {
+            warn!(?error, "Failed to forward request");
+            Err(error.into())
         }
     }
 }

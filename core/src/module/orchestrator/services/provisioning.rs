@@ -12,6 +12,7 @@ use async_trait::async_trait;
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::AcquireError;
+use tracing::{debug, instrument};
 
 #[derive(Debug, Error)]
 enum ProvisioningServiceError {
@@ -55,20 +56,24 @@ where
     S: SessionProvisioner + Send + Sync,
     F: CommunicationFactory + Send + Sync,
 {
+    #[instrument(skip(self, notification), fields(id = ?notification.session_id))]
     async fn provision(
         &self,
         notification: &<Self as Consumer>::Notification,
     ) -> Result<ProvisionedSessionMetadata, ProvisioningServiceError> {
         // Get a permit so we don't deploy infinitely many sessions
+        debug!("Acquiring permit");
         self.state.acquire_permit(notification.session_id).await?;
 
         // Provision the session
+        debug!("Provisioning session");
         let meta = self
             .provisioner
             .provision(&notification.session_id, &notification.capabilities)
             .await
             .map_err(|e| ProvisioningServiceError::ProvisioningFailed(e))?;
 
+        debug!("Provisioned session");
         Ok(meta)
     }
 }

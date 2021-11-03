@@ -13,6 +13,7 @@ use jatsl::{schedule, JobScheduler};
 
 pub use options::Options;
 use services::*;
+use tracing::{debug, instrument};
 
 /// Module implementation
 pub struct Collector {
@@ -28,12 +29,14 @@ impl Collector {
 
 #[async_trait]
 impl Module for Collector {
+    #[instrument(skip(self, scheduler))]
     async fn run(&mut self, scheduler: &JobScheduler) -> Result<Option<Heart>, BoxedError> {
         let redis_url = self.options.redis.url.clone();
         let group =
             ConsumerGroupDescriptor::new(ConsumerGroupIdentifier::Collector, QueueLocation::Tail);
         let consumer = self.options.queueing.id.to_string();
 
+        debug!("Acquiring mongo connection");
         // TODO The database should not be instantiated in advance. Instead a resource pool should be used for proper error handling!
         let database = self.options.mongo.database().await?;
         let collection = self.options.mongo.collection(&database).await?;
@@ -81,6 +84,7 @@ impl Module for Collector {
             (collection, staging_collection.clone()),
         );
 
+        debug!("Scheduling jobs");
         schedule!(scheduler, {
             creation_watcher,
             scheduling_watcher,

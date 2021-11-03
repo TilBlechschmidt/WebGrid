@@ -7,6 +7,7 @@ use async_trait::async_trait;
 use redis::aio::ConnectionLike;
 use redis::streams::StreamId;
 use redis::AsyncCommands;
+use tracing::{debug, instrument};
 
 /// Redis based implementation of the [`QueueEntry`](crate::library::communication::event::QueueEntry) trait
 pub struct RedisQueueEntry<C> {
@@ -50,7 +51,10 @@ where
         &self.payload
     }
 
+    #[instrument(skip(self), fields(id = ?self.id, key = ?self.key, group = ?self.group))]
     async fn acknowledge(&mut self) -> Result<(), BoxedError> {
+        debug!("Acknowledging queue entry");
+
         self.con
             .xack::<_, _, _, ()>(&self.key, &self.group, &[&self.id])
             .await?;

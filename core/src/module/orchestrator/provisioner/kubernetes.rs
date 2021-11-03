@@ -17,7 +17,7 @@ use serde::{de::DeserializeOwned, ser::Serialize};
 use std::fmt::Debug;
 use std::str::FromStr;
 use thiserror::Error;
-use tracing::{error, info, trace};
+use tracing::{debug, error, trace, warn};
 use uuid::Uuid;
 
 #[derive(Error, Debug)]
@@ -50,17 +50,11 @@ impl KubernetesProvisioner {
     /// By default, it uses the `webgrid` namespace unless the `NAMESPACE` variable is set (which it is by default in K8s pods).
     pub fn new(images: ContainerImageSet) -> Self {
         if images.is_empty() {
-            log::warn!("No images provided! Orchestrator won't be able to schedule nodes.");
+            warn!("No images provided to provisioner. It won't be able to launch any sessions!");
         }
 
         let namespace = std::env::var("NAMESPACE").unwrap_or_else(|_| "webgrid".into());
         let instance = Uuid::new_v4();
-
-        log::info!(
-            "Operating in K8s namespace {} with provisioner instance ID {}",
-            namespace,
-            instance
-        );
 
         Self {
             namespace,
@@ -85,11 +79,7 @@ impl KubernetesProvisioner {
 
     async fn list_jobs(&self, filter: fn(&Job) -> bool) -> Result<Vec<Job>, BoxedError> {
         let api = self.get_api::<Job>().await?;
-        let label_filter = format!(
-            "{}={}",
-            PROVISIONER_INSTANCE_LABEL,
-            self.instance.to_string()
-        );
+        let label_filter = format!("{}={}", PROVISIONER_INSTANCE_LABEL, self.instance);
 
         let params = ListParams::default().labels(&label_filter);
         let jobs = api.list(&params).await?;
@@ -111,11 +101,11 @@ impl KubernetesProvisioner {
         match api.create(&PostParams::default(), value).await {
             Ok(o) => {
                 let name = ResourceExt::name(&o);
-                info!("Created {} {}", T::KIND, name);
+                trace!(resource = ?T::KIND, ?name, "Created resource");
                 Ok(o)
             }
             Err(e) => {
-                error!("Failed to create {} {:?}", T::KIND, e);
+                error!(resource = ?T::KIND, ?e, "Failed to create resource");
                 Err(e)
             }
         }
@@ -142,13 +132,13 @@ impl KubernetesProvisioner {
         match api.delete(name, &params).await {
             Ok(o) => {
                 if o.is_left() {
-                    log::debug!("Deletion of {} {} scheduled", T::KIND, name);
+                    trace!(resource = ?T::KIND, ?name, "Deletion of resource scheduled");
                 } else {
-                    log::debug!("Deleted {} {}", T::KIND, name);
+                    trace!(resource = ?T::KIND, ?name, "Deleted resource");
                 }
             }
             Err(e) => {
-                log::error!("Failed to delete {} {:?}", T::KIND, e);
+                error!(resource = ?T::KIND, ?e, "Failed to delete resource");
             }
         };
 
@@ -166,6 +156,8 @@ impl KubernetesProvisioner {
             .match_against_capabilities(request)
             .ok_or(KubernetesProvisionerError::NoImageFound)?;
 
+        debug!(?session_id, image = ?image.identifier, browser = ?image.browser, "Creating job");
+
         let name = Self::generate_name(session_id);
         let mut job_yaml = load_config("job.yaml")?;
         job_yaml = replace_config_variable(job_yaml, "job_name", &name);
@@ -178,7 +170,6 @@ impl KubernetesProvisioner {
         trace!("Job YAML {}", job_yaml);
 
         let job: Job = serde_yaml::from_str(&job_yaml)?;
-
         let _resource = self.create_resource(&job).await?;
 
         // TODO Append more meaningful information
@@ -215,11 +206,7 @@ impl SessionProvisioner for KubernetesProvisioner {
                     .map(|id| {
                         Uuid::from_str(id)
                             .map_err(|e| {
-                                log::warn!(
-                                    "Failed to parse session id from job label value '{}': {}",
-                                    id,
-                                    e
-                                )
+                                warn!(?id, ?e, "Failed to parse session id from container label",)
                             })
                             .ok()
                     })
@@ -245,14 +232,14 @@ impl SessionProvisioner for KubernetesProvisioner {
         let failed_jobs = self.list_jobs(JobExt::has_failed).await?;
 
         if failed_jobs.len() > 100 {
-            log::error!("Detected an unreasonably high number of failed Jobs! Purging some of them to keep K8s smooth — note that this hints at a critical error either in the WebGrid node or your infrastructure. This warrants triaging as it will cause problems for downstream consumers!");
+            error!("Detected an unreasonably high number of failed Jobs! Purging some of them to keep K8s smooth — note that this hints at a critical error either in the WebGrid node or your infrastructure. This warrants triaging as it will cause problems for downstream consumers!");
 
             let amount_to_purge = failed_jobs.len() - 50;
             for job in failed_jobs.into_iter().take(amount_to_purge) {
                 self.delete_resource::<Job>(&job.name()).await?;
             }
         } else if failed_jobs.len() > 10 {
-            log::warn!("Detected an increasing number of failed Jobs. The resources will not be cleaned up yet, so please check for the root cause");
+            warn!("Detected an increasing number of failed Jobs. The resources will not be cleaned up yet, so please check for the root cause");
         }
 
         Ok(())

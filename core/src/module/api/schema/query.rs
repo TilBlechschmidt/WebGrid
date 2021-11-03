@@ -6,6 +6,7 @@ use futures::TryStreamExt;
 use juniper::{graphql_object, FieldResult, GraphQLInputObject};
 use mongodb::bson::doc;
 use mongodb::options::FindOptions;
+use tracing::debug;
 
 pub struct Query;
 struct SessionQuery {}
@@ -23,6 +24,8 @@ impl SessionQuery {
     /// Fetch the latest `count` sessions that have terminated. Sorted in descending order based on the creation date.
     async fn latest(count: Option<i32>, context: &GqlContext) -> FieldResult<Vec<Session>> {
         let limit = count.unwrap_or(10) as i64;
+        debug!(limit, "QUERY latest");
+
         let options = FindOptions::builder()
             .limit(limit)
             .sort(doc! { "createdAt": -1 })
@@ -43,6 +46,7 @@ impl SessionQuery {
         id: SessionIdentifier,
         context: &GqlContext,
     ) -> FieldResult<Option<Session>> {
+        debug!(?id, "QUERY fetch");
         let filter = doc! { "_id": id };
 
         let stored_session = context
@@ -67,6 +71,7 @@ impl SessionQuery {
         limit: Option<i32>,
         context: &GqlContext,
     ) -> FieldResult<Vec<Session>> {
+        debug!(?fields, ?limit, "QUERY fieldQuery");
         let limit = limit.unwrap_or(10) as i64;
         let options = FindOptions::builder().limit(limit).build();
 
@@ -89,7 +94,7 @@ impl SessionQuery {
 }
 
 /// Field entry used when querying. The value is parsed as a regular expression.
-#[derive(GraphQLInputObject)]
+#[derive(GraphQLInputObject, Debug)]
 struct MetadataQuery {
     key: String,
     regex: String,

@@ -7,6 +7,7 @@ use crate::library::communication::CommunicationFactory;
 use crate::library::EmptyResult;
 use async_trait::async_trait;
 use mongodb::Collection;
+use tracing::{debug, trace};
 
 pub struct OperationalWatcherService {
     collection: Collection<SessionMetadata>,
@@ -33,6 +34,7 @@ impl Consumer for OperationalWatcherService {
     type Notification = SessionOperationalNotification;
 
     async fn consume(&self, notification: NotificationFrame<Self::Notification>) -> EmptyResult {
+        debug!(id = ?notification.id, capabilities = ?notification.actual_capabilities, "Session became alive");
         let capabilities: Capabilities = serde_json::from_str(&notification.actual_capabilities)?;
 
         self.collection
@@ -48,6 +50,8 @@ impl Consumer for OperationalWatcherService {
                 None,
             )
             .await?;
+
+        trace!("Patched metadata object");
 
         Ok(())
     }

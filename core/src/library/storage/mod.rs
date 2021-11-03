@@ -1,12 +1,9 @@
 //! Structures to persist and retrieve arbitrary binary data
 
 use self::s3::{S3StorageBackend, S3StorageURL};
-
 use super::BoxedError;
-use crate::domain::event::SessionIdentifier;
 use async_trait::async_trait;
 use http::Uri;
-use std::path::PathBuf;
 
 pub mod s3;
 
@@ -46,11 +43,6 @@ pub trait StorageBackend: Clone {
 
     /// Creates a new object at the given path
     async fn put_object(&self, path: &str, content: &[u8]) -> Result<(), BoxedError>;
-}
-
-/// Creates a storage path within a sessions namespace
-pub fn storage_path(session_id: SessionIdentifier, filename: &str) -> PathBuf {
-    PathBuf::from(session_id.to_string()).join(filename.trim_start_matches('/'))
 }
 
 /// Parses a storage backend URI and instantiates the matching backend
