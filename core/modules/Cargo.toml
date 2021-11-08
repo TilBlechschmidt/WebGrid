@@ -1,0 +1,59 @@
+[package]
+name = "modules"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# Everyday stuff
+tokio = "1.6"
+futures = "0.3"
+thiserror = "1.0"
+anyhow = "1.0"
+structopt = "0.3"
+async-trait = "0.1"
+paste = "1.0"
+
+# Data serialization
+serde = { version = "1.0", features = [] }
+uuid = { version = "0.8", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+serde_json = "1.0"
+
+# Tracing, Metrics & Co.
+tracing = { git = "https://github.com/tokio-rs/tracing", version = "0.2", features = ["log"] }
+
+# Data handling & caching
+mongodb = { version = "2.0", features = ["bson-uuid-0_8", "bson-chrono-0_4"] }
+
+# Provisioner implementations
+bollard = "0.10"
+kube = "0.58"
+k8s-openapi = { version = "0.12", default-features = false, features = ["v1_21"] }
+serde_yaml = "0.8"
+
+# Module implementations
+heim = { version = "0.1.0-rc.1", features = ["process"] }
+tempfile = "3"
+hyper = { version = "0.14", features = ["full"] }
+mime_guess = "2.0"
+warp = "0.3"
+juniper = "0.15"
+juniper_warp = "0.7"
+lru = "0.6"
+rand = "0.8"
+
+# Other webgrid crates
+library = { path = "../library" }
+domain = { path = "../domain" }
+harness = { path = "../harness" }
+jatsl = "0.1.9"
+
+[dev-dependencies]
+lazy_static = "1.4"
+library = { path = "../library", features = ["test"] }
+
+[build-dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.8"

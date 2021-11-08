@@ -1,78 +1,8 @@
-[package]
-name = "webgrid"
-version = "0.0.0"
-edition = "2018"
-license = "MIT"
-authors = ["Til Blechschmidt <til@blechschmidt.de>"]
-
-[dependencies]
-# Everyday stuff
-tokio = { version = "1.6", features = ["rt-multi-thread", "macros", "process", "signal"] }
-futures = "0.3"
-uuid = { version = "0.8", features = ["v4", "serde"] }
-async-trait = "0.1"
-lazy_static = "1.4"
-structopt = "0.3"
-rand = "0.8"
-lru = "0.6"
-tempfile = "3"
-
-# Proxying
-hyper = { version = "0.14", features = ["full"] }
-paste = "1.0"
-
-# Module operation
-jatsl = "0.1.9"
-heim = { version = "0.1.0-rc.1", features = ["process"] }
-
-# Data serialization
-serde = "1.0"
-serde_json = "1.0"
-chrono = { version = "0.4", features = ["serde"] }
-
-# Error handling
-thiserror = "1.0"
-anyhow = "1.0"
-
-# Tracing, Metrics & Co.
-tracing = { git = "https://github.com/tokio-rs/tracing", version = "0.2", features = ["log"] }
-tracing-subscriber = { git = "https://github.com/tokio-rs/tracing", version = "0.3", default-features = false, features = ["env-filter", "fmt", "ansi", "json"] }
-
-# Data storage and stream processing
-redis = { version = "0.20.2-alpha.0", default-features = false, features = ["tokio-comp", "streams"], git = "https://github.com/TilBlechschmidt/redis-rs", branch = "webgrid-state" }
-mongodb = { version = "2.0", features = ["bson-uuid-0_8", "bson-chrono-0_4"] }
-
-# Storage dependencies
-rust-s3 = { version = "0.27.0-rc4", git = "https://github.com/durch/rust-s3" }
-http = { version = "0.2" }
-mime_guess = "2.0"
-
-# Provisioner implementations
-bollard = { version = "0.10", optional = true }
-kube = { version = "0.58", optional = true }
-k8s-openapi = { version = "0.12", default-features = false, features = ["v1_21"], optional = true }
-serde_yaml = { version = "0.8", optional = true }
-
-# API Server
-warp = "0.3"
-juniper = "0.15"
-juniper_warp = "0.7"
-
-[build-dependencies]
-serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.8"
-git2 = "0.13"
-
-[dev-dependencies]
-tokio-stream = { version = "0.1", features = ["sync"] }
-reqwest = "0.11"
-pretty_assertions = "0.7"
-
-[features]
-default = ["docker", "kubernetes"]
-docker = ["bollard"]
-kubernetes = ["kube", "k8s-openapi", "serde_yaml"]
-test = []
-
-[profile.release]
-lto = true
+[workspace]
+members = [
+    "domain",
+    "harness",
+    "library",
+    "modules",
+    "webgrid",
+]

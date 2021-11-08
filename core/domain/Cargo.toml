@@ -1,0 +1,26 @@
+[package]
+name = "domain"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1.6", features = ["process"] }
+thiserror = "1.0"
+
+# Data serialization
+serde = { version = "1.0", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
+serde_json = "1.0"
+bson = "2.0.1"
+uuid = { version = "0.8", features = ["v4", "serde"] }
+
+# Proxying
+hyper = { version = "0.14", features = ["full"] }
+
+# Tracing, Metrics & Co.
+tracing = { git = "https://github.com/tokio-rs/tracing", version = "0.2", features = ["log"] }
+
+# Other webgrid crates
+library = { path = "../library" }

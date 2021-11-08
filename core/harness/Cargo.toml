@@ -1,0 +1,28 @@
+[package]
+name = "harness"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# Everyday stuff
+tokio = { version = "1.6", features = ["signal"] }
+futures = "0.3"
+async-trait = "0.1"
+lazy_static = "1.4"
+thiserror = "1.0"
+
+# Data serialization
+serde = "1.0"
+
+# Tracing, Metrics & Co.
+tracing = { git = "https://github.com/tokio-rs/tracing", version = "0.2", features = ["log"] }
+
+# Data handling & caching
+redis = { version = "0.20.2-alpha.0", default-features = false, features = ["tokio-comp", "streams"], git = "https://github.com/TilBlechschmidt/redis-rs", branch = "webgrid-state" }
+
+# Other webgrid crates
+domain = { path = "../domain" }
+library = { path = "../library" }
+jatsl = "0.1.9"
