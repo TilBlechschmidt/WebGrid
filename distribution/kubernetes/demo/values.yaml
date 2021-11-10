@@ -18,4 +18,4 @@ affinity:
 
 webgrid:
   config:
-    storageBackend: s3+http://minioadmin:minioadmin@webgrid-demo-storage/webgrid-video?pathStyle
+    storageBackend: s3+http://minioadmin:minioadmin@webgrid-demo-storage/webgrid?pathStyle

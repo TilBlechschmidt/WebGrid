@@ -11,7 +11,7 @@ spec:
       storage: {{ .Values.volumeClaim.request }}
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "webgrid-demo.fullname" . }}-storage
   labels:
@@ -19,6 +19,7 @@ metadata:
     {{- include "webgrid-demo.labels" . | nindent 4 }}
 spec:
   replicas: 1
+  serviceName: {{ include "webgrid-demo.fullname" . }}-storage
   selector:
     matchLabels:
       dev.webgrid/component: minio
@@ -48,16 +49,11 @@ spec:
       {{- end }}
       containers:
         - name: minio
-          image: minio/minio@sha256:9daf9c4b2be5b19b8bf40d3cc9a6026b94d9b31582deb7365914b27c09e28573
+          image: minio/minio
+          command: ["/usr/bin/docker-entrypoint.sh", "server", "/storage/data{1...4}", "--console-address", ":44095"]
           volumeMounts:
             - mountPath: "/storage"
               name: storage
-          command:
-            [
-              "/bin/bash",
-              "-c",
-              'mkdir -p /storage/webgrid-video && /usr/bin/docker-entrypoint.sh server /storage --console-address ":44095"',
-            ]
           ports:
             - name: s3
               containerPort: 9000
@@ -95,3 +91,20 @@ spec:
   selector:
     dev.webgrid/component: minio
     {{- include "webgrid-demo.selectorLabels" . | nindent 4 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "webgrid-demo.fullname" . }}-storage-setup
+spec:
+  backoffLimit: 4
+  template:
+    spec:
+      containers:
+      - name: storage-setup
+        image: minio/mc
+        command: ["/bin/bash", "-c", "curl --retry 64 -f --retry-connrefused --retry-delay 5 -s -o /dev/null 'http://webgrid-demo-storage' || true && mc mb --ignore-existing webgrid/webgrid && mc admin bucket quota --fifo {{ trimSuffix "i" .Values.volumeClaim.request }} webgrid/webgrid"]
+        env:
+          - name: MC_HOST_webgrid
+            value: http://minioadmin:minioadmin@webgrid-demo-storage
+      restartPolicy: Never
