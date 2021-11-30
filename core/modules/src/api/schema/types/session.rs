@@ -2,7 +2,7 @@ use super::super::GqlContext;
 use chrono::{DateTime, Utc};
 use domain::event::ProvisionerIdentifier;
 use domain::SessionMetadata;
-use juniper::{graphql_object, GraphQLObject};
+use juniper::{graphql_object, GraphQLEnum, GraphQLObject};
 
 #[derive(GraphQLObject)]
 pub struct MetadataEntry {
@@ -58,6 +58,34 @@ pub struct Video {
     playlist: String,
     /// Total number of bytes excluding metadata
     size: i32,
+}
+
+/// Lifecycle position of a session
+#[derive(GraphQLEnum)]
+pub enum SessionState {
+    /// Submitted by a client
+    Created,
+    /// Assigned to a provisioner
+    Scheduled,
+    /// Processed by the assigned provisioner and handed over to the infrastructure
+    Provisioned,
+    /// Up and running, ready to serve requests
+    Operational,
+    /// Completely shut down and no longer serving requests. Either due to explicit shutdown by client or due to crash.
+    Terminated,
+}
+
+impl SessionState {
+    /// Returns the database keys to use when querying for each state
+    pub fn database_key(&self) -> &str {
+        match self {
+            SessionState::Created => "createdAt",
+            SessionState::Scheduled => "scheduledAt",
+            SessionState::Provisioned => "provisionedAt",
+            SessionState::Operational => "operationalAt",
+            SessionState::Terminated => "terminatedAt",
+        }
+    }
 }
 
 pub struct Session {

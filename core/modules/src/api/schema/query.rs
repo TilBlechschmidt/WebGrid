@@ -1,4 +1,4 @@
-use super::types::Session;
+use super::types::{Session, SessionState};
 use super::GqlContext;
 use domain::event::SessionIdentifier;
 use futures::TryStreamExt;
@@ -20,6 +20,29 @@ impl Query {
 
 #[graphql_object(context = GqlContext)]
 impl SessionQuery {
+    /// Number of sessions that have at least reached the lower lifecycle state (inclusive) but not the upper state (exclusive)
+    async fn count(
+        &self,
+        lower: SessionState,
+        upper: SessionState,
+        context: &GqlContext,
+    ) -> FieldResult<i32> {
+        let lower_key = lower.database_key();
+        let upper_key = upper.database_key();
+
+        let filter = doc! {
+            lower_key: { "$ne": null },
+            upper_key: null
+        };
+
+        let count = context
+            .staging_collection
+            .count_documents(filter, None)
+            .await?;
+
+        Ok(count as i32)
+    }
+
     /// Fetch the latest `count` sessions that have terminated. Sorted in descending order based on the creation date.
     async fn latest(count: Option<i32>, context: &GqlContext) -> FieldResult<Vec<Session>> {
         let limit = count.unwrap_or(10) as i64;
