@@ -21,7 +21,7 @@ services:
     image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-latest}
     platform: linux/amd64
     container_name: webgrid-orchestrator
-    command: orchestrator docker -p 5 --storage s3+http://webgrid:supersecretPasswordYouShouldChange@webgrid-s3:9000/webgrid?pathStyle DEADBEEF-0000-0000-0000-0000CAFEFEED "${REPOSITORY:-webgrid}/node-firefox:${IMAGE_TAG:-latest}=firefox::68.7.0esr,${REPOSITORY:-webgrid}/node-chrome:${IMAGE_TAG:-latest}=chrome::81.0.4044.122"
+    command: orchestrator docker -p 2 --storage s3+http://webgrid:supersecretPasswordYouShouldChange@webgrid-s3:9000/webgrid?pathStyle DEADBEEF-0000-0000-0000-0000CAFEFEED "${REPOSITORY:-webgrid}/node-firefox:${IMAGE_TAG:-latest}=firefox::68.7.0esr,${REPOSITORY:-webgrid}/node-chrome:${IMAGE_TAG:-latest}=chrome::81.0.4044.122"
     depends_on:
       - redis
       - s3
