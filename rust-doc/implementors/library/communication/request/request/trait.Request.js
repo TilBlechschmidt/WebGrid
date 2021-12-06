@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["domain"] = [{"text":"impl <a class=\"trait\" href=\"library/communication/request/request/trait.Request.html\" title=\"trait library::communication::request::request::Request\">Request</a> for <a class=\"struct\" href=\"domain/request/struct.ProvisionerMatchRequest.html\" title=\"struct domain::request::ProvisionerMatchRequest\">ProvisionerMatchRequest</a>","synthetic":false,"types":["domain::request::provisioner::ProvisionerMatchRequest"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

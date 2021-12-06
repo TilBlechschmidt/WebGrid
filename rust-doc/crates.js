@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["webgrid"];
+window.ALL_CRATES = ["domain","harness","library","modules","webgrid"];

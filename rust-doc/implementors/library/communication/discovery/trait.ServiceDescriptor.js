@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["domain"] = [{"text":"impl <a class=\"trait\" href=\"library/communication/discovery/trait.ServiceDescriptor.html\" title=\"trait library::communication::discovery::ServiceDescriptor\">ServiceDescriptor</a> for <a class=\"enum\" href=\"domain/enum.WebgridServiceDescriptor.html\" title=\"enum domain::WebgridServiceDescriptor\">WebgridServiceDescriptor</a>","synthetic":false,"types":["domain::discovery::WebgridServiceDescriptor"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

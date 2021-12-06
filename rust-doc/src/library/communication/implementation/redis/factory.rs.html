@@ -1,0 +1,118 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library&#x2F;src&#x2F;communication&#x2F;implementation&#x2F;redis&#x2F;factory.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>factory.rs - source</title><link rel="stylesheet" type="text/css" href="../../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../../../../storage.js"></script><script src="../../../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../../../library/index.html'><div class='logo-container rust-logo'><img src='../../../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../../../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1"> 1</span>
+<span id="2"> 2</span>
+<span id="3"> 3</span>
+<span id="4"> 4</span>
+<span id="5"> 5</span>
+<span id="6"> 6</span>
+<span id="7"> 7</span>
+<span id="8"> 8</span>
+<span id="9"> 9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+</pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::<span class="kw">super</span>::<span class="kw">super</span>::BoxedError</span>;
+<span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
+<span class="kw">use</span> <span class="ident">futures::stream::BoxStream</span>;
+<span class="kw">use</span> <span class="ident">redis::aio::ConnectionLike</span>;
+<span class="kw">use</span> <span class="ident">redis</span>::{<span class="ident">Msg</span>, <span class="ident">RedisResult</span>};
+<span class="kw">use</span> <span class="ident">thiserror::Error</span>;
+
+<span class="doccomment">/// Variant for redis connections</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">RedisConnectionVariant</span> {
+    <span class="doccomment">/// Individual connection that may allow for blocking commands without disturbing other users.</span>
+    <span class="doccomment">/// While it may be reused after going out-of-scope, this variant indicates that the consumer</span>
+    <span class="doccomment">/// is operating long-running, blocking operations on the connection and the use of a resource pool is</span>
+    <span class="doccomment">/// unadvisable as it may take a long time for the connection to be returned.</span>
+    <span class="ident">Owned</span>,
+    <span class="doccomment">/// Same as [`Owned`](RedisConnectionVariant::Owned) but indicates that the consumer is expected to only</span>
+    <span class="doccomment">/// block for relatively short periods of time (e.g. waiting for responses to requests while processing a</span>
+    <span class="doccomment">/// [`Notification`](super::super::super::event::Notification)) so that the use of a connection pool is viable.</span>
+    <span class="ident">Pooled</span>,
+    <span class="doccomment">/// Connection that can be shared between multiple users and generally does not permit blocking commands</span>
+    <span class="ident">Multiplexed</span>,
+}
+
+<span class="doccomment">/// Errors that may occur while listening on a [`PubSubResource`]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Error</span>, <span class="ident">Debug</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">PubSubResourceError</span> {
+    <span class="doccomment">/// Underlying stream has been closed</span>
+    <span class="attribute">#[<span class="ident">error</span>(<span class="string">&quot;redis stream has been closed&quot;</span>)]</span>
+    <span class="ident">StreamClosed</span>,
+}
+
+<span class="doccomment">/// Wrapper trait for [`PubSub`](redis::aio::PubSub) to allow for black-box implementation</span>
+<span class="attribute">#[<span class="ident">async_trait</span>]</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">PubSubResource</span> {
+    <span class="doccomment">/// Subscribe to a channel using a wildcard pattern</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">psubscribe</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">pchannel</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RedisResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
+    <span class="doccomment">/// Subscribe to a channel by name</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">subscribe</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">channel</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">RedisResult</span><span class="op">&lt;</span>()<span class="op">&gt;</span>;
+
+    <span class="doccomment">/// Listen to a channel for incoming messages</span>
+    <span class="kw">fn</span> <span class="ident">into_on_message</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">BoxStream</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Msg</span>, <span class="ident">PubSubResourceError</span><span class="op">&gt;</span><span class="op">&gt;</span>;
+}
+
+<span class="doccomment">/// Factory for redis connections of different [types](RedisConnectionVariant)</span>
+<span class="attribute">#[<span class="ident">async_trait</span>]</span>
+<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">RedisFactory</span> {
+    <span class="doccomment">/// Type returned when creating a PubSub connection</span>
+    <span class="kw">type</span> <span class="ident">PubSub</span>: <span class="ident">PubSubResource</span>;
+
+    <span class="doccomment">/// Creates a new PubSub connection</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">pubsub</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident"><span class="self">Self</span>::PubSub</span>, <span class="ident">BoxedError</span><span class="op">&gt;</span>;
+
+    <span class="doccomment">/// Establishes a new connection, retrieves one from a pool, or clones a shared one</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">connection</span>(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        <span class="ident">variant</span>: <span class="ident">RedisConnectionVariant</span>,
+    ) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">ConnectionLike</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>, <span class="ident">BoxedError</span><span class="op">&gt;</span>;
+}
+</code></pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../../../" data-current-crate="library" data-search-index-js="../../../../../search-index.js" data-search-js="../../../../../search.js"></div>
+    <script src="../../../../../main.js"></script><script src="../../../../../source-script.js"></script><script src="../../../../../source-files.js"></script>
+</body></html>

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["parse_storage_backend_uri","Parses a storage backend URI and instantiates the matching backend"]],"mod":[["s3","Trait implementations for Amazon S3 compatible storage providers"]],"trait":[["StorageBackend","Generic storage backend providing read and write access"],["StorageURL","URL from which a storage backend can be instantiated"]]});

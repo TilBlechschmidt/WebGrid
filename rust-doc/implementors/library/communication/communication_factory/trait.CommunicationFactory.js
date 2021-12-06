@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["harness"] = [{"text":"impl <a class=\"trait\" href=\"library/communication/communication_factory/trait.CommunicationFactory.html\" title=\"trait library::communication::communication_factory::CommunicationFactory\">CommunicationFactory</a> for <a class=\"struct\" href=\"harness/struct.RedisCommunicationFactory.html\" title=\"struct harness::RedisCommunicationFactory\">RedisCommunicationFactory</a>","synthetic":false,"types":["harness::redis::factory::RedisCommunicationFactory"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

@@ -1,0 +1,76 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `library&#x2F;src&#x2F;communication&#x2F;mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs - source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../../storage.js"></script><script src="../../../crates.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../../library/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1"> 1</span>
+<span id="2"> 2</span>
+<span id="3"> 3</span>
+<span id="4"> 4</span>
+<span id="5"> 5</span>
+<span id="6"> 6</span>
+<span id="7"> 7</span>
+<span id="8"> 8</span>
+<span id="9"> 9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+</pre><pre class="rust"><code><span class="doccomment">//! Structures to communication between services in a distributed system</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! TODO: This doc-block is redundant and should be replaced with something more descriptive for what this module actually encompasses.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! In general, there are two modes of operation:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! 1. Publish and subscribe</span>
+<span class="doccomment">//! 2. Request and response</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! The first is used primarily for event notifications which make up the</span>
+<span class="doccomment">//! event-driven architecture. Whenever something noteworthy happens in the</span>
+<span class="doccomment">//! system, a notification describing what happened will be published.</span>
+<span class="doccomment">//! The notification data structure implements the [`Notification`](event::Notification) trait and</span>
+<span class="doccomment">//! thus describes where to expect it in a type-safe manner.</span>
+<span class="doccomment">//! In this mode, everybody can publish notifications and all interested parties</span>
+<span class="doccomment">//! can listen in and react to published event notifications. For more details and</span>
+<span class="doccomment">//! a more in-depth explanation, consult the [`event`] module.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! The second mode of operation is request and response. In a simple</span>
+<span class="doccomment">//! scenario, a component may request information from another one and thus</span>
+<span class="doccomment">//! one service may receive one response. However, it is also possible for</span>
+<span class="doccomment">//! multiple respondents to send a response as more than one service may</span>
+<span class="doccomment">//! serve the request simultaneously (if desired). This is implemented using</span>
+<span class="doccomment">//! the [`Request`](request::Request) trait which builds on the [`Notification`](event::Notification) trait by adding</span>
+<span class="doccomment">//! a response channel.</span>
+
+<span class="kw">mod</span> <span class="ident">communication_factory</span>;
+<span class="kw">mod</span> <span class="ident">error</span>;
+
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">discovery</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">event</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">implementation</span>;
+<span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">request</span>;
+
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">communication_factory::CommunicationFactory</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">error::BlackboxError</span>;
+</code></pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../../" data-current-crate="library" data-search-index-js="../../../search-index.js" data-search-js="../../../search.js"></div>
+    <script src="../../../main.js"></script><script src="../../../source-script.js"></script><script src="../../../source-files.js"></script>
+</body></html>
