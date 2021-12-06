@@ -191,7 +191,8 @@ jobs:
           make install
           docker-compose -f distribution/docker/docker-compose.yml logs -f &
           sleep 15
-          python3 test/integration.py 8080
+          docker run --rm --network host -e ENDPOINT=http://localhost:8080 -e FORKS=2 -e BROWSER=firefox ghcr.io/tilblechschmidt/parallelseleniumtest:sha-fa30ad9
+          docker run --rm --network host -e ENDPOINT=http://localhost:8080 -e FORKS=2 -e BROWSER=chrome ghcr.io/tilblechschmidt/parallelseleniumtest:sha-fa30ad9
 
   kubernetes-integration:
     name: ☸️ Kubernetes integration test
@@ -247,7 +248,8 @@ jobs:
           kubectl describe pods
       - name: Run integration test
         run: |
-          python3 test/integration.py 30007
+          docker run --rm --network host -e ENDPOINT=http://localhost:30007 -e FORKS=2 -e BROWSER=firefox ghcr.io/tilblechschmidt/parallelseleniumtest:sha-fa30ad9
+          docker run --rm --network host -e ENDPOINT=http://localhost:30007 -e FORKS=2 -e BROWSER=chrome ghcr.io/tilblechschmidt/parallelseleniumtest:sha-fa30ad9
 
   # ------------------ RELEASE ONLY JOBS ------------------
   docker-hub:
