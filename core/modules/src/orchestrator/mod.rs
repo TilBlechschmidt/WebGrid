@@ -54,6 +54,7 @@ impl Orchestrator {
                     provisioner_options.images.clone(),
                     !provisioner_options.retain_exited_sessions,
                     provisioner_options.storage,
+                    provisioner_options.volume,
                     provisioner_options.log,
                 )
                 .unwrap();

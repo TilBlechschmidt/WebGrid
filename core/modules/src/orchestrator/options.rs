@@ -75,6 +75,11 @@ pub struct DockerOptions {
         value_name = "sessionLevel"
     )]
     pub log: String,
+
+    /// Volume binds for session containers using the docker format (e.g. /tmp/onHost:/insideContainer).
+    /// Using this option is not recommended and it will be deprecated at a later point.
+    #[structopt(env, long)]
+    pub volume: Vec<String>,
 }
 
 #[derive(Debug, StructOpt)]

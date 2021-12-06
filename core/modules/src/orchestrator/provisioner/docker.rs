@@ -44,6 +44,7 @@ pub struct DockerProvisioner {
     instance: Uuid,
     auto_remove: bool,
     storage: Option<String>,
+    binds: Vec<String>,
     log: String,
 }
 
@@ -53,6 +54,7 @@ impl DockerProvisioner {
         images: ContainerImageSet,
         auto_remove: bool,
         storage: Option<String>,
+        binds: Vec<String>,
         log: String,
     ) -> Result<Self, bollard::errors::Error> {
         if images.is_empty() {
@@ -68,6 +70,7 @@ impl DockerProvisioner {
             instance,
             auto_remove,
             storage,
+            binds,
             log,
         })
     }
@@ -136,6 +139,7 @@ impl DockerProvisioner {
             auto_remove: Some(self.auto_remove),
             network_mode: Some("webgrid".to_string()),
             shm_size: Some(1024 * 1024 * 1024 * 2),
+            binds: Some(self.binds.clone()),
             ..Default::default()
         };
 
