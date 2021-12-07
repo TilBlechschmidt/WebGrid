@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "web-grid.serviceName" . }}
+  labels:
+    {{- include "web-grid.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    dev.webgrid/component: gangway
+    {{- include "web-grid.selectorLabels" . | nindent 4 }}

@@ -1,1 +1,1 @@
-A service named {{ include "web-grid.fullname" . }} has been created. Point your selenium client to it (either by running it in K8s or creating an Ingress)!
+A service named {{ include "web-grid.serviceName" . }} has been created. Point your selenium client to it (either by running it in K8s or creating an Ingress)!

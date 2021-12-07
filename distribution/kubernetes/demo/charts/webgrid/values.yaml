@@ -7,6 +7,7 @@ logLevel: info,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn
 service:
   type: ClusterIP
   port: 80
+  name: ""
 
 config:
   # When set, sessions will be provided with this backend enabling video recording.
@@ -79,6 +80,7 @@ config:
       segmentDuration: 6
 
 replicaCount:
+  api: 1
   gangway: 1
   manager: 1
   collector: 1

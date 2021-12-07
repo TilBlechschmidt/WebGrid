@@ -93,6 +93,13 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
+Create the name for the service
+*/}}
+{{- define "web-grid.serviceName" -}}
+{{- default (include "web-grid.fullname" .) .Values.service.name }}
+{{- end }}
+
+{{/*
 Allow customization of the image tag used
 */}}
 {{- define "web-grid.imageTag" -}}
