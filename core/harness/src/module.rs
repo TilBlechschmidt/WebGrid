@@ -1,9 +1,11 @@
 use super::Heart;
 use async_trait::async_trait;
 use domain::event::ModuleTerminationReason;
-use jatsl::{JobScheduler, StatusServer};
+use futures::lock::Mutex;
+use jatsl::{JobScheduler, State, StatusServer};
 use library::{BoxedError, EmptyResult};
 use std::any::type_name;
+use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::timeout;
 use tracing::{debug, error, info, instrument};
@@ -23,6 +25,9 @@ pub trait Module {
     ///
     /// Returning `None` results in the program entering a shutdown state and calling the `pre_shutdown` hook.
     async fn run(&mut self, scheduler: &JobScheduler) -> Result<Option<Heart>, BoxedError>;
+
+    /// Opportunity for modules to do something before all jobs will be terminated
+    async fn pre_shutdown(&mut self, _scheduler: &JobScheduler) {}
 
     /// Shutdown hook executed after the core loop and all associated jobs have terminated
     #[instrument(skip(self))]
@@ -71,20 +76,27 @@ impl ModuleRunner {
         let scheduler = JobScheduler::default();
         let mut termination_reason = ModuleTerminationReason::ExitedNormally;
 
-        if let Some(port) = self.status_server_port {
+        let status_state = if let Some(port) = self.status_server_port {
             info!(port, "Spawning status server");
-            // TODO Provide the status server with a "fake job" that is not ready while we the module.run() method has not been awaited
-            let status_server = StatusServer::new(&scheduler, port);
+            let (status_state, status_server) = StatusServer::new(&scheduler, port);
             scheduler.spawn_job(status_server).await;
-        }
+            Some(status_state)
+        } else {
+            None
+        };
 
         info!("Commencing module startup sequence");
         let startup = timeout(self.startup_timeout, module.pre_startup()).await;
 
         match startup {
             Ok(Ok(_)) => {
-                self.run_loop(&mut module, &scheduler, &mut termination_reason)
-                    .await
+                self.run_loop(
+                    &mut module,
+                    &scheduler,
+                    &mut termination_reason,
+                    &status_state,
+                )
+                .await
             }
             Ok(Err(error)) => {
                 error!(?error, "Module startup sequence encountered an error");
@@ -96,8 +108,14 @@ impl ModuleRunner {
             }
         }
 
+        info!("Running pre-shutdown hook");
+        if let Some(state) = status_state {
+            *state.lock().await = State::Shutdown;
+        }
+        module.pre_shutdown(&scheduler).await;
+
         info!("Terminating remaining jobs");
-        scheduler.terminate_jobs().await;
+        scheduler.terminate_jobs(Duration::from_secs(5)).await;
 
         info!("Commencing module shutdown sequence");
         let result = timeout(
@@ -111,20 +129,27 @@ impl ModuleRunner {
         }
     }
 
-    #[instrument(skip(self, module, scheduler, termination_reason))]
+    #[instrument(skip(self, module, scheduler, termination_reason, status_state))]
     async fn run_loop<M: Module + Send + Sync>(
         &self,
         module: &mut M,
         scheduler: &JobScheduler,
         termination_reason: &mut ModuleTerminationReason,
+        status_state: &Option<Arc<Mutex<State>>>,
     ) {
         info!("Executing module run procedure");
         match module.run(scheduler).await {
             Ok(None) => {
                 debug!("Module run procedure completed successfully");
+                if let Some(state) = status_state {
+                    *state.lock().await = State::Running;
+                }
             }
             Ok(Some(mut heart)) => {
                 debug!("Module run procedure completed successfully, entering run loop");
+                if let Some(state) = status_state {
+                    *state.lock().await = State::Running;
+                }
                 let death_reason = heart.death().await;
                 info!(?death_reason, "Heart provided by run procedure died");
                 *termination_reason = ModuleTerminationReason::HeartDied(death_reason);
