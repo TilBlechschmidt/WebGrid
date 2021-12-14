@@ -85,11 +85,11 @@ config:
       segmentDuration: 6
 
 replicaCount:
-  api: 1
-  gangway: 1
-  manager: 1
-  collector: 1
-  orchestrator: 1
+  api: 2
+  gangway: 2
+  manager: 2
+  collector: 2
+  orchestrator: 2
 
 image:
   repository: webgrid

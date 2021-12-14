@@ -81,3 +81,14 @@ spec:
               port: status
           resources:
             {{- toYaml .Values.resources.gangway | nindent 12 }}
+---
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "web-grid.fullname" . }}-gangway
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      dev.webgrid/component: gangway
+      {{- include "web-grid.selectorLabels" . | nindent 6 }}
