@@ -1,4 +1,6 @@
 use crate::options::{QueueingOptions, RedisOptions, StorageOptions};
+use library::helpers::parse_seconds;
+use std::time::Duration;
 use structopt::StructOpt;
 
 /// Options for the gangway module
@@ -26,6 +28,10 @@ pub struct Options {
     /// Options regarding storage
     #[structopt(flatten)]
     pub storage: StorageOptions,
+
+    /// Grace period for running HTTP requests to complete before quitting
+    #[structopt(long, env, default_value = "600", parse(try_from_str = parse_seconds))]
+    pub termination_grace_period: Duration,
 }
 
 #[derive(Debug, StructOpt)]

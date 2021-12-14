@@ -35,6 +35,7 @@ spec:
       imagePullSecrets:
       - name: {{ .Values.image.pullSecret }}
       {{- end }}
+      terminationGracePeriodSeconds: {{ add .Values.config.gangway.terminationGracePeriod 20 }}
       containers:
         - image: "{{ .Values.image.repository }}/core:{{ include "web-grid.imageTag" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
@@ -56,6 +57,8 @@ spec:
               value: "{{ .Values.config.gangway.cacheSize }}"
             - name: PENDING_REQUEST_LIMIT
               value: "{{ .Values.config.gangway.pendingRequestLimit }}"
+            - name: TERMINATION_GRACE_PERIOD
+              value: "{{ .Values.config.gangway.terminationGracePeriod }}"
             - name: ID
               valueFrom:
                 fieldRef:
@@ -71,6 +74,8 @@ spec:
             tcpSocket:
               port: status
           readinessProbe:
+            periodSeconds: 3
+            failureThreshold: 1
             httpGet:
               path: /status
               port: status

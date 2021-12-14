@@ -4,12 +4,14 @@
 //         prevented a module with that name from being recognized as part of the project, breaking
 //         most IDE functionality. For that reason, the module is now dubbed "gangway" 🤷‍♂️
 
+use std::time::Duration;
+
 use crate::gangway::created_publisher::CreatedNotificationPublisherJob;
 use crate::gangway::proxy::ProxyJob;
 use async_trait::async_trait;
 use domain::WebgridServiceDescriptor;
 use harness::{Heart, Module, RedisServiceDiscoveryJob, ServiceRunner};
-use jatsl::{schedule, JobScheduler};
+use jatsl::{schedule, Job, JobScheduler};
 use library::communication::discovery::pubsub::PubSubServiceDiscoverer;
 use library::communication::event::{
     ConsumerGroupDescriptor, ConsumerGroupIdentifier, QueueLocation,
@@ -21,8 +23,10 @@ mod options;
 mod proxy;
 mod services;
 
+use library::storage::s3::S3StorageBackend;
 pub use options::Options;
 use services::*;
+use tokio::time::sleep;
 use tracing::debug;
 
 /// Module implementation
@@ -93,5 +97,19 @@ impl Module for Gangway {
         });
 
         Ok(Some(Heart::without_heart_stone()))
+    }
+
+    async fn pre_shutdown(&mut self, scheduler: &JobScheduler) {
+        // Give e.g. K8s some time to discover that we are not ready
+        debug!("Postponing shutdown for readiness probe to be observed");
+        sleep(Duration::from_secs(5)).await;
+
+        // Terminate the proxy server gracefully
+        debug!("Gracefully shutting down HTTP server");
+        scheduler.terminate_job(
+            &ProxyJob::<PubSubServiceDiscoverer<WebgridServiceDescriptor>, S3StorageBackend>::NAME
+                .into(),
+            self.options.termination_grace_period,
+        ).await;
     }
 }

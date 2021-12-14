@@ -38,6 +38,11 @@ config:
     # In reality, this variable is only here to cap the memory usage and not to actively control the requests.
     # When you are hitting this limit you should probably start scaling horizontally instead.
     pendingRequestLimit: 25000
+    # Maximum amount of time for queued session requests to be processed before the gangway shuts down.
+    # You should set this to a rather high value so that all pending requests can still be completed while
+    # new ones are delegated to another replica instance. Note that the K8s terminationGracePeriod is set to
+    # this value plus 20sec and the gangway is instructed to terminate within the set time period.
+    terminationGracePeriod: 600
   collector:
     # Name of the mongo database to use
     database: webgrid
