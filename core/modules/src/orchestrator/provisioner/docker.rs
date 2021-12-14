@@ -41,7 +41,7 @@ enum DockerProvisionerError {
 pub struct DockerProvisioner {
     docker: Docker,
     images: ContainerImageSet,
-    instance: Uuid,
+    instance: String,
     auto_remove: bool,
     storage: Option<String>,
     binds: Vec<String>,
@@ -52,6 +52,7 @@ impl DockerProvisioner {
     /// Creates a new instance with the provided images, connecting to the default docker instance
     pub fn new(
         images: ContainerImageSet,
+        instance: String,
         auto_remove: bool,
         storage: Option<String>,
         binds: Vec<String>,
@@ -62,7 +63,6 @@ impl DockerProvisioner {
         }
 
         let connection = Docker::connect_with_local_defaults()?;
-        let instance = Uuid::new_v4();
 
         Ok(Self {
             docker: connection,

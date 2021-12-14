@@ -42,19 +42,18 @@ enum KubernetesProvisionerError {
 pub struct KubernetesProvisioner {
     namespace: String,
     images: ContainerImageSet,
-    instance: Uuid,
+    instance: String,
 }
 
 impl KubernetesProvisioner {
     /// Creates a new instance with the provided images, connecting to the default API endpoint drawn from the environment.
     /// By default, it uses the `webgrid` namespace unless the `NAMESPACE` variable is set (which it is by default in K8s pods).
-    pub fn new(images: ContainerImageSet) -> Self {
+    pub fn new(images: ContainerImageSet, instance: String) -> Self {
         if images.is_empty() {
             warn!("No images provided to provisioner. It won't be able to launch any sessions!");
         }
 
         let namespace = std::env::var("NAMESPACE").unwrap_or_else(|_| "webgrid".into());
-        let instance = Uuid::new_v4();
 
         Self {
             namespace,

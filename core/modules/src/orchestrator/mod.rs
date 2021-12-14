@@ -39,7 +39,10 @@ impl Orchestrator {
             BoxedMatchingStrategy,
         ) = match command.provisioner {
             ProvisionerCommand::Kubernetes(provisioner_options) => {
-                let provisioner = KubernetesProvisioner::new(provisioner_options.images.clone());
+                let provisioner = KubernetesProvisioner::new(
+                    provisioner_options.images.clone(),
+                    provisioner_options.orchestrator.queueing.id.clone(),
+                );
 
                 (
                     provisioner_options.orchestrator,
@@ -52,6 +55,7 @@ impl Orchestrator {
             ProvisionerCommand::Docker(provisioner_options) => {
                 let provisioner = DockerProvisioner::new(
                     provisioner_options.images.clone(),
+                    provisioner_options.orchestrator.queueing.id.clone(),
                     !provisioner_options.retain_exited_sessions,
                     provisioner_options.storage,
                     provisioner_options.volume,
