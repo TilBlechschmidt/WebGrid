@@ -49,6 +49,7 @@ impl Consumer for TerminationWatcherService {
         let notification = notification.into_inner();
         metadata.termination = Some(notification.reason);
         metadata.recording_bytes = Some(notification.recording_bytes as i64);
+        metadata.profiling_data = notification.profiling_data;
 
         self.collection.insert_one(metadata, None).await?;
         self.staging_collection.delete_one(query, None).await?;

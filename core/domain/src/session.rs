@@ -6,6 +6,7 @@ use super::event::{
 use bson::serde_helpers::uuid_as_binary;
 use chrono::{DateTime, Utc};
 use library::helpers::option_chrono_datetime_as_bson_datetime;
+use library::AccumulatedPerformanceMetrics;
 use serde::{Deserialize, Serialize};
 
 /// Indexable metadata for a session
@@ -55,6 +56,9 @@ pub struct SessionMetadata {
     /// Number of bytes used by the video recording
     pub recording_bytes: Option<i64>,
 
+    /// Performance metrics collected for each process
+    pub profiling_data: HashMap<String, AccumulatedPerformanceMetrics>,
+
     /// Reason why the session terminated
     pub termination: Option<SessionTerminationReason>,
 }
@@ -75,6 +79,7 @@ impl SessionMetadata {
             provisioner_metadata: None,
             client_metadata: HashMap::new(),
             recording_bytes: None,
+            profiling_data: HashMap::new(),
             termination: None,
         }
     }

@@ -2,8 +2,9 @@ use super::super::super::QUEUE_SIZE_STARTUP_WORKFLOW;
 use super::SessionIdentifier;
 use library::communication::event::{Notification, QueueDescriptor};
 use library::communication::BlackboxError;
-use library::BoxedError;
+use library::{AccumulatedPerformanceMetrics, BoxedError};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::{
     fmt,
     fmt::{Error as FmtError, Formatter},
@@ -80,7 +81,7 @@ pub enum SessionTerminationReason {
 ///
 /// Whenever a session that has previously sent the [`SessionOperationalNotification`](super::SessionOperationalNotification)
 /// becomes unreachable permanently due to a particular [reason](SessionTerminationReason), this event is fired.
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct SessionTerminatedNotification {
     /// Unique identifier of the created session
     pub id: SessionIdentifier,
@@ -90,6 +91,9 @@ pub struct SessionTerminatedNotification {
 
     /// Bytes of video recorded
     pub recording_bytes: usize,
+
+    /// Performance metrics collected for each process
+    pub profiling_data: HashMap<String, AccumulatedPerformanceMetrics>,
 }
 
 impl Notification for SessionTerminatedNotification {
@@ -105,6 +109,7 @@ impl SessionTerminatedNotification {
             id,
             reason: SessionTerminationReason::StartupFailed { error },
             recording_bytes: 0,
+            profiling_data: HashMap::new(),
         }
     }
 }

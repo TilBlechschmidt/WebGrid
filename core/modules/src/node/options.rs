@@ -50,6 +50,14 @@ pub struct Options {
     /// Options regarding storage
     #[structopt(flatten)]
     pub storage: StorageOptions,
+
+    /// Enables CPU, memory, and disk usage profiling of all involved processes
+    #[structopt(long, env)]
+    pub profile: bool,
+
+    /// Sets the interval at which profiled processes will be sampled
+    #[structopt(long, env, default_value = "1", parse(try_from_str = parse_seconds))]
+    pub profiler_sampling_interval: Duration,
 }
 
 /// WebDriver related options

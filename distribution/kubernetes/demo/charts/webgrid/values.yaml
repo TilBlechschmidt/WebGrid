@@ -75,6 +75,13 @@ config:
     idleTimeout: 120
     # Screen resolution for sessions
     resolution: 1920x1080
+    # CPU, Mem, Disk profiling of involved processes
+    profiling:
+      # Whether to activate the profiler
+      # Note that this feature uses quite some CPU itself, depending on the samplingInterval below!
+      enable: true
+      # Interval at which the processes are sampled
+      samplingInterval: 1
     # Options related to video recording
     # Consult the ffmpeg documentation on how these parameters work
     # https://trac.ffmpeg.org/wiki/Encode/H.264

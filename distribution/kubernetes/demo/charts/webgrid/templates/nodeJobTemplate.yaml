@@ -77,6 +77,12 @@ data:
                   value: "{{ .Values.config.node.startupTimeout }}"
                 - name: INITIAL_TIMEOUT
                   value: "{{ .Values.config.node.initialTimeout }}"
+                {{- if .Values.config.node.profiling.enable }}
+                - name: PROFILE
+                  value: "1"
+                - name: PROFILER_SAMPLING_INTERVAL
+                  value: "{{ .Values.config.node.profiling.samplingInterval }}"
+                {{- end }}
                 - name: IDLE_TIMEOUT
                   value: "{{ .Values.config.node.idleTimeout }}"
                 - name: RESOLUTION

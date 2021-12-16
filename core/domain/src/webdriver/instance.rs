@@ -305,6 +305,13 @@ impl WebDriverInstance {
         self.socket_addr
     }
 
+    /// Fetches the process id of the webdriver instance.
+    /// Returns `None` when it is no longer running.
+    /// Note that this does not return the browser pid.
+    pub fn pid(&self) -> Option<u32> {
+        self.process.id()
+    }
+
     /// Attempts to kill the webdriver and waits for it to die in agony
     #[instrument(err, skip(self), fields(pid = ?self.process.id(), addr = ?self.socket_addr))]
     pub async fn kill(mut self) -> Result<(), IoError> {

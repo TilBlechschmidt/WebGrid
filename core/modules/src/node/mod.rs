@@ -16,12 +16,17 @@ use jatsl::{schedule, schedule_and_wait, JobScheduler};
 use library::communication::event::NotificationPublisher;
 use library::communication::{BlackboxError, CommunicationFactory};
 use library::storage::s3::S3StorageBackend;
-use library::{BoxedError, EmptyResult};
+use library::{
+    AccumulatedPerformanceMetrics, BoxedError, EmptyResult, PerformanceMonitor,
+    PerformanceMonitoringTarget,
+};
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
 use tokio::sync::mpsc::{self, UnboundedSender};
+use tokio::sync::Mutex;
 use tracing::{error, info};
 
 mod metadata;
@@ -48,15 +53,21 @@ pub struct Node {
     options: Options,
     instance: Option<WebDriverInstance>,
     video_byte_count_total: Arc<AtomicUsize>,
+    profiling_tx: mpsc::UnboundedSender<Arc<Mutex<AccumulatedPerformanceMetrics>>>,
+    profiling_rx: mpsc::UnboundedReceiver<Arc<Mutex<AccumulatedPerformanceMetrics>>>,
 }
 
 impl Node {
     /// Creates a new instance from raw parts
     pub fn new(options: Options) -> Self {
+        let (profiling_tx, profiling_rx) = mpsc::unbounded_channel();
+
         Self {
             options,
             instance: None,
             video_byte_count_total: Arc::new(AtomicUsize::new(0)),
+            profiling_tx,
+            profiling_rx,
         }
     }
 
@@ -68,6 +79,32 @@ impl Node {
         );
 
         communication_factory.notification_publisher()
+    }
+
+    async fn monitor_process(&self) -> EmptyResult {
+        let interval = self.options.profiler_sampling_interval;
+
+        #[cfg(target_os = "linux")]
+        match PerformanceMonitor::observe_by_name("Xvfb".into(), "xvfb".into(), interval).await {
+            Ok(xvfb_metrics) => {
+                self.profiling_tx.send(xvfb_metrics)?;
+            }
+            Err(error) => {
+                error!(?error, "Could not find Xvfb process for monitoring");
+            }
+        }
+
+        let webgrid_metrics = PerformanceMonitor::observe_self("webgrid".into(), interval).await?;
+        let cgroup_metrics = PerformanceMonitor::observe(
+            PerformanceMonitoringTarget::CurrentCgroup,
+            "cgroup".into(),
+            interval,
+        );
+
+        self.profiling_tx.send(webgrid_metrics)?;
+        self.profiling_tx.send(cgroup_metrics)?;
+
+        Ok(())
     }
 
     async fn build_heart(&self, capabilities: &Capabilities) -> (Heart, HeartStone) {
@@ -105,6 +142,70 @@ impl Node {
         self.instance = Some(webdriver);
 
         Ok(())
+    }
+
+    async fn monitor_driver(&self) -> EmptyResult {
+        if let Some(pid) = self.instance.as_ref().map(|w| w.pid()).flatten() {
+            let metrics = PerformanceMonitor::observe_by_pid(
+                pid as i32,
+                "webdriver".into(),
+                self.options.profiler_sampling_interval,
+            )
+            .await?;
+            self.profiling_tx.send(metrics)?;
+        }
+
+        Ok(())
+    }
+
+    async fn monitor_browser(&self) {
+        if let Some(pid) = self.instance.as_ref().map(|w| w.pid()).flatten() {
+            let profiling_tx = self.profiling_tx.clone();
+            let interval = self.options.profiler_sampling_interval;
+            let mut monitored_children = Vec::new();
+
+            tokio::spawn(async move {
+                loop {
+                    let children =
+                        PerformanceMonitor::recursively_find_child_processes_of_pid(pid as i32)
+                            .await;
+
+                    match children {
+                        Ok(children) => {
+                            for child in children {
+                                let pid = child.pid();
+                                if monitored_children.contains(&pid) {
+                                    continue;
+                                }
+
+                                let postfix = child
+                                    .name()
+                                    .await
+                                    .unwrap_or_else(|_| "unknown".into())
+                                    .replace(" ", "");
+
+                                let child_metrics = PerformanceMonitor::observe(
+                                    PerformanceMonitoringTarget::Process(child),
+                                    format!("browser-{}-{}", pid, postfix),
+                                    interval,
+                                );
+
+                                monitored_children.push(pid);
+
+                                if let Err(error) = profiling_tx.send(child_metrics) {
+                                    error!(?error, "failed to submit browser process metrics");
+                                }
+                            }
+                        }
+                        Err(error) => error!(?error, "failed to fetch children of browser"),
+                    }
+
+                    tokio::time::sleep(Duration::from_millis(2000)).await;
+                }
+            });
+        } else {
+            error!("failed to monitor browser process as no webdriver pid could be found");
+        }
     }
 
     fn build_proxy_job(
@@ -164,11 +265,19 @@ impl Node {
         {
             None
         } else {
+            let interval = if self.options.profile {
+                Some(self.options.profiler_sampling_interval)
+            } else {
+                None
+            };
+
             Some(RecordingJob::new(
                 self.options.id,
                 self.options.recording.generate_arguments(),
                 self.options.storage.backend.clone()?,
                 self.video_byte_count_total.clone(),
+                self.profiling_tx.clone(),
+                interval,
             ))
         }
     }
@@ -201,7 +310,18 @@ impl Node {
         }
     }
 
-    async fn send_termination_notification(&self, reason: SessionTerminationReason) {
+    async fn collect_profiling_data(&mut self) -> HashMap<String, AccumulatedPerformanceMetrics> {
+        let mut profiling_data = HashMap::new();
+
+        while let Ok(entry) = self.profiling_rx.try_recv() {
+            let data = entry.lock().await.clone();
+            profiling_data.insert(data.label.clone(), data);
+        }
+
+        profiling_data
+    }
+
+    async fn send_termination_notification(&mut self, reason: SessionTerminationReason) {
         info!("Publishing termination notification");
         let publisher = self.create_oneshot_notification_publisher();
 
@@ -224,10 +344,13 @@ impl Node {
             }
             _ => {
                 let recording_bytes = self.video_byte_count_total.load(Ordering::Relaxed);
+                let profiling_data = self.collect_profiling_data().await;
+
                 let notification = SessionTerminatedNotification {
                     id: self.options.id,
                     reason,
                     recording_bytes,
+                    profiling_data,
                 };
 
                 publisher.publish(&notification).await
@@ -244,6 +367,13 @@ impl Node {
 impl Module for Node {
     async fn pre_startup(&mut self) -> EmptyResult {
         self.start_driver().await?;
+
+        if self.options.profile {
+            self.monitor_process().await?;
+            self.monitor_driver().await?;
+            self.monitor_browser().await;
+        }
+
         Ok(())
     }
 
@@ -251,8 +381,6 @@ impl Module for Node {
         let capabilities: Capabilities =
             serde_json::from_str(&self.options.webdriver.capabilities)?;
         let (heart, stone) = self.build_heart(&capabilities).await;
-
-        // TODO Spawn process monitoring for webdriver (find a generic solution because it won't be the last one)
 
         let advertise_job = self.build_advertise_job();
         let (metadata_publisher_job, metadata_tx) = self.build_metadata_publisher_job();

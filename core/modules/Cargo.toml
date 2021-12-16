@@ -34,7 +34,7 @@ k8s-openapi = { version = "0.12", default-features = false, features = ["v1_21"]
 serde_yaml = "0.8"
 
 # Module implementations
-heim = { version = "0.1.0-rc.1", features = ["process"] }
+heim = { version = "0.1.0-rc.1", features = ["process", "net"] }
 tempfile = "3"
 hyper = { version = "0.14", features = ["full"] }
 mime_guess = "2.0"

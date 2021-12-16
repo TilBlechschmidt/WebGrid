@@ -6,17 +6,18 @@ use heim::process::os::unix::{ProcessExt, Signal};
 use hyper::Server;
 use jatsl::Job;
 use library::storage::StorageBackend;
-use library::EmptyResult;
 use library::{http::Responder, make_responder_chain_service_fn, responder_chain};
+use library::{AccumulatedPerformanceMetrics, EmptyResult, PerformanceMonitor};
 use std::io::Read;
 use std::net::SocketAddr;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::time::Duration;
 use storage::StorageResponder;
 use tempfile::NamedTempFile;
 use thiserror::Error;
 use tokio::process::Command;
-use tokio::sync::oneshot;
+use tokio::sync::{mpsc, oneshot, Mutex};
 use tracing::{error, info};
 
 mod storage;
@@ -35,6 +36,8 @@ pub struct RecordingJob<S: StorageBackend> {
     session_id: SessionIdentifier,
     started: AtomicBool,
     byte_count_total: Arc<AtomicUsize>,
+    profiling_tx: mpsc::UnboundedSender<Arc<Mutex<AccumulatedPerformanceMetrics>>>,
+    profiling_interval: Option<Duration>,
 }
 
 impl<S> RecordingJob<S>
@@ -46,6 +49,8 @@ where
         arguments: String,
         storage: S,
         byte_count_total: Arc<AtomicUsize>,
+        profiling_tx: mpsc::UnboundedSender<Arc<Mutex<AccumulatedPerformanceMetrics>>>,
+        profiling_interval: Option<Duration>,
     ) -> Self {
         Self {
             arguments,
@@ -53,6 +58,8 @@ where
             session_id,
             started: AtomicBool::new(false),
             byte_count_total,
+            profiling_tx,
+            profiling_interval,
         }
     }
 }
@@ -101,9 +108,16 @@ where
         self.started.store(true, Ordering::Release);
 
         // Prepare the three step termination process
-        let pid = ffmpeg.id().ok_or(RecordingError::NoPIDFound)?;
-        let process = process::get(pid as i32).await?;
+        let pid = ffmpeg.id().ok_or(RecordingError::NoPIDFound)? as i32;
+        let process = process::get(pid).await?;
         let (shutdown_tx, shutdown_rx) = oneshot::channel();
+
+        // Profile ffmpeg (if enabled)
+        if let Some(interval) = self.profiling_interval {
+            let metrics =
+                PerformanceMonitor::observe_by_pid(pid, "ffmpeg".into(), interval).await?;
+            self.profiling_tx.send(metrics)?;
+        }
 
         // 1. Wait for an external termination signal and send SIGTERM to ffmpeg
         let termination_request = async move {
