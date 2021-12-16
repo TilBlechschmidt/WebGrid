@@ -282,7 +282,6 @@
 <span id="282">282</span>
 <span id="283">283</span>
 <span id="284">284</span>
-<span id="285">285</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::SessionProvisioner</span>;
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">CONTAINER_SESSION_ID_LABEL</span>, <span class="ident">PROVISIONER_INSTANCE_LABEL</span>};
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
@@ -327,19 +326,18 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">KubernetesProvisioner</span> {
     <span class="ident">namespace</span>: <span class="ident">String</span>,
     <span class="ident">images</span>: <span class="ident">ContainerImageSet</span>,
-    <span class="ident">instance</span>: <span class="ident">Uuid</span>,
+    <span class="ident">instance</span>: <span class="ident">String</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">KubernetesProvisioner</span> {
     <span class="doccomment">/// Creates a new instance with the provided images, connecting to the default API endpoint drawn from the environment.</span>
     <span class="doccomment">/// By default, it uses the `webgrid` namespace unless the `NAMESPACE` variable is set (which it is by default in K8s pods).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">images</span>: <span class="ident">ContainerImageSet</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">images</span>: <span class="ident">ContainerImageSet</span>, <span class="ident">instance</span>: <span class="ident">String</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="kw">if</span> <span class="ident">images</span>.<span class="ident">is_empty</span>() {
             <span class="macro">warn!</span>(<span class="string">&quot;No images provided to provisioner. It won&#39;t be able to launch any sessions!&quot;</span>);
         }
 
         <span class="kw">let</span> <span class="ident">namespace</span> <span class="op">=</span> <span class="ident">std::env::var</span>(<span class="string">&quot;NAMESPACE&quot;</span>).<span class="ident">unwrap_or_else</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> <span class="string">&quot;webgrid&quot;</span>.<span class="ident">into</span>());
-        <span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">Uuid::new_v4</span>();
 
         <span class="self">Self</span> {
             <span class="ident">namespace</span>,

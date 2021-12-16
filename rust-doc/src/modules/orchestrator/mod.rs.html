@@ -126,6 +126,10 @@
 <span id="126">126</span>
 <span id="127">127</span>
 <span id="128">128</span>
+<span id="129">129</span>
+<span id="130">130</span>
+<span id="131">131</span>
+<span id="132">132</span>
 </pre><pre class="rust"><code><span class="doccomment">//! Module to provision new instances of the [`node`](super::node) module</span>
 
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
@@ -167,7 +171,10 @@
             <span class="ident">BoxedMatchingStrategy</span>,
         ) <span class="op">=</span> <span class="kw">match</span> <span class="ident">command</span>.<span class="ident">provisioner</span> {
             <span class="ident">ProvisionerCommand::Kubernetes</span>(<span class="ident">provisioner_options</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="kw">let</span> <span class="ident">provisioner</span> <span class="op">=</span> <span class="ident">KubernetesProvisioner::new</span>(<span class="ident">provisioner_options</span>.<span class="ident">images</span>.<span class="ident">clone</span>());
+                <span class="kw">let</span> <span class="ident">provisioner</span> <span class="op">=</span> <span class="ident">KubernetesProvisioner::new</span>(
+                    <span class="ident">provisioner_options</span>.<span class="ident">images</span>.<span class="ident">clone</span>(),
+                    <span class="ident">provisioner_options</span>.<span class="ident">orchestrator</span>.<span class="ident">queueing</span>.<span class="ident">id</span>.<span class="ident">clone</span>(),
+                );
 
                 (
                     <span class="ident">provisioner_options</span>.<span class="ident">orchestrator</span>,
@@ -180,6 +187,7 @@
             <span class="ident">ProvisionerCommand::Docker</span>(<span class="ident">provisioner_options</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="kw">let</span> <span class="ident">provisioner</span> <span class="op">=</span> <span class="ident">DockerProvisioner::new</span>(
                     <span class="ident">provisioner_options</span>.<span class="ident">images</span>.<span class="ident">clone</span>(),
+                    <span class="ident">provisioner_options</span>.<span class="ident">orchestrator</span>.<span class="ident">queueing</span>.<span class="ident">id</span>.<span class="ident">clone</span>(),
                     <span class="op">!</span><span class="ident">provisioner_options</span>.<span class="ident">retain_exited_sessions</span>,
                     <span class="ident">provisioner_options</span>.<span class="ident">storage</span>,
                     <span class="ident">provisioner_options</span>.<span class="ident">volume</span>,

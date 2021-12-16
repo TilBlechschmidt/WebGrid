@@ -136,12 +136,39 @@
 <span id="136">136</span>
 <span id="137">137</span>
 <span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::Heart</span>;
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">domain::event::ModuleTerminationReason</span>;
-<span class="kw">use</span> <span class="ident">jatsl</span>::{<span class="ident">JobScheduler</span>, <span class="ident">StatusServer</span>};
+<span class="kw">use</span> <span class="ident">futures::lock::Mutex</span>;
+<span class="kw">use</span> <span class="ident">jatsl</span>::{<span class="ident">JobScheduler</span>, <span class="ident">State</span>, <span class="ident">StatusServer</span>};
 <span class="kw">use</span> <span class="ident">library</span>::{<span class="ident">BoxedError</span>, <span class="ident">EmptyResult</span>};
 <span class="kw">use</span> <span class="ident">std::any::type_name</span>;
+<span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
 <span class="kw">use</span> <span class="ident">std::time::Duration</span>;
 <span class="kw">use</span> <span class="ident">tokio::time::timeout</span>;
 <span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">debug</span>, <span class="ident">error</span>, <span class="ident">info</span>, <span class="ident">instrument</span>};
@@ -161,6 +188,9 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Returning `None` results in the program entering a shutdown state and calling the `pre_shutdown` hook.</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">run</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">scheduler</span>: <span class="kw-2">&amp;</span><span class="ident">JobScheduler</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Heart</span><span class="op">&gt;</span>, <span class="ident">BoxedError</span><span class="op">&gt;</span>;
+
+    <span class="doccomment">/// Opportunity for modules to do something before all jobs will be terminated</span>
+    <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">pre_shutdown</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">_scheduler</span>: <span class="kw-2">&amp;</span><span class="ident">JobScheduler</span>) {}
 
     <span class="doccomment">/// Shutdown hook executed after the core loop and all associated jobs have terminated</span>
     <span class="attribute">#[<span class="ident">instrument</span>(<span class="ident">skip</span>(<span class="self">self</span>))]</span>
@@ -209,20 +239,27 @@
         <span class="kw">let</span> <span class="ident">scheduler</span> <span class="op">=</span> <span class="ident">JobScheduler::default</span>();
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">termination_reason</span> <span class="op">=</span> <span class="ident">ModuleTerminationReason::ExitedNormally</span>;
 
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">port</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">status_server_port</span> {
+        <span class="kw">let</span> <span class="ident">status_state</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">port</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">status_server_port</span> {
             <span class="macro">info!</span>(<span class="ident">port</span>, <span class="string">&quot;Spawning status server&quot;</span>);
-            <span class="comment">// TODO Provide the status server with a &quot;fake job&quot; that is not ready while we the module.run() method has not been awaited</span>
-            <span class="kw">let</span> <span class="ident">status_server</span> <span class="op">=</span> <span class="ident">StatusServer::new</span>(<span class="kw-2">&amp;</span><span class="ident">scheduler</span>, <span class="ident">port</span>);
+            <span class="kw">let</span> (<span class="ident">status_state</span>, <span class="ident">status_server</span>) <span class="op">=</span> <span class="ident">StatusServer::new</span>(<span class="kw-2">&amp;</span><span class="ident">scheduler</span>, <span class="ident">port</span>);
             <span class="ident">scheduler</span>.<span class="ident">spawn_job</span>(<span class="ident">status_server</span>).<span class="kw">await</span>;
-        }
+            <span class="prelude-val">Some</span>(<span class="ident">status_state</span>)
+        } <span class="kw">else</span> {
+            <span class="prelude-val">None</span>
+        };
 
         <span class="macro">info!</span>(<span class="string">&quot;Commencing module startup sequence&quot;</span>);
         <span class="kw">let</span> <span class="ident">startup</span> <span class="op">=</span> <span class="ident">timeout</span>(<span class="self">self</span>.<span class="ident">startup_timeout</span>, <span class="ident">module</span>.<span class="ident">pre_startup</span>()).<span class="kw">await</span>;
 
         <span class="kw">match</span> <span class="ident">startup</span> {
             <span class="prelude-val">Ok</span>(<span class="prelude-val">Ok</span>(<span class="kw">_</span>)) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="self">self</span>.<span class="ident">run_loop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">module</span>, <span class="kw-2">&amp;</span><span class="ident">scheduler</span>, <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">termination_reason</span>)
-                    .<span class="kw">await</span>
+                <span class="self">self</span>.<span class="ident">run_loop</span>(
+                    <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">module</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">scheduler</span>,
+                    <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">termination_reason</span>,
+                    <span class="kw-2">&amp;</span><span class="ident">status_state</span>,
+                )
+                .<span class="kw">await</span>
             }
             <span class="prelude-val">Ok</span>(<span class="prelude-val">Err</span>(<span class="ident">error</span>)) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro">error!</span>(<span class="question-mark">?</span><span class="ident">error</span>, <span class="string">&quot;Module startup sequence encountered an error&quot;</span>);
@@ -234,8 +271,14 @@
             }
         }
 
+        <span class="macro">info!</span>(<span class="string">&quot;Running pre-shutdown hook&quot;</span>);
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">state</span>) <span class="op">=</span> <span class="ident">status_state</span> {
+            <span class="kw-2">*</span><span class="ident">state</span>.<span class="ident">lock</span>().<span class="kw">await</span> <span class="op">=</span> <span class="ident">State::Shutdown</span>;
+        }
+        <span class="ident">module</span>.<span class="ident">pre_shutdown</span>(<span class="kw-2">&amp;</span><span class="ident">scheduler</span>).<span class="kw">await</span>;
+
         <span class="macro">info!</span>(<span class="string">&quot;Terminating remaining jobs&quot;</span>);
-        <span class="ident">scheduler</span>.<span class="ident">terminate_jobs</span>().<span class="kw">await</span>;
+        <span class="ident">scheduler</span>.<span class="ident">terminate_jobs</span>(<span class="ident">Duration::from_secs</span>(<span class="number">5</span>)).<span class="kw">await</span>;
 
         <span class="macro">info!</span>(<span class="string">&quot;Commencing module shutdown sequence&quot;</span>);
         <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">timeout</span>(
@@ -249,20 +292,27 @@
         }
     }
 
-    <span class="attribute">#[<span class="ident">instrument</span>(<span class="ident">skip</span>(<span class="self">self</span>, <span class="ident">module</span>, <span class="ident">scheduler</span>, <span class="ident">termination_reason</span>))]</span>
+    <span class="attribute">#[<span class="ident">instrument</span>(<span class="ident">skip</span>(<span class="self">self</span>, <span class="ident">module</span>, <span class="ident">scheduler</span>, <span class="ident">termination_reason</span>, <span class="ident">status_state</span>))]</span>
     <span class="kw">async</span> <span class="kw">fn</span> <span class="ident">run_loop</span><span class="op">&lt;</span><span class="ident">M</span>: <span class="ident">Module</span> <span class="op">+</span> <span class="ident">Send</span> <span class="op">+</span> <span class="ident">Sync</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="ident">module</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">M</span>,
         <span class="ident">scheduler</span>: <span class="kw-2">&amp;</span><span class="ident">JobScheduler</span>,
         <span class="ident">termination_reason</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">ModuleTerminationReason</span>,
+        <span class="ident">status_state</span>: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">State</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
     ) {
         <span class="macro">info!</span>(<span class="string">&quot;Executing module run procedure&quot;</span>);
         <span class="kw">match</span> <span class="ident">module</span>.<span class="ident">run</span>(<span class="ident">scheduler</span>).<span class="kw">await</span> {
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro">debug!</span>(<span class="string">&quot;Module run procedure completed successfully&quot;</span>);
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">state</span>) <span class="op">=</span> <span class="ident">status_state</span> {
+                    <span class="kw-2">*</span><span class="ident">state</span>.<span class="ident">lock</span>().<span class="kw">await</span> <span class="op">=</span> <span class="ident">State::Running</span>;
+                }
             }
             <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="kw-2">mut</span> <span class="ident">heart</span>)) <span class="op">=</span><span class="op">&gt;</span> {
                 <span class="macro">debug!</span>(<span class="string">&quot;Module run procedure completed successfully, entering run loop&quot;</span>);
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">state</span>) <span class="op">=</span> <span class="ident">status_state</span> {
+                    <span class="kw-2">*</span><span class="ident">state</span>.<span class="ident">lock</span>().<span class="kw">await</span> <span class="op">=</span> <span class="ident">State::Running</span>;
+                }
                 <span class="kw">let</span> <span class="ident">death_reason</span> <span class="op">=</span> <span class="ident">heart</span>.<span class="ident">death</span>().<span class="kw">await</span>;
                 <span class="macro">info!</span>(<span class="question-mark">?</span><span class="ident">death_reason</span>, <span class="string">&quot;Heart provided by run procedure died&quot;</span>);
                 <span class="kw-2">*</span><span class="ident">termination_reason</span> <span class="op">=</span> <span class="ident">ModuleTerminationReason::HeartDied</span>(<span class="ident">death_reason</span>);

@@ -46,7 +46,15 @@
 <span id="46">46</span>
 <span id="47">47</span>
 <span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::options</span>::{<span class="ident">QueueingOptions</span>, <span class="ident">RedisOptions</span>, <span class="ident">StorageOptions</span>};
+<span class="kw">use</span> <span class="ident">library::helpers::parse_seconds</span>;
+<span class="kw">use</span> <span class="ident">std::time::Duration</span>;
 <span class="kw">use</span> <span class="ident">structopt::StructOpt</span>;
 
 <span class="doccomment">/// Options for the gangway module</span>
@@ -74,6 +82,10 @@
     <span class="doccomment">/// Options regarding storage</span>
     <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">flatten</span>)]</span>
     <span class="kw">pub</span> <span class="ident">storage</span>: <span class="ident">StorageOptions</span>,
+
+    <span class="doccomment">/// Grace period for running HTTP requests to complete before quitting</span>
+    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span>, <span class="ident">env</span>, <span class="ident">default_value</span> <span class="op">=</span> <span class="string">&quot;600&quot;</span>, <span class="ident">parse</span>(<span class="ident">try_from_str</span> <span class="op">=</span> <span class="ident">parse_seconds</span>))]</span>
+    <span class="kw">pub</span> <span class="ident">termination_grace_period</span>: <span class="ident">Duration</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">StructOpt</span>)]</span>

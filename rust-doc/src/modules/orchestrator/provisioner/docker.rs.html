@@ -267,7 +267,7 @@
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DockerProvisioner</span> {
     <span class="ident">docker</span>: <span class="ident">Docker</span>,
     <span class="ident">images</span>: <span class="ident">ContainerImageSet</span>,
-    <span class="ident">instance</span>: <span class="ident">Uuid</span>,
+    <span class="ident">instance</span>: <span class="ident">String</span>,
     <span class="ident">auto_remove</span>: <span class="ident">bool</span>,
     <span class="ident">storage</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     <span class="ident">binds</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
@@ -278,6 +278,7 @@
     <span class="doccomment">/// Creates a new instance with the provided images, connecting to the default docker instance</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(
         <span class="ident">images</span>: <span class="ident">ContainerImageSet</span>,
+        <span class="ident">instance</span>: <span class="ident">String</span>,
         <span class="ident">auto_remove</span>: <span class="ident">bool</span>,
         <span class="ident">storage</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
         <span class="ident">binds</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
@@ -288,7 +289,6 @@
         }
 
         <span class="kw">let</span> <span class="ident">connection</span> <span class="op">=</span> <span class="ident">Docker::connect_with_local_defaults</span>()<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">instance</span> <span class="op">=</span> <span class="ident">Uuid::new_v4</span>();
 
         <span class="prelude-val">Ok</span>(<span class="self">Self</span> {
             <span class="ident">docker</span>: <span class="ident">connection</span>,
