@@ -312,6 +312,13 @@
 <span id="312">312</span>
 <span id="313">313</span>
 <span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::creation::SessionCreateResponse</span>;
 <span class="kw">use</span> <span class="ident">hyper</span>::{
     <span class="ident">http</span>::{<span class="ident">Method</span>, <span class="ident">Request</span>},
@@ -617,6 +624,13 @@
     <span class="doccomment">/// Address where the driver is reachable</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">socket_addr</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">SocketAddr</span> {
         <span class="self">self</span>.<span class="ident">socket_addr</span>
+    }
+
+    <span class="doccomment">/// Fetches the process id of the webdriver instance.</span>
+    <span class="doccomment">/// Returns `None` when it is no longer running.</span>
+    <span class="doccomment">/// Note that this does not return the browser pid.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pid</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">process</span>.<span class="ident">id</span>()
     }
 
     <span class="doccomment">/// Attempts to kill the webdriver and waits for it to die in agony</span>

@@ -56,6 +56,7 @@
 <span id="56">56</span>
 <span id="57">57</span>
 <span id="58">58</span>
+<span id="59">59</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">domain::event::SessionTerminatedNotification</span>;
 <span class="kw">use</span> <span class="ident">domain::SessionMetadata</span>;
@@ -107,6 +108,7 @@
         <span class="kw">let</span> <span class="ident">notification</span> <span class="op">=</span> <span class="ident">notification</span>.<span class="ident">into_inner</span>();
         <span class="ident">metadata</span>.<span class="ident">termination</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">notification</span>.<span class="ident">reason</span>);
         <span class="ident">metadata</span>.<span class="ident">recording_bytes</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">notification</span>.<span class="ident">recording_bytes</span> <span class="kw">as</span> <span class="ident">i64</span>);
+        <span class="ident">metadata</span>.<span class="ident">profiling_data</span> <span class="op">=</span> <span class="ident">notification</span>.<span class="ident">profiling_data</span>;
 
         <span class="self">self</span>.<span class="ident">collection</span>.<span class="ident">insert_one</span>(<span class="ident">metadata</span>, <span class="prelude-val">None</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">staging_collection</span>.<span class="ident">delete_one</span>(<span class="ident">query</span>, <span class="prelude-val">None</span>).<span class="kw">await</span><span class="question-mark">?</span>;

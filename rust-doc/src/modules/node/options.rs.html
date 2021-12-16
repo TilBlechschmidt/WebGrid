@@ -154,6 +154,14 @@
 <span id="154">154</span>
 <span id="155">155</span>
 <span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::options</span>::{<span class="ident">RedisOptions</span>, <span class="ident">StorageOptions</span>};
 <span class="kw">use</span> <span class="ident">domain::webdriver</span>::{<span class="ident">ScreenResolution</span>, <span class="ident">WebDriverVariant</span>};
 <span class="kw">use</span> <span class="ident">library::helpers::parse_seconds</span>;
@@ -206,6 +214,14 @@
     <span class="doccomment">/// Options regarding storage</span>
     <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">flatten</span>)]</span>
     <span class="kw">pub</span> <span class="ident">storage</span>: <span class="ident">StorageOptions</span>,
+
+    <span class="doccomment">/// Enables CPU, memory, and disk usage profiling of all involved processes</span>
+    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span>, <span class="ident">env</span>)]</span>
+    <span class="kw">pub</span> <span class="ident">profile</span>: <span class="ident">bool</span>,
+
+    <span class="doccomment">/// Sets the interval at which profiled processes will be sampled</span>
+    <span class="attribute">#[<span class="ident">structopt</span>(<span class="ident">long</span>, <span class="ident">env</span>, <span class="ident">default_value</span> <span class="op">=</span> <span class="string">&quot;1&quot;</span>, <span class="ident">parse</span>(<span class="ident">try_from_str</span> <span class="op">=</span> <span class="ident">parse_seconds</span>))]</span>
+    <span class="kw">pub</span> <span class="ident">profiler_sampling_interval</span>: <span class="ident">Duration</span>,
 }
 
 <span class="doccomment">/// WebDriver related options</span>

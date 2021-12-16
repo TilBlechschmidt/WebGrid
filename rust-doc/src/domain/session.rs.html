@@ -79,6 +79,11 @@
 <span id="79">79</span>
 <span id="80">80</span>
 <span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
 
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::event</span>::{
@@ -87,6 +92,7 @@
 <span class="kw">use</span> <span class="ident">bson::serde_helpers::uuid_as_binary</span>;
 <span class="kw">use</span> <span class="ident">chrono</span>::{<span class="ident">DateTime</span>, <span class="ident">Utc</span>};
 <span class="kw">use</span> <span class="ident">library::helpers::option_chrono_datetime_as_bson_datetime</span>;
+<span class="kw">use</span> <span class="ident">library::AccumulatedPerformanceMetrics</span>;
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
 
 <span class="doccomment">/// Indexable metadata for a session</span>
@@ -136,6 +142,9 @@
     <span class="doccomment">/// Number of bytes used by the video recording</span>
     <span class="kw">pub</span> <span class="ident">recording_bytes</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">i64</span><span class="op">&gt;</span>,
 
+    <span class="doccomment">/// Performance metrics collected for each process</span>
+    <span class="kw">pub</span> <span class="ident">profiling_data</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">AccumulatedPerformanceMetrics</span><span class="op">&gt;</span>,
+
     <span class="doccomment">/// Reason why the session terminated</span>
     <span class="kw">pub</span> <span class="ident">termination</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">SessionTerminationReason</span><span class="op">&gt;</span>,
 }
@@ -156,6 +165,7 @@
             <span class="ident">provisioner_metadata</span>: <span class="prelude-val">None</span>,
             <span class="ident">client_metadata</span>: <span class="ident">HashMap::new</span>(),
             <span class="ident">recording_bytes</span>: <span class="prelude-val">None</span>,
+            <span class="ident">profiling_data</span>: <span class="ident">HashMap::new</span>(),
             <span class="ident">termination</span>: <span class="prelude-val">None</span>,
         }
     }

@@ -575,6 +575,13 @@ helm upgrade -f webgrid-chart-values.yaml example webgrid/webgrid
     <span class="nt">idleTimeout</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">120</span>
     <span class="c1"># Screen resolution for sessions</span>
     <span class="nt">resolution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1920x1080</span>
+    <span class="c1"># CPU, Mem, Disk profiling of involved processes</span>
+    <span class="nt">profiling</span><span class="p">:</span>
+      <span class="c1"># Whether to activate the profiler</span>
+      <span class="c1"># Note that this feature uses quite some CPU itself, depending on the samplingInterval below!</span>
+      <span class="nt">enable</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+      <span class="c1"># Interval at which the processes are sampled</span>
+      <span class="nt">samplingInterval</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
     <span class="c1"># Options related to video recording</span>
     <span class="c1"># Consult the ffmpeg documentation on how these parameters work</span>
     <span class="c1"># https://trac.ffmpeg.org/wiki/Encode/H.264</span>

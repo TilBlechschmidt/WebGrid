@@ -158,6 +158,20 @@
 <span id="158">158</span>
 <span id="159">159</span>
 <span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">domain</span>::{<span class="ident">event::SessionIdentifier</span>, <span class="ident">storage_path</span>};
 <span class="kw">use</span> <span class="ident">futures::join</span>;
@@ -166,17 +180,18 @@
 <span class="kw">use</span> <span class="ident">hyper::Server</span>;
 <span class="kw">use</span> <span class="ident">jatsl::Job</span>;
 <span class="kw">use</span> <span class="ident">library::storage::StorageBackend</span>;
-<span class="kw">use</span> <span class="ident">library::EmptyResult</span>;
 <span class="kw">use</span> <span class="ident">library</span>::{<span class="ident">http::Responder</span>, <span class="ident">make_responder_chain_service_fn</span>, <span class="ident">responder_chain</span>};
+<span class="kw">use</span> <span class="ident">library</span>::{<span class="ident">AccumulatedPerformanceMetrics</span>, <span class="ident">EmptyResult</span>, <span class="ident">PerformanceMonitor</span>};
 <span class="kw">use</span> <span class="ident">std::io::Read</span>;
 <span class="kw">use</span> <span class="ident">std::net::SocketAddr</span>;
 <span class="kw">use</span> <span class="ident">std::sync::atomic</span>::{<span class="ident">AtomicBool</span>, <span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>};
 <span class="kw">use</span> <span class="ident">std::sync::Arc</span>;
+<span class="kw">use</span> <span class="ident">std::time::Duration</span>;
 <span class="kw">use</span> <span class="ident">storage::StorageResponder</span>;
 <span class="kw">use</span> <span class="ident">tempfile::NamedTempFile</span>;
 <span class="kw">use</span> <span class="ident">thiserror::Error</span>;
 <span class="kw">use</span> <span class="ident">tokio::process::Command</span>;
-<span class="kw">use</span> <span class="ident">tokio::sync::oneshot</span>;
+<span class="kw">use</span> <span class="ident">tokio::sync</span>::{<span class="ident">mpsc</span>, <span class="ident">oneshot</span>, <span class="ident">Mutex</span>};
 <span class="kw">use</span> <span class="ident">tracing</span>::{<span class="ident">error</span>, <span class="ident">info</span>};
 
 <span class="kw">mod</span> <span class="ident">storage</span>;
@@ -195,6 +210,8 @@
     <span class="ident">session_id</span>: <span class="ident">SessionIdentifier</span>,
     <span class="ident">started</span>: <span class="ident">AtomicBool</span>,
     <span class="ident">byte_count_total</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">AtomicUsize</span><span class="op">&gt;</span>,
+    <span class="ident">profiling_tx</span>: <span class="ident">mpsc::UnboundedSender</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">AccumulatedPerformanceMetrics</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+    <span class="ident">profiling_interval</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span> <span class="ident">RecordingJob</span><span class="op">&lt;</span><span class="ident">S</span><span class="op">&gt;</span>
@@ -206,6 +223,8 @@
         <span class="ident">arguments</span>: <span class="ident">String</span>,
         <span class="ident">storage</span>: <span class="ident">S</span>,
         <span class="ident">byte_count_total</span>: <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">AtomicUsize</span><span class="op">&gt;</span>,
+        <span class="ident">profiling_tx</span>: <span class="ident">mpsc::UnboundedSender</span><span class="op">&lt;</span><span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">AccumulatedPerformanceMetrics</span><span class="op">&gt;</span><span class="op">&gt;</span><span class="op">&gt;</span>,
+        <span class="ident">profiling_interval</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Duration</span><span class="op">&gt;</span>,
     ) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
         <span class="self">Self</span> {
             <span class="ident">arguments</span>,
@@ -213,6 +232,8 @@
             <span class="ident">session_id</span>,
             <span class="ident">started</span>: <span class="ident">AtomicBool::new</span>(<span class="bool-val">false</span>),
             <span class="ident">byte_count_total</span>,
+            <span class="ident">profiling_tx</span>,
+            <span class="ident">profiling_interval</span>,
         }
     }
 }
@@ -261,9 +282,16 @@
         <span class="self">self</span>.<span class="ident">started</span>.<span class="ident">store</span>(<span class="bool-val">true</span>, <span class="ident">Ordering::Release</span>);
 
         <span class="comment">// Prepare the three step termination process</span>
-        <span class="kw">let</span> <span class="ident">pid</span> <span class="op">=</span> <span class="ident">ffmpeg</span>.<span class="ident">id</span>().<span class="ident">ok_or</span>(<span class="ident">RecordingError::NoPIDFound</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">process</span> <span class="op">=</span> <span class="ident">process::get</span>(<span class="ident">pid</span> <span class="kw">as</span> <span class="ident">i32</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+        <span class="kw">let</span> <span class="ident">pid</span> <span class="op">=</span> <span class="ident">ffmpeg</span>.<span class="ident">id</span>().<span class="ident">ok_or</span>(<span class="ident">RecordingError::NoPIDFound</span>)<span class="question-mark">?</span> <span class="kw">as</span> <span class="ident">i32</span>;
+        <span class="kw">let</span> <span class="ident">process</span> <span class="op">=</span> <span class="ident">process::get</span>(<span class="ident">pid</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let</span> (<span class="ident">shutdown_tx</span>, <span class="ident">shutdown_rx</span>) <span class="op">=</span> <span class="ident">oneshot::channel</span>();
+
+        <span class="comment">// Profile ffmpeg (if enabled)</span>
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">interval</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">profiling_interval</span> {
+            <span class="kw">let</span> <span class="ident">metrics</span> <span class="op">=</span>
+                <span class="ident">PerformanceMonitor::observe_by_pid</span>(<span class="ident">pid</span>, <span class="string">&quot;ffmpeg&quot;</span>.<span class="ident">into</span>(), <span class="ident">interval</span>).<span class="kw">await</span><span class="question-mark">?</span>;
+            <span class="self">self</span>.<span class="ident">profiling_tx</span>.<span class="ident">send</span>(<span class="ident">metrics</span>)<span class="question-mark">?</span>;
+        }
 
         <span class="comment">// 1. Wait for an external termination signal and send SIGTERM to ffmpeg</span>
         <span class="kw">let</span> <span class="ident">termination_request</span> <span class="op">=</span> <span class="kw">async</span> <span class="kw">move</span> {

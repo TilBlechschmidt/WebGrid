@@ -144,12 +144,18 @@
 <span id="144">144</span>
 <span id="145">145</span>
 <span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::<span class="kw">super</span>::<span class="kw">super</span>::QUEUE_SIZE_STARTUP_WORKFLOW</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::SessionIdentifier</span>;
 <span class="kw">use</span> <span class="ident">library::communication::event</span>::{<span class="ident">Notification</span>, <span class="ident">QueueDescriptor</span>};
 <span class="kw">use</span> <span class="ident">library::communication::BlackboxError</span>;
-<span class="kw">use</span> <span class="ident">library::BoxedError</span>;
+<span class="kw">use</span> <span class="ident">library</span>::{<span class="ident">AccumulatedPerformanceMetrics</span>, <span class="ident">BoxedError</span>};
 <span class="kw">use</span> <span class="ident">serde</span>::{<span class="ident">Deserialize</span>, <span class="ident">Serialize</span>};
+<span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
 <span class="kw">use</span> <span class="ident">std</span>::{
     <span class="ident">fmt</span>,
     <span class="ident">fmt</span>::{<span class="ident">Error</span> <span class="kw">as</span> <span class="ident">FmtError</span>, <span class="ident">Formatter</span>},
@@ -226,7 +232,7 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// Whenever a session that has previously sent the [`SessionOperationalNotification`](super::SessionOperationalNotification)</span>
 <span class="doccomment">/// becomes unreachable permanently due to a particular [reason](SessionTerminationReason), this event is fired.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Serialize</span>, <span class="ident">Deserialize</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SessionTerminatedNotification</span> {
     <span class="doccomment">/// Unique identifier of the created session</span>
     <span class="kw">pub</span> <span class="ident">id</span>: <span class="ident">SessionIdentifier</span>,
@@ -236,6 +242,9 @@
 
     <span class="doccomment">/// Bytes of video recorded</span>
     <span class="kw">pub</span> <span class="ident">recording_bytes</span>: <span class="ident">usize</span>,
+
+    <span class="doccomment">/// Performance metrics collected for each process</span>
+    <span class="kw">pub</span> <span class="ident">profiling_data</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">AccumulatedPerformanceMetrics</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Notification</span> <span class="kw">for</span> <span class="ident">SessionTerminatedNotification</span> {
@@ -251,6 +260,7 @@
             <span class="ident">id</span>,
             <span class="ident">reason</span>: <span class="ident">SessionTerminationReason::StartupFailed</span> { <span class="ident">error</span> },
             <span class="ident">recording_bytes</span>: <span class="number">0</span>,
+            <span class="ident">profiling_data</span>: <span class="ident">HashMap::new</span>(),
         }
     }
 }
