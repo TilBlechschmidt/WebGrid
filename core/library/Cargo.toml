@@ -25,6 +25,7 @@ serde_json = "1.0"
 
 # Tracing, Metrics & Co.
 tracing = { git = "https://github.com/tokio-rs/tracing", version = "0.2", features = ["log"] }
+heim = { version = "0.1.0-rc.1", features = ["process", "net"] }
 
 # Data handling & caching
 rust-s3 = { version = "0.27.0-rc4", git = "https://github.com/durch/rust-s3" }

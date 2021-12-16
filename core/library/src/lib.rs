@@ -15,6 +15,9 @@ pub mod helpers;
 pub mod http;
 pub mod storage;
 
+mod perfmon;
+pub use perfmon::{AccumulatedPerformanceMetrics, PerformanceMonitor, PerformanceMonitoringTarget};
+
 /// Generic error type
 pub type BoxedError = Box<dyn std::error::Error + Send + Sync + 'static>;
 
