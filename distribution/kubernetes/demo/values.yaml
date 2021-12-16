@@ -1,8 +1,11 @@
 volumeClaim:
   # How much storage should be allocated for videos and other assets
-  request: 16Gi
+  request: 64Gi
   # Which storageClass to use for the PVC
   storageClass: local-path
+  # FIFO limit
+  # It is best to set this to a value that is slightly below half the volume claim size
+  fifoQuota: 14Gi
 
 nodeSelector:
   storage: {}

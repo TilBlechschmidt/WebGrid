@@ -15,6 +15,8 @@ spec:
       {{- include "web-grid.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/nodeJobTemplate.yaml") . | sha256sum }}
       labels:
         dev.webgrid/component: orchestrator
         {{- include "web-grid.selectorLabels" . | nindent 8 }}

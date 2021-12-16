@@ -98,12 +98,13 @@ metadata:
   name: {{ include "webgrid-demo.fullname" . }}-storage-setup
 spec:
   backoffLimit: 4
+  ttlSecondsAfterFinished: 60
   template:
     spec:
       containers:
       - name: storage-setup
         image: minio/mc
-        command: ["/bin/bash", "-c", "curl --retry 64 -f --retry-connrefused --retry-delay 5 -s -o /dev/null 'http://webgrid-demo-storage' || true && mc mb --ignore-existing webgrid/webgrid && mc admin bucket quota --fifo {{ trimSuffix "i" .Values.volumeClaim.request }} webgrid/webgrid"]
+        command: ["/bin/bash", "-c", "curl --retry 64 -f --retry-connrefused --retry-delay 5 -s -o /dev/null 'http://webgrid-demo-storage' || true && mc mb --ignore-existing webgrid/webgrid && mc admin bucket quota --fifo {{ trimSuffix "i" .Values.volumeClaim.fifoQuota }} webgrid/webgrid"]
         env:
           - name: MC_HOST_webgrid
             value: http://minioadmin:minioadmin@webgrid-demo-storage
