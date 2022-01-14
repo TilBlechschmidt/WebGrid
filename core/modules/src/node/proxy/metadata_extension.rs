@@ -3,6 +3,7 @@ use domain::event::SessionClientMetadata;
 use futures::Future;
 use harness::HeartStone;
 use hyper::body::to_bytes;
+use hyper::header::CONTENT_TYPE;
 use hyper::{
     http::{request::Parts, Method, Response},
     Body,
@@ -103,6 +104,9 @@ impl Responder for MetadataExtensionInterceptor {
 
         // Build a json response and send it
         let response = serde_json::to_string(&response_value).unwrap_or_else(|_| "{}".into());
-        Ok(Response::builder().body(response.into()).unwrap())
+        Ok(Response::builder()
+            .header(CONTENT_TYPE, "application/json")
+            .body(response.into())
+            .unwrap())
     }
 }

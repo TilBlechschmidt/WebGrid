@@ -5,6 +5,7 @@ use std::net::SocketAddr;
 use tokio::sync::mpsc::UnboundedSender;
 use tracing::info;
 
+use self::file_upload::FileUploadInterceptor;
 use self::forwarding::ForwardingResponder;
 use self::terminate::TerminationInterceptor;
 use crate::node::proxy::metadata_extension::MetadataExtensionInterceptor;
@@ -12,6 +13,7 @@ use domain::event::SessionClientMetadata;
 use harness::HeartStone;
 use library::{http::Responder, make_responder_chain_service_fn, responder_chain};
 
+mod file_upload;
 mod forwarding;
 mod metadata_extension;
 mod terminate;
@@ -74,9 +76,13 @@ impl Job for ProxyJob {
             self.heart_stone.clone(),
         );
 
+        let file_upload_interceptor =
+            FileUploadInterceptor::new(self.heart_stone.clone(), self.session_id_external.clone());
+
         let make_svc = make_responder_chain_service_fn! {
             termination_interceptor,
             metadata_extension_interceptor,
+            file_upload_interceptor,
             forwarding_responder
         };
 
