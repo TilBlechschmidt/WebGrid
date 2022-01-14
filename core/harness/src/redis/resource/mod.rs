@@ -11,6 +11,7 @@ mod conlike;
 mod multiplexed;
 mod owned;
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Eq, PartialEq)]
 enum CommandParseMode {
     ArgumentCount,
