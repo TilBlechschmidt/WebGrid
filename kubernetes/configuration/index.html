@@ -9,9 +9,9 @@
 <meta content="Til Blechschmidt" name="author"/>
 <link href="https://webgrid.dev/kubernetes/configuration/" rel="canonical"/>
 <link href="../../assets/images/favicon.png" rel="icon"/>
-<meta content="mkdocs-1.2.3, mkdocs-material-8.1.2" name="generator"/>
+<meta content="mkdocs-1.2.3, mkdocs-material-8.1.6" name="generator"/>
 <title>Configuration - WebGrid</title>
-<link href="../../assets/stylesheets/main.f7951f6f.min.css" rel="stylesheet"/>
+<link href="../../assets/stylesheets/main.cd566b2a.min.css" rel="stylesheet"/>
 <link href="../../assets/stylesheets/palette.e6a45f82.min.css" rel="stylesheet"/>
 <meta content="#009485" name="theme-color"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -498,166 +498,166 @@ helm upgrade -f webgrid-chart-values.yaml example webgrid/webgrid
 <p>Below is a reference of all default helm values with their documentations. You can also find those in the <a href="https://github.com/TilBlechschmidt/WebGrid/blob/main/distribution/kubernetes/chart/values.yaml">source code</a> of the chart.</p>
 <div class="tabbed-set" data-tabs="1:1"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio"><label for="__tabbed_1_1">Default helm values</label><div class="tabbed-content"></div>
 </input></div>
-<div class="highlight"><pre><span></span><code><span class="c1"># Default values for web-grid.</span>
-<span class="c1"># This is a YAML-formatted file.</span>
-<span class="c1"># Declare variables to be passed into your templates.</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># Default values for web-grid.</span><span class="w"></span>
+<span class="c1"># This is a YAML-formatted file.</span><span class="w"></span>
+<span class="c1"># Declare variables to be passed into your templates.</span><span class="w"></span>
 
-<span class="nt">logLevel</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">info,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn</span>
+<span class="nt">logLevel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">info,hyper=warn,warp=warn,sqlx=warn,tower=warn,h2=warn</span><span class="w"></span>
 
-<span class="nt">service</span><span class="p">:</span>
-  <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ClusterIP</span>
-  <span class="nt">port</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">80</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="s">""</span>
+<span class="nt">service</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterIP</span><span class="w"></span>
+<span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">""</span><span class="w"></span>
 
-<span class="nt">config</span><span class="p">:</span>
-  <span class="c1"># When set, sessions will be provided with this backend enabling video recording.</span>
-  <span class="c1"># Currently, only S3 compatible storage backends are supported. The URL encapsulates all parameters needed to</span>
-  <span class="c1"># connect to the backend. It follows the following pattern where values in brackets are optional:</span>
-  <span class="c1">#   s3+http[s]://key:secret@endpoint/bucket[?pathStyle]</span>
-  <span class="nt">storageBackend</span><span class="p">:</span>
-  <span class="nt">redis</span><span class="p">:</span>
-    <span class="c1"># If you have your own Redis instance somewhere, you can point to it here.</span>
-    <span class="c1"># When left empty, the chart will deploy its own one and use it.</span>
-    <span class="nt">customEndpoint</span><span class="p">:</span>
-    <span class="c1"># Storage class to use for persisting data when customEndpoint is not set</span>
-    <span class="nt">storageClassName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">emptyDir</span>
-  <span class="nt">mongo</span><span class="p">:</span>
-    <span class="c1"># If you have your own MongoDB instance somewhere, you can point to it here.</span>
-    <span class="c1"># When left empty, the chart will deploy its own one and use it.</span>
-    <span class="nt">customEndpoint</span><span class="p">:</span>
-    <span class="c1"># Storage class to use for persisting data when customEndpoint is not set</span>
-    <span class="nt">storageClassName</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">emptyDir</span>
-    <span class="nt">storageSize</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">16G</span>
-  <span class="nt">manager</span><span class="p">:</span>
-    <span class="nt">requiredMetadata</span><span class="p">:</span> <span class="s">""</span>
-  <span class="nt">gangway</span><span class="p">:</span>
-    <span class="c1"># Maximum number of cached service endpoints</span>
-    <span class="nt">cacheSize</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1000</span>
-    <span class="c1"># Maximum number of concurrent, pending session creation requests.</span>
-    <span class="c1"># When more requests arrive, the oldest ones will be terminated.</span>
-    <span class="c1"># In reality, this variable is only here to cap the memory usage and not to actively control the requests.</span>
-    <span class="c1"># When you are hitting this limit you should probably start scaling horizontally instead.</span>
-    <span class="nt">pendingRequestLimit</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">25000</span>
-    <span class="c1"># Maximum amount of time for queued session requests to be processed before the gangway shuts down.</span>
-    <span class="c1"># You should set this to a rather high value so that all pending requests can still be completed while</span>
-    <span class="c1"># new ones are delegated to another replica instance. Note that the K8s terminationGracePeriod is set to</span>
-    <span class="c1"># this value plus 20sec and the gangway is instructed to terminate within the set time period.</span>
-    <span class="nt">terminationGracePeriod</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">600</span>
-  <span class="nt">collector</span><span class="p">:</span>
-    <span class="c1"># Name of the mongo database to use</span>
-    <span class="nt">database</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">webgrid</span>
-    <span class="c1"># Capped collection to use for "permanent" storage</span>
-    <span class="nt">collection</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">sessions</span>
-    <span class="c1"># Byte limit for the collection (quoted because Helm likes its scientific notation ...)</span>
-    <span class="nt">sizeLimit</span><span class="p">:</span> <span class="s">"17179869184"</span>
-    <span class="c1"># Settings for an intermediary "staging" collection</span>
-    <span class="c1"># Since documents in capped collections are immutable, sessions are stored here temporarily</span>
-    <span class="nt">staging</span><span class="p">:</span>
-      <span class="c1"># Name of the collection</span>
-      <span class="nt">collection</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">sessionsStaging</span>
-      <span class="c1"># TTL for documents in the collection</span>
-      <span class="c1"># This ensures that "orphaned" metadata gets cleaned up eventually. This can happen when</span>
-      <span class="c1"># a session dies without sending a termination notification (e.g. during server failure)</span>
-      <span class="nt">ttl</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">3600</span>
-  <span class="nt">orchestrator</span><span class="p">:</span>
-    <span class="c1"># Number of concurrent sessions allowed *per* orchestrator replica</span>
-    <span class="nt">permits</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
-  <span class="nt">node</span><span class="p">:</span>
-    <span class="c1"># Maximum duration (in seconds) the webdriver may take until it reports a ready state.</span>
-    <span class="nt">startupTimeout</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">120</span>
-    <span class="c1"># Idle timeout (in seconds) which is in effect until the first client request is received.</span>
-    <span class="c1"># This allows the session to terminate early if the client no longer has any interest in the session</span>
-    <span class="c1"># or it itself ran into a local timeout (e.g. due to prolonged queueing).</span>
-    <span class="c1"># After the first request from a client has been received, the regular idle-timeout is taking effect.</span>
-    <span class="nt">initialTimeout</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">30</span>
-    <span class="c1"># If no WebDriver client request is received within the specified period (in seconds), the node will terminate.</span>
-    <span class="c1"># Each incoming request resets the countdown.</span>
-    <span class="nt">idleTimeout</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">120</span>
-    <span class="c1"># Screen resolution for sessions</span>
-    <span class="nt">resolution</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1920x1080</span>
-    <span class="c1"># CPU, Mem, Disk profiling of involved processes</span>
-    <span class="nt">profiling</span><span class="p">:</span>
-      <span class="c1"># Whether to activate the profiler</span>
-      <span class="c1"># Note that this feature uses quite some CPU itself, depending on the samplingInterval below!</span>
-      <span class="nt">enable</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
-      <span class="c1"># Interval at which the processes are sampled</span>
-      <span class="nt">samplingInterval</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
-    <span class="c1"># Options related to video recording</span>
-    <span class="c1"># Consult the ffmpeg documentation on how these parameters work</span>
-    <span class="c1"># https://trac.ffmpeg.org/wiki/Encode/H.264</span>
-    <span class="nt">recording</span><span class="p">:</span>
-      <span class="nt">crf</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">46</span>
-      <span class="nt">maxBitrate</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">450000</span>
-      <span class="nt">framerate</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
-      <span class="nt">segmentDuration</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">6</span>
+<span class="nt">config</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="c1"># When set, sessions will be provided with this backend enabling video recording.</span><span class="w"></span>
+<span class="w">  </span><span class="c1"># Currently, only S3 compatible storage backends are supported. The URL encapsulates all parameters needed to</span><span class="w"></span>
+<span class="w">  </span><span class="c1"># connect to the backend. It follows the following pattern where values in brackets are optional:</span><span class="w"></span>
+<span class="w">  </span><span class="c1">#   s3+http[s]://key:secret@endpoint/bucket[?pathStyle]</span><span class="w"></span>
+<span class="w">  </span><span class="nt">storageBackend</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">redis</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># If you have your own Redis instance somewhere, you can point to it here.</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># When left empty, the chart will deploy its own one and use it.</span><span class="w"></span>
+<span class="w">    </span><span class="nt">customEndpoint</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># Storage class to use for persisting data when customEndpoint is not set</span><span class="w"></span>
+<span class="w">    </span><span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">emptyDir</span><span class="w"></span>
+<span class="w">  </span><span class="nt">mongo</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># If you have your own MongoDB instance somewhere, you can point to it here.</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># When left empty, the chart will deploy its own one and use it.</span><span class="w"></span>
+<span class="w">    </span><span class="nt">customEndpoint</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># Storage class to use for persisting data when customEndpoint is not set</span><span class="w"></span>
+<span class="w">    </span><span class="nt">storageClassName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">emptyDir</span><span class="w"></span>
+<span class="w">    </span><span class="nt">storageSize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">16G</span><span class="w"></span>
+<span class="w">  </span><span class="nt">manager</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">requiredMetadata</span><span class="p">:</span><span class="w"> </span><span class="s">""</span><span class="w"></span>
+<span class="w">  </span><span class="nt">gangway</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># Maximum number of cached service endpoints</span><span class="w"></span>
+<span class="w">    </span><span class="nt">cacheSize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># Maximum number of concurrent, pending session creation requests.</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># When more requests arrive, the oldest ones will be terminated.</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># In reality, this variable is only here to cap the memory usage and not to actively control the requests.</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># When you are hitting this limit you should probably start scaling horizontally instead.</span><span class="w"></span>
+<span class="w">    </span><span class="nt">pendingRequestLimit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">25000</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># Maximum amount of time for queued session requests to be processed before the gangway shuts down.</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># You should set this to a rather high value so that all pending requests can still be completed while</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># new ones are delegated to another replica instance. Note that the K8s terminationGracePeriod is set to</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># this value plus 20sec and the gangway is instructed to terminate within the set time period.</span><span class="w"></span>
+<span class="w">    </span><span class="nt">terminationGracePeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">600</span><span class="w"></span>
+<span class="w">  </span><span class="nt">collector</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># Name of the mongo database to use</span><span class="w"></span>
+<span class="w">    </span><span class="nt">database</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">webgrid</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># Capped collection to use for "permanent" storage</span><span class="w"></span>
+<span class="w">    </span><span class="nt">collection</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sessions</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># Byte limit for the collection (quoted because Helm likes its scientific notation ...)</span><span class="w"></span>
+<span class="w">    </span><span class="nt">sizeLimit</span><span class="p">:</span><span class="w"> </span><span class="s">"17179869184"</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># Settings for an intermediary "staging" collection</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># Since documents in capped collections are immutable, sessions are stored here temporarily</span><span class="w"></span>
+<span class="w">    </span><span class="nt">staging</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="c1"># Name of the collection</span><span class="w"></span>
+<span class="w">      </span><span class="nt">collection</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sessionsStaging</span><span class="w"></span>
+<span class="w">      </span><span class="c1"># TTL for documents in the collection</span><span class="w"></span>
+<span class="w">      </span><span class="c1"># This ensures that "orphaned" metadata gets cleaned up eventually. This can happen when</span><span class="w"></span>
+<span class="w">      </span><span class="c1"># a session dies without sending a termination notification (e.g. during server failure)</span><span class="w"></span>
+<span class="w">      </span><span class="nt">ttl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3600</span><span class="w"></span>
+<span class="w">  </span><span class="nt">orchestrator</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># Number of concurrent sessions allowed *per* orchestrator replica</span><span class="w"></span>
+<span class="w">    </span><span class="nt">permits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w"></span>
+<span class="w">  </span><span class="nt">node</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># Maximum duration (in seconds) the webdriver may take until it reports a ready state.</span><span class="w"></span>
+<span class="w">    </span><span class="nt">startupTimeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">120</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># Idle timeout (in seconds) which is in effect until the first client request is received.</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># This allows the session to terminate early if the client no longer has any interest in the session</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># or it itself ran into a local timeout (e.g. due to prolonged queueing).</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># After the first request from a client has been received, the regular idle-timeout is taking effect.</span><span class="w"></span>
+<span class="w">    </span><span class="nt">initialTimeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># If no WebDriver client request is received within the specified period (in seconds), the node will terminate.</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># Each incoming request resets the countdown.</span><span class="w"></span>
+<span class="w">    </span><span class="nt">idleTimeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">120</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># Screen resolution for sessions</span><span class="w"></span>
+<span class="w">    </span><span class="nt">resolution</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1920x1080</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># CPU, Mem, Disk profiling of involved processes</span><span class="w"></span>
+<span class="w">    </span><span class="nt">profiling</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="c1"># Whether to activate the profiler</span><span class="w"></span>
+<span class="w">      </span><span class="c1"># Note that this feature uses quite some CPU itself, depending on the samplingInterval below!</span><span class="w"></span>
+<span class="w">      </span><span class="nt">enable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
+<span class="w">      </span><span class="c1"># Interval at which the processes are sampled</span><span class="w"></span>
+<span class="w">      </span><span class="nt">samplingInterval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># Options related to video recording</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># Consult the ffmpeg documentation on how these parameters work</span><span class="w"></span>
+<span class="w">    </span><span class="c1"># https://trac.ffmpeg.org/wiki/Encode/H.264</span><span class="w"></span>
+<span class="w">    </span><span class="nt">recording</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">crf</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">46</span><span class="w"></span>
+<span class="w">      </span><span class="nt">maxBitrate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">450000</span><span class="w"></span>
+<span class="w">      </span><span class="nt">framerate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w"></span>
+<span class="w">      </span><span class="nt">segmentDuration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6</span><span class="w"></span>
 
-<span class="nt">replicaCount</span><span class="p">:</span>
-  <span class="nt">api</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span>
-  <span class="nt">gangway</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span>
-  <span class="nt">manager</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span>
-  <span class="nt">collector</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span>
-  <span class="nt">orchestrator</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="nt">replicaCount</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">api</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w"></span>
+<span class="w">  </span><span class="nt">gangway</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w"></span>
+<span class="w">  </span><span class="nt">manager</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w"></span>
+<span class="w">  </span><span class="nt">collector</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w"></span>
+<span class="w">  </span><span class="nt">orchestrator</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w"></span>
 
-<span class="nt">image</span><span class="p">:</span>
-  <span class="nt">repository</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">webgrid</span>
-  <span class="c1"># Defaults to Chart.AppVersion if not set</span>
-  <span class="nt">tag</span><span class="p">:</span> <span class="s">""</span>
-  <span class="nt">pullPolicy</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Always</span>
-  <span class="nt">pullSecret</span><span class="p">:</span> <span class="s">""</span>
+<span class="nt">image</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">repository</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">webgrid</span><span class="w"></span>
+<span class="w">  </span><span class="c1"># Defaults to Chart.AppVersion if not set</span><span class="w"></span>
+<span class="w">  </span><span class="nt">tag</span><span class="p">:</span><span class="w"> </span><span class="s">""</span><span class="w"></span>
+<span class="w">  </span><span class="nt">pullPolicy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Always</span><span class="w"></span>
+<span class="w">  </span><span class="nt">pullSecret</span><span class="p">:</span><span class="w"> </span><span class="s">""</span><span class="w"></span>
 
-<span class="nt">serviceAccount</span><span class="p">:</span>
-  <span class="c1"># Specifies whether a service account with RBAC should be created</span>
-  <span class="nt">create</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
-  <span class="c1"># Annotations to add to the service account</span>
-  <span class="nt">annotations</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="c1"># The name of the service account to use.</span>
-  <span class="c1"># If not set and create is true, a name is generated using the fullname template</span>
-  <span class="nt">name</span><span class="p">:</span> <span class="s">""</span>
+<span class="nt">serviceAccount</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="c1"># Specifies whether a service account with RBAC should be created</span><span class="w"></span>
+<span class="w">  </span><span class="nt">create</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
+<span class="w">  </span><span class="c1"># Annotations to add to the service account</span><span class="w"></span>
+<span class="w">  </span><span class="nt">annotations</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="c1"># The name of the service account to use.</span><span class="w"></span>
+<span class="w">  </span><span class="c1"># If not set and create is true, a name is generated using the fullname template</span><span class="w"></span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">""</span><span class="w"></span>
 
-<span class="nt">resources</span><span class="p">:</span>
-  <span class="nt">api</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">redis</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">mongo</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">gangway</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">manager</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">collector</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">orchestrator</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">node</span><span class="p">:</span>
-    <span class="nt">limits</span><span class="p">:</span>
-      <span class="nt">memory</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">8000Mi</span>
-    <span class="nt">requests</span><span class="p">:</span>
-      <span class="nt">cpu</span><span class="p">:</span> <span class="s">"1"</span>
-      <span class="nt">memory</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">4000Mi</span>
+<span class="nt">resources</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">api</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">redis</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">mongo</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">gangway</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">manager</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">collector</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">orchestrator</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">node</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">limits</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8000Mi</span><span class="w"></span>
+<span class="w">    </span><span class="nt">requests</span><span class="p">:</span><span class="w"></span>
+<span class="w">      </span><span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="s">"1"</span><span class="w"></span>
+<span class="w">      </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4000Mi</span><span class="w"></span>
 
-<span class="nt">nodeSelector</span><span class="p">:</span>
-  <span class="nt">api</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">redis</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">mongo</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">gangway</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">manager</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">collector</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">orchestrator</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">node</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
+<span class="nt">nodeSelector</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">api</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">redis</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">mongo</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">gangway</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">manager</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">collector</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">orchestrator</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">node</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
 
-<span class="nt">tolerations</span><span class="p">:</span>
-  <span class="nt">api</span><span class="p">:</span> <span class="p p-Indicator">[]</span>
-  <span class="nt">redis</span><span class="p">:</span> <span class="p p-Indicator">[]</span>
-  <span class="nt">mongo</span><span class="p">:</span> <span class="p p-Indicator">[]</span>
-  <span class="nt">gangway</span><span class="p">:</span> <span class="p p-Indicator">[]</span>
-  <span class="nt">manager</span><span class="p">:</span> <span class="p p-Indicator">[]</span>
-  <span class="nt">collector</span><span class="p">:</span> <span class="p p-Indicator">[]</span>
-  <span class="nt">orchestrator</span><span class="p">:</span> <span class="p p-Indicator">[]</span>
-  <span class="nt">node</span><span class="p">:</span> <span class="p p-Indicator">[]</span>
+<span class="nt">tolerations</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">api</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span><span class="w"></span>
+<span class="w">  </span><span class="nt">redis</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span><span class="w"></span>
+<span class="w">  </span><span class="nt">mongo</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span><span class="w"></span>
+<span class="w">  </span><span class="nt">gangway</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span><span class="w"></span>
+<span class="w">  </span><span class="nt">manager</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span><span class="w"></span>
+<span class="w">  </span><span class="nt">collector</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span><span class="w"></span>
+<span class="w">  </span><span class="nt">orchestrator</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span><span class="w"></span>
+<span class="w">  </span><span class="nt">node</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span><span class="w"></span>
 
-<span class="nt">affinity</span><span class="p">:</span>
-  <span class="nt">api</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">redis</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">mongo</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">gangway</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">manager</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">collector</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">orchestrator</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
-  <span class="nt">node</span><span class="p">:</span> <span class="p p-Indicator">{}</span>
+<span class="nt">affinity</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">api</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">redis</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">mongo</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">gangway</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">manager</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">collector</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">orchestrator</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
+<span class="w">  </span><span class="nt">node</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"></span>
 </code></pre></div>
 <hr/>
 <div class="md-source-file">
@@ -734,8 +734,8 @@ helm upgrade -f webgrid-chart-values.yaml example webgrid/webgrid
 <div class="md-dialog" data-md-component="dialog">
 <div class="md-dialog__inner md-typeset"></div>
 </div>
-<script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
-<script src="../../assets/javascripts/bundle.649a939e.min.js"></script>
+<script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../assets/javascripts/workers/search.22074ed6.min.js"}</script>
+<script src="../../assets/javascripts/bundle.1514a9a0.min.js"></script>
 <script src="https://unpkg.com/mermaid@8.5.0/dist/mermaid.min.js"></script>
 </body>
 </html>

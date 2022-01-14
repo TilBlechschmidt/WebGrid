@@ -107,6 +107,7 @@
 <span id="107">107</span>
 <span id="108">108</span>
 <span id="109">109</span>
+<span id="110">110</span>
 </pre><pre class="rust"><code><span class="attribute">#![<span class="ident">allow</span>(<span class="ident">dead_code</span>)]</span>
 
 <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::handle</span>::{<span class="ident">HandleRegistration</span>, <span class="ident">SHARED_TASK_RESOURCE_HANDLES</span>};
@@ -120,6 +121,7 @@
 <span class="kw">mod</span> <span class="ident">multiplexed</span>;
 <span class="kw">mod</span> <span class="ident">owned</span>;
 
+<span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy::enum_variant_names</span>)]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Eq</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="kw">enum</span> <span class="ident">CommandParseMode</span> {
     <span class="ident">ArgumentCount</span>,

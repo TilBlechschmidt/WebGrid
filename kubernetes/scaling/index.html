@@ -9,9 +9,9 @@
 <meta content="Til Blechschmidt" name="author"/>
 <link href="https://webgrid.dev/kubernetes/scaling/" rel="canonical"/>
 <link href="../../assets/images/favicon.png" rel="icon"/>
-<meta content="mkdocs-1.2.3, mkdocs-material-8.1.2" name="generator"/>
+<meta content="mkdocs-1.2.3, mkdocs-material-8.1.6" name="generator"/>
 <title>Scaling - WebGrid</title>
-<link href="../../assets/stylesheets/main.f7951f6f.min.css" rel="stylesheet"/>
+<link href="../../assets/stylesheets/main.cd566b2a.min.css" rel="stylesheet"/>
 <link href="../../assets/stylesheets/palette.e6a45f82.min.css" rel="stylesheet"/>
 <meta content="#009485" name="theme-color"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -485,9 +485,9 @@
 <h2 id="concurrent-sessions">Concurrent sessions<a class="headerlink" href="#concurrent-sessions" title="Permanent link">¶</a></h2>
 <p>By default, the number of concurrent sessions is limited to five per orchestrator and one Kubernetes orchestrator. Normally, only one orchestrator is required even for very large setups so the per-orchestrator limit should be used.</p>
 <p>To change the number of concurrent sessions allowed (in this case <code>5</code>) merge and apply the following helm value as described <a href="../configuration/#changing-the-defaults">here</a>:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">config</span><span class="p">:</span>
-  <span class="nt">orchestrator</span><span class="p">:</span>
-    <span class="nt">permits</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">5</span>
+<div class="highlight"><pre><span></span><code><span class="nt">config</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">orchestrator</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="nt">permits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w"></span>
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -496,8 +496,8 @@
 <h2 id="traffic-congestion">Traffic congestion<a class="headerlink" href="#traffic-congestion" title="Permanent link">¶</a></h2>
 <p>Another common bottleneck, which is especially common with regular Selenium Grids, is the proxy server. Due to protocol constraints all traffic has to be routed through an intermediate instance, which inherently creates a choke point. This can be remedied by the microservice architecture of WebGrid.</p>
 <p>To increase the number of proxy servers that route session control traffic, merge and apply the following helm value as described <a href="../configuration/#changing-the-defaults">here</a>:</p>
-<div class="highlight"><pre><span></span><code><span class="nt">replicaCount</span><span class="p">:</span>
-  <span class="nt">proxy</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span>
+<div class="highlight"><pre><span></span><code><span class="nt">replicaCount</span><span class="p">:</span><span class="w"></span>
+<span class="w">  </span><span class="nt">proxy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span><span class="w"></span>
 </code></pre></div>
 <hr/>
 <div class="md-source-file">
@@ -574,8 +574,8 @@
 <div class="md-dialog" data-md-component="dialog">
 <div class="md-dialog__inner md-typeset"></div>
 </div>
-<script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
-<script src="../../assets/javascripts/bundle.649a939e.min.js"></script>
+<script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../../assets/javascripts/workers/search.22074ed6.min.js"}</script>
+<script src="../../assets/javascripts/bundle.1514a9a0.min.js"></script>
 <script src="https://unpkg.com/mermaid@8.5.0/dist/mermaid.min.js"></script>
 </body>
 </html>
