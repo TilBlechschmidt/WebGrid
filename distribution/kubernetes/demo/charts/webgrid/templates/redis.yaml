@@ -13,7 +13,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 100M
+      storage: 500M
 ---
 {{- end }}
 apiVersion: v1
