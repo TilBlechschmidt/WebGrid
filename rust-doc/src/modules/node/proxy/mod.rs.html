@@ -91,6 +91,12 @@
 <span id="91">91</span>
 <span id="92">92</span>
 <span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
 <span class="kw">use</span> <span class="ident">hyper::Server</span>;
 <span class="kw">use</span> <span class="ident">jatsl::Job</span>;
@@ -98,6 +104,7 @@
 <span class="kw">use</span> <span class="ident">tokio::sync::mpsc::UnboundedSender</span>;
 <span class="kw">use</span> <span class="ident">tracing::info</span>;
 
+<span class="kw">use</span> <span class="ident"><span class="self">self</span>::file_upload::FileUploadInterceptor</span>;
 <span class="kw">use</span> <span class="ident"><span class="self">self</span>::forwarding::ForwardingResponder</span>;
 <span class="kw">use</span> <span class="ident"><span class="self">self</span>::terminate::TerminationInterceptor</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::node::proxy::metadata_extension::MetadataExtensionInterceptor</span>;
@@ -105,6 +112,7 @@
 <span class="kw">use</span> <span class="ident">harness::HeartStone</span>;
 <span class="kw">use</span> <span class="ident">library</span>::{<span class="ident">http::Responder</span>, <span class="ident">make_responder_chain_service_fn</span>, <span class="ident">responder_chain</span>};
 
+<span class="kw">mod</span> <span class="ident">file_upload</span>;
 <span class="kw">mod</span> <span class="ident">forwarding</span>;
 <span class="kw">mod</span> <span class="ident">metadata_extension</span>;
 <span class="kw">mod</span> <span class="ident">terminate</span>;
@@ -167,9 +175,13 @@
             <span class="self">self</span>.<span class="ident">heart_stone</span>.<span class="ident">clone</span>(),
         );
 
+        <span class="kw">let</span> <span class="ident">file_upload_interceptor</span> <span class="op">=</span>
+            <span class="ident">FileUploadInterceptor::new</span>(<span class="self">self</span>.<span class="ident">heart_stone</span>.<span class="ident">clone</span>(), <span class="self">self</span>.<span class="ident">session_id_external</span>.<span class="ident">clone</span>());
+
         <span class="kw">let</span> <span class="ident">make_svc</span> <span class="op">=</span> <span class="macro">make_responder_chain_service_fn!</span> {
             <span class="ident">termination_interceptor</span>,
             <span class="ident">metadata_extension_interceptor</span>,
+            <span class="ident">file_upload_interceptor</span>,
             <span class="ident">forwarding_responder</span>
         };
 
