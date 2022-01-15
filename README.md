@@ -34,7 +34,7 @@
   <br>
 
   <a href="">
-    <img alt="Maintenance" src="https://img.shields.io/maintenance/yes/2021">
+    <img alt="Maintenance" src="https://img.shields.io/maintenance/yes/2022">
   </a>
   <a href="https://github.com/TilBlechschmidt/WebGrid/commits/main">
     <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/TilBlechschmidt/WebGrid">
