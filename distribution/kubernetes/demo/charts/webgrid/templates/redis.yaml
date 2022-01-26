@@ -110,7 +110,9 @@ spec:
         - image: oliver006/redis_exporter:latest
           name: redis-exporter
           ports:
-            - containerPort: 9121
+            - name: monitoring
+              containerPort: 9121
+              protocol: TCP
 ---
 apiVersion: v1
 kind: Service
@@ -124,6 +126,10 @@ spec:
       targetPort: redis
       protocol: TCP
       name: redis
+    - port: 9121
+      targetPort: monitoring
+      protocol: TCP
+      name: monitoring
   selector:
     dev.webgrid/component: redis
     {{- include "web-grid.selectorLabels" . | nindent 4 }}
