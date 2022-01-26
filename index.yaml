@@ -2,8 +2,24 @@ apiVersion: v1
 entries:
   demo:
   - apiVersion: v2
+    appVersion: v0.8.0
+    created: "2022-01-26T16:25:56.276753727Z"
+    description: Quick-start demonstration chart for WebGrid
+    digest: 9bee455ee6f91125ea585363c4521f63bdb01e8c9d053353dcc57a2e8ce8096d
+    home: https://webgrid.dev/
+    maintainers:
+    - email: til@blechschmidt.dev
+      name: Til Blechschmidt
+    name: demo
+    sources:
+    - https://github.com/TilBlechschmidt/WebGrid
+    type: application
+    urls:
+    - https://webgrid.dev/charts/demo-v0.8.0.tgz
+    version: v0.8.0
+  - apiVersion: v2
     appVersion: v0.8.0-beta
-    created: "2022-01-15T12:30:43.65043456Z"
+    created: "2022-01-26T16:25:56.27502416Z"
     description: Quick-start demonstration chart for WebGrid
     digest: ab1877a722fea4bfd4fb6396e68c8fad0f9c94ae06f58f4523d2765b49ce0ee4
     home: https://webgrid.dev/
@@ -19,7 +35,7 @@ entries:
     version: v0.8.0-beta
   - apiVersion: v2
     appVersion: v0.7.4-beta
-    created: "2022-01-15T12:30:43.649174342Z"
+    created: "2022-01-26T16:25:56.27373971Z"
     description: Quick-start demonstration chart for WebGrid
     digest: 9244f59e46d6dfe9847b90e53f84775771a215e1f85a8bd2b82675dd7e12cfe7
     home: https://webgrid.dev/
@@ -35,7 +51,7 @@ entries:
     version: v0.7.4-beta
   - apiVersion: v2
     appVersion: v0.7.3-beta
-    created: "2022-01-15T12:30:43.647890424Z"
+    created: "2022-01-26T16:25:56.272429559Z"
     description: Quick-start demonstration chart for WebGrid
     digest: 23ea1e6573e26da0b23e2b66eaae94ac20bac0857d85cc011c6c65c54cad45bc
     home: https://webgrid.dev/
@@ -51,7 +67,7 @@ entries:
     version: v0.7.3-beta
   - apiVersion: v2
     appVersion: v0.7.2-beta
-    created: "2022-01-15T12:30:43.645723894Z"
+    created: "2022-01-26T16:25:56.271138609Z"
     description: Quick-start demonstration chart for WebGrid
     digest: 3845a8eed0a4d010937878f2b23c90a640d219faadaa3788758ddc9fcae1fd3b
     home: https://webgrid.dev/
@@ -67,7 +83,7 @@ entries:
     version: v0.7.2-beta
   - apiVersion: v2
     appVersion: v0.7.1-beta
-    created: "2022-01-15T12:30:43.643214359Z"
+    created: "2022-01-26T16:25:56.269334639Z"
     description: Quick-start demonstration chart for WebGrid
     digest: 63bcff2132f465c6eeea0b79e2e46731dbbb53514afc7df77d0d5c73a6f44223
     home: https://webgrid.dev/
@@ -83,7 +99,7 @@ entries:
     version: v0.7.1-beta
   - apiVersion: v2
     appVersion: v0.7.0-beta
-    created: "2022-01-15T12:30:43.642066243Z"
+    created: "2022-01-26T16:25:56.267998588Z"
     description: Quick-start demonstration chart for WebGrid
     digest: 700997c5f8acf50cfdb51b6b64968dcd6aa72059503733e50f3ae5f8dd001819
     home: https://webgrid.dev/
@@ -99,7 +115,7 @@ entries:
     version: v0.7.0-beta
   - apiVersion: v2
     appVersion: v0.6.1-beta
-    created: "2022-01-15T12:30:43.640883627Z"
+    created: "2022-01-26T16:25:56.266734639Z"
     description: Quick-start demonstration chart for WebGrid
     digest: 98b528ae5864789d523a9776994ebd24eba0aa256930ceacf1ff1228c5103ade
     home: https://webgrid.dev/
@@ -115,7 +131,7 @@ entries:
     version: v0.6.1-beta
   - apiVersion: v2
     appVersion: v0.6.0-beta
-    created: "2022-01-15T12:30:43.639766112Z"
+    created: "2022-01-26T16:25:56.241434959Z"
     description: Quick-start demonstration chart for WebGrid
     digest: fdeb604c00fa20c34eaddb530f013bec5d27fcf01c248749414a629dcaa009af
     home: https://webgrid.dev/
@@ -131,8 +147,24 @@ entries:
     version: v0.6.0-beta
   webgrid:
   - apiVersion: v2
+    appVersion: v0.8.0
+    created: "2022-01-26T16:25:56.297948047Z"
+    description: Scalable WebDriver provisioner
+    digest: 2c4170047e05075d267f8ed6ff20bf9ddec93c01d685046d2e65cf6ddafdcc1c
+    home: https://webgrid.dev/
+    maintainers:
+    - email: til@blechschmidt.dev
+      name: Til Blechschmidt
+    name: webgrid
+    sources:
+    - https://github.com/TilBlechschmidt/WebGrid
+    type: application
+    urls:
+    - https://webgrid.dev/charts/webgrid-v0.8.0.tgz
+    version: v0.8.0
+  - apiVersion: v2
     appVersion: v0.8.0-beta
-    created: "2022-01-15T12:30:43.671427851Z"
+    created: "2022-01-26T16:25:56.29698311Z"
     description: Scalable WebDriver provisioner
     digest: 0f949ab9a1c9330c0425f40719cbef9d6d349a6fc6ba098c9a183f30d354400c
     home: https://webgrid.dev/
@@ -148,7 +180,7 @@ entries:
     version: v0.8.0-beta
   - apiVersion: v2
     appVersion: v0.7.4-beta
-    created: "2022-01-15T12:30:43.670472438Z"
+    created: "2022-01-26T16:25:56.29594937Z"
     description: Scalable WebDriver provisioner
     digest: f9ec00ae274298d176f699d23f3f79a251d97a1ca4788249b42156222e3884c3
     home: https://webgrid.dev/
@@ -164,7 +196,7 @@ entries:
     version: v0.7.4-beta
   - apiVersion: v2
     appVersion: v0.7.3-beta
-    created: "2022-01-15T12:30:43.669121019Z"
+    created: "2022-01-26T16:25:56.294942931Z"
     description: Scalable WebDriver provisioner
     digest: 79f7b3e9e008742d87de1ed747f08db6dca0f97c24529826ce713313e4fdf5c1
     home: https://webgrid.dev/
@@ -180,7 +212,7 @@ entries:
     version: v0.7.3-beta
   - apiVersion: v2
     appVersion: v0.7.2-beta
-    created: "2022-01-15T12:30:43.667389195Z"
+    created: "2022-01-26T16:25:56.293954493Z"
     description: Scalable WebDriver provisioner
     digest: 49a9d8fdcda9d97ca1a04dec17249b0e241ce0e024dc4e359503cf3188008b47
     home: https://webgrid.dev/
@@ -196,7 +228,7 @@ entries:
     version: v0.7.2-beta
   - apiVersion: v2
     appVersion: v0.7.1-beta
-    created: "2022-01-15T12:30:43.666397381Z"
+    created: "2022-01-26T16:25:56.292975055Z"
     description: Scalable WebDriver provisioner
     digest: 6cea3db7c6b9c1619b40367f58132cd01c46578ece76ba22a3df73585a2c49f9
     home: https://webgrid.dev/
@@ -212,7 +244,7 @@ entries:
     version: v0.7.1-beta
   - apiVersion: v2
     appVersion: v0.7.0-beta
-    created: "2022-01-15T12:30:43.665388767Z"
+    created: "2022-01-26T16:25:56.291970916Z"
     description: Scalable WebDriver provisioner
     digest: 4eebcd01e85daa4051453114203a89e2c3e98a33207816571aeb29912b6b043f
     home: https://webgrid.dev/
@@ -228,7 +260,7 @@ entries:
     version: v0.7.0-beta
   - apiVersion: v2
     appVersion: v0.6.1-beta
-    created: "2022-01-15T12:30:43.664370953Z"
+    created: "2022-01-26T16:25:56.290862073Z"
     description: Scalable WebDriver provisioner
     digest: 194129c607334036c4724770b60583c16c15e9d27546592a146fbff2775f6edd
     home: https://webgrid.dev/
@@ -244,7 +276,7 @@ entries:
     version: v0.6.1-beta
   - apiVersion: v2
     appVersion: v0.6.0-beta
-    created: "2022-01-15T12:30:43.663193937Z"
+    created: "2022-01-26T16:25:56.288678688Z"
     description: Scalable WebDriver provisioner
     digest: e389e39049be781d250890ada8c7f04e3f8e829b933e654c458f24243229c356
     home: https://webgrid.dev/
@@ -260,7 +292,7 @@ entries:
     version: v0.6.0-beta
   - apiVersion: v2
     appVersion: v0.5.1-beta
-    created: "2022-01-15T12:30:43.662408026Z"
+    created: "2022-01-26T16:25:56.287813055Z"
     description: Scalable WebDriver provisioner
     digest: e6ab0bb91df8163136799628e62339fd71d994170f4b41ac80969fe86e623fc9
     home: https://webgrid.dev/
@@ -276,7 +308,7 @@ entries:
     version: v0.5.1-beta
   - apiVersion: v2
     appVersion: v0.5.0-beta
-    created: "2022-01-15T12:30:43.661607815Z"
+    created: "2022-01-26T16:25:56.286869018Z"
     description: Scalable WebDriver provisioner
     digest: b0382f4a8fff6524a902c265e2b78a69ee710be40c06dd31a3cabbe650cdb363
     home: https://webgrid.dev/
@@ -292,7 +324,7 @@ entries:
     version: v0.5.0-beta
   - apiVersion: v2
     appVersion: v0.4.0-beta
-    created: "2022-01-15T12:30:43.660834504Z"
+    created: "2022-01-26T16:25:56.285941882Z"
     description: Scalable WebDriver provisioner
     digest: 24b5832df47f864d292a653bb3e3d20720de25e8878e3138550bc5977a0bb59c
     home: https://webgrid.dev/
@@ -308,7 +340,7 @@ entries:
     version: v0.4.0-beta
   - apiVersion: v2
     appVersion: v0.3.2-beta
-    created: "2022-01-15T12:30:43.659943592Z"
+    created: "2022-01-26T16:25:56.28509705Z"
     description: Scalable WebDriver provisioner
     digest: 89a558e80dbad7c13498ded31f008fa15054e7d8520519ee7c5c322af98315c0
     home: https://webgrid.dev/
@@ -324,7 +356,7 @@ entries:
     version: v0.3.2-beta
   - apiVersion: v2
     appVersion: v0.3.1-beta
-    created: "2022-01-15T12:30:43.65908408Z"
+    created: "2022-01-26T16:25:56.284234016Z"
     description: Scalable WebDriver provisioner
     digest: 297cb3b9ba3fc05117306a44defc3a041cb71bd973e2dba6f35c67257daa1eb7
     home: https://webgrid.dev/
@@ -340,7 +372,7 @@ entries:
     version: v0.3.1-beta
   - apiVersion: v2
     appVersion: v0.3.0-beta
-    created: "2022-01-15T12:30:43.656672546Z"
+    created: "2022-01-26T16:25:56.283409084Z"
     description: Scalable WebDriver provisioner
     digest: 13462a41959f3e46adf67caabed12703fd078dd507ff39b1fb7bb8421c6dd049
     home: https://webgrid.dev/
@@ -356,7 +388,7 @@ entries:
     version: v0.3.0-beta
   - apiVersion: v2
     appVersion: v0.2.1-beta
-    created: "2022-01-15T12:30:43.655849735Z"
+    created: "2022-01-26T16:25:56.282626854Z"
     description: Scalable WebDriver provisioner
     digest: 7b239be27ecb2b7914a09ce22f2781ac87b65bc2e9afb4347f73e12bb193af5b
     home: https://webgrid.dev/
@@ -372,7 +404,7 @@ entries:
     version: v0.2.1-beta
   - apiVersion: v2
     appVersion: v0.2.0-beta
-    created: "2022-01-15T12:30:43.654997123Z"
+    created: "2022-01-26T16:25:56.281832223Z"
     description: Scalable WebDriver provisioner
     digest: 4351ca081fa902913b587eb2e1c3612454ac15cebbac00053a64a6b6106d75fd
     home: https://webgrid.dev/
@@ -388,7 +420,7 @@ entries:
     version: v0.2.0-beta
   - apiVersion: v2
     appVersion: v0.1.3-beta
-    created: "2022-01-15T12:30:43.653738006Z"
+    created: "2022-01-26T16:25:56.281006791Z"
     description: Scalable WebDriver provisioner
     digest: 9e38e0736639402deb4f50b241f930ae22e57e7ee35acf9e87d073851c0dbb21
     home: https://webgrid.dev/
@@ -404,7 +436,7 @@ entries:
     version: v0.1.3-beta
   - apiVersion: v2
     appVersion: v0.1.2-beta
-    created: "2022-01-15T12:30:43.652978695Z"
+    created: "2022-01-26T16:25:56.28020256Z"
     description: Scalable WebDriver provisioner
     digest: be33824519f0deb965e989d3fe5adda2ee980df6d942d78e887e62dc6af90341
     home: https://webgrid.dev/
@@ -420,7 +452,7 @@ entries:
     version: v0.1.2-beta
   - apiVersion: v2
     appVersion: v0.1.1-beta
-    created: "2022-01-15T12:30:43.652016382Z"
+    created: "2022-01-26T16:25:56.279358628Z"
     description: Scalable WebDriver provisioner
     digest: 32a17a4b6da8bcc5bc929e2a3590617909aa0622027bf2b212f4e6a0ab36807c
     home: https://webgrid.dev/
@@ -436,7 +468,7 @@ entries:
     version: v0.1.1-beta
   - apiVersion: v2
     appVersion: v0.1.0-beta
-    created: "2022-01-15T12:30:43.65120127Z"
+    created: "2022-01-26T16:25:56.277897071Z"
     description: Scalable WebDriver provisioner
     digest: 9b21b95afeea82f250cf38aa3e131f0e08cc517052ff27a818e4b6f5d7b0a91d
     home: https://webgrid.dev/
@@ -450,4 +482,4 @@ entries:
     urls:
     - https://webgrid.dev/charts/webgrid-v0.1.0-beta.tgz
     version: v0.1.0-beta
-generated: "2022-01-15T12:30:43.638406693Z"
+generated: "2022-01-26T16:25:56.239590188Z"
