@@ -1,7 +1,7 @@
 version: "3"
 services:
   gangway:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.8.1-beta}
+    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.8.2-beta}
     platform: linux/amd64
     container_name: webgrid-gangway
     command: gangway DEADBEEF-0000-0000-0000-0000CAFEFEED --storage s3+http://webgrid:supersecretPasswordYouShouldChange@webgrid-s3:9000/webgrid?pathStyle
@@ -11,24 +11,24 @@ services:
     ports:
       - 8080:48048
   manager:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.8.1-beta}
+    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.8.2-beta}
     platform: linux/amd64
     container_name: webgrid-manager
     command: manager DEADBEEF-0000-0000-0000-0000CAFEFEED
     depends_on:
       - redis
   orchestrator:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.8.1-beta}
+    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.8.2-beta}
     platform: linux/amd64
     container_name: webgrid-orchestrator
-    command: orchestrator docker -p 2 --storage s3+http://webgrid:supersecretPasswordYouShouldChange@webgrid-s3:9000/webgrid?pathStyle DEADBEEF-0000-0000-0000-0000CAFEFEED "${REPOSITORY:-webgrid}/node-firefox:${IMAGE_TAG:-v0.8.1-beta}=firefox::68.7.0esr,${REPOSITORY:-webgrid}/node-chrome:${IMAGE_TAG:-v0.8.1-beta}=chrome::81.0.4044.122"
+    command: orchestrator docker -p 2 --storage s3+http://webgrid:supersecretPasswordYouShouldChange@webgrid-s3:9000/webgrid?pathStyle DEADBEEF-0000-0000-0000-0000CAFEFEED "${REPOSITORY:-webgrid}/node-firefox:${IMAGE_TAG:-v0.8.2-beta}=firefox::68.7.0esr,${REPOSITORY:-webgrid}/node-chrome:${IMAGE_TAG:-v0.8.2-beta}=chrome::81.0.4044.122"
     depends_on:
       - redis
       - s3
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   collector:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.8.1-beta}
+    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.8.2-beta}
     platform: linux/amd64
     container_name: webgrid-collector
     command: collector DEADBEEF-0000-0000-0000-0000CAFEFEED --mongodb mongodb://root:example@webgrid-mongo:27017/
@@ -36,7 +36,7 @@ services:
       - redis
       - mongo
   api:
-    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.8.1-beta}
+    image: ${REPOSITORY:-webgrid}/core:${IMAGE_TAG:-v0.8.2-beta}
     platform: linux/amd64
     container_name: webgrid-api
     command: api --mongodb mongodb://root:example@webgrid-mongo:27017/ --host webgrid-api
