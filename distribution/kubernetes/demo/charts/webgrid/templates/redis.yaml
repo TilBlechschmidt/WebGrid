@@ -119,6 +119,7 @@ kind: Service
 metadata:
   name: {{ include "web-grid.redisServiceName" . }}
   labels:
+    dev.webgrid/component: redis
     {{- include "web-grid.labels" . | nindent 4 }}
 spec:
   ports:
