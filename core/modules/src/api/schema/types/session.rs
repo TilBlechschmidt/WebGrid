@@ -61,7 +61,7 @@ pub struct Video {
 }
 
 /// Lifecycle position of a session
-#[derive(GraphQLEnum)]
+#[derive(GraphQLEnum, Debug)]
 pub enum SessionState {
     /// Submitted by a client
     Created,

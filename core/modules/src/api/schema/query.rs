@@ -86,7 +86,7 @@ impl SessionQuery {
     }
 
     /// Query for sessions based on metadata properties set by the client.
-    /// Fields are combined with the `AND` operator.
+    /// Fields are combined with the `AND` operator. Default limit is 10.
     async fn query(
         &self,
         fields: Vec<MetadataQuery>,
@@ -112,6 +112,37 @@ impl SessionQuery {
             .map_ok(Session::new)
             .try_collect::<Vec<_>>()
             .await?)
+    }
+
+    async fn query_count(
+        &self,
+        fields: Vec<MetadataQuery>,
+        stage_lower: SessionState,
+        stage_upper: SessionState,
+        context: &GqlContext,
+    ) -> FieldResult<i32> {
+        debug!(?fields, ?stage_lower, ?stage_upper, "QUERY queryCount");
+        let lower_key = stage_lower.database_key();
+        let upper_key = stage_upper.database_key();
+
+        let mut filter = doc! {
+            lower_key: { "$ne": null },
+            upper_key: null
+        };
+
+        fields.into_iter().for_each(|field| {
+            filter.insert(
+                format!("clientMetadata.{}", field.key),
+                doc! { "$regex": field.regex },
+            );
+        });
+
+        let count = context
+            .staging_collection
+            .count_documents(filter, None)
+            .await?;
+
+        Ok(count as i32)
     }
 }
 
