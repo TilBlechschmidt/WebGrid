@@ -36,10 +36,10 @@ impl<C: ConnectionLike> RedisResource<C> {
     pub async fn select(&mut self, db: usize) -> RedisResult<()> {
         debug!(db, "Selecting redis database");
 
-        Ok(redis::cmd("SELECT")
+        redis::cmd("SELECT")
             .arg(db)
             .query_async(&mut self.con)
-            .await?)
+            .await
     }
 
     async fn notify(&mut self, error: &RedisError) {

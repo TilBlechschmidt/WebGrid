@@ -188,16 +188,13 @@ impl DockerProvisioner {
             .into_iter()
             .filter_map(|container| match container.labels {
                 None => None,
-                Some(labels) => labels
-                    .get(CONTAINER_SESSION_ID_LABEL)
-                    .map(|id| {
-                        Uuid::from_str(id)
-                            .map_err(|e| {
-                                warn!(?id, ?e, "Failed to parse session id from container label",)
-                            })
-                            .ok()
-                    })
-                    .flatten(),
+                Some(labels) => labels.get(CONTAINER_SESSION_ID_LABEL).and_then(|id| {
+                    Uuid::from_str(id)
+                        .map_err(|e| {
+                            warn!(?id, ?e, "Failed to parse session id from container label",)
+                        })
+                        .ok()
+                }),
             })
             .collect())
     }

@@ -66,8 +66,7 @@ fn add_proxy_headers<B>(
     let host = req
         .headers()
         .get(HOST)
-        .map(|v| v.to_str().ok())
-        .flatten()
+        .and_then(|v| v.to_str().ok())
         .map(|host| format!(";host={}", host))
         .unwrap_or_default();
 

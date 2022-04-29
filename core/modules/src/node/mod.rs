@@ -111,8 +111,7 @@ impl Node {
         let idle_timeout = if let Some(idle_timeout_secs) = capabilities
             .webgrid_options
             .as_ref()
-            .map(|w| w.idle_timeout)
-            .flatten()
+            .and_then(|w| w.idle_timeout)
         {
             Duration::from_secs(idle_timeout_secs)
         } else {
@@ -145,7 +144,7 @@ impl Node {
     }
 
     async fn monitor_driver(&self) -> EmptyResult {
-        if let Some(pid) = self.instance.as_ref().map(|w| w.pid()).flatten() {
+        if let Some(pid) = self.instance.as_ref().and_then(WebDriverInstance::pid) {
             let metrics = PerformanceMonitor::observe_by_pid(
                 pid as i32,
                 "webdriver".into(),
@@ -159,7 +158,7 @@ impl Node {
     }
 
     async fn monitor_browser(&self) {
-        if let Some(pid) = self.instance.as_ref().map(|w| w.pid()).flatten() {
+        if let Some(pid) = self.instance.as_ref().and_then(WebDriverInstance::pid) {
             let profiling_tx = self.profiling_tx.clone();
             let interval = self.options.profiler_sampling_interval;
             let mut monitored_children = Vec::new();
@@ -182,7 +181,7 @@ impl Node {
                                     .name()
                                     .await
                                     .unwrap_or_else(|_| "unknown".into())
-                                    .replace(" ", "");
+                                    .replace(' ', "");
 
                                 let child_metrics = PerformanceMonitor::observe(
                                     PerformanceMonitoringTarget::Process(child),

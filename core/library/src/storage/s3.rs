@@ -243,7 +243,7 @@ mod does {
         let backend = test_backend();
         let path = Uuid::new_v4().to_string();
         let put_link = backend
-            .presign_put(&path, 10, &"application/octet-stream".to_string())
+            .presign_put(&path, 10, "application/octet-stream")
             .unwrap();
 
         let client = reqwest::Client::new();

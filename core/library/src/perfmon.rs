@@ -123,9 +123,7 @@ impl PerformanceMonitor {
         let memory_rss_raw = tokio::fs::read_to_string(mem_stat_path).await?;
         let memory_rss = memory_rss_raw
             .lines()
-            .filter(|l| l.contains(mem_field))
-            .map(|l| l.strip_prefix(mem_field))
-            .flatten()
+            .filter_map(|l| l.strip_prefix(mem_field))
             .collect::<Vec<_>>()
             .first()
             .ok_or(PerformanceMonitorError::MemFieldNotFound)?

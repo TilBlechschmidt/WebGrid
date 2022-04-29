@@ -29,7 +29,7 @@ impl FromStr for ScreenResolution {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if let Some((raw_width, raw_height)) = s.split_once("x") {
+        if let Some((raw_width, raw_height)) = s.split_once('x') {
             if let (Ok(width), Ok(height)) = (raw_width.parse(), raw_height.parse()) {
                 Ok(Self(width, height))
             } else {

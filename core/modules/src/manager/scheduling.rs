@@ -87,7 +87,7 @@ where
             .clone()
             .into_sets()
             .into_iter()
-            .find_map(|c| c.webgrid_options.map(|o| o.metadata).flatten())
+            .find_map(|c| c.webgrid_options.and_then(|o| o.metadata))
         {
             let missing_keys = self
                 .required_metadata

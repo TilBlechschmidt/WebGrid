@@ -159,6 +159,6 @@ impl ScreenRecordingOptions {
                     maxrate = self.max_bitrate,
                     bufsize = self.max_bitrate * 2,
                     segment_duration = self.segment_duration
-                ).trim().replace("\n", " ")
+                ).trim().replace('\n', " ")
     }
 }

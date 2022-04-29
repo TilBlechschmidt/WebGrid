@@ -44,7 +44,7 @@ pub fn load_config(name: &str) -> Result<String, std::io::Error> {
 
 /// Replaces a variable in the passed config string
 pub fn replace_config_variable(config: String, key: &str, value: &str) -> String {
-    config.replace(&format!("{{{{{}}}}}", key), &value.to_string())
+    config.replace(&format!("{{{{{}}}}}", key), value)
 }
 
 /// Parses a Duration from a string containing seconds.

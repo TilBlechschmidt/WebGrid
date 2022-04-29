@@ -202,14 +202,13 @@ impl SessionProvisioner for KubernetesProvisioner {
                 job.meta()
                     .labels
                     .get(CONTAINER_SESSION_ID_LABEL)
-                    .map(|id| {
+                    .and_then(|id| {
                         Uuid::from_str(id)
                             .map_err(|e| {
                                 warn!(?id, ?e, "Failed to parse session id from container label",)
                             })
                             .ok()
                     })
-                    .flatten()
             })
             .collect();
 
