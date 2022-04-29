@@ -307,8 +307,6 @@
 <span id="307">307</span>
 <span id="308">308</span>
 <span id="309">309</span>
-<span id="310">310</span>
-<span id="311">311</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::BoxedError</span>;
 <span class="kw">use</span> <span class="ident">futures::StreamExt</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;linux&quot;</span>)]</span>
@@ -434,9 +432,7 @@
         <span class="kw">let</span> <span class="ident">memory_rss_raw</span> <span class="op">=</span> <span class="ident">tokio::fs::read_to_string</span>(<span class="ident">mem_stat_path</span>).<span class="kw">await</span><span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">memory_rss</span> <span class="op">=</span> <span class="ident">memory_rss_raw</span>
             .<span class="ident">lines</span>()
-            .<span class="ident">filter</span>(<span class="op">|</span><span class="ident">l</span><span class="op">|</span> <span class="ident">l</span>.<span class="ident">contains</span>(<span class="ident">mem_field</span>))
-            .<span class="ident">map</span>(<span class="op">|</span><span class="ident">l</span><span class="op">|</span> <span class="ident">l</span>.<span class="ident">strip_prefix</span>(<span class="ident">mem_field</span>))
-            .<span class="ident">flatten</span>()
+            .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">l</span><span class="op">|</span> <span class="ident">l</span>.<span class="ident">strip_prefix</span>(<span class="ident">mem_field</span>))
             .<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span><span class="op">&gt;</span>()
             .<span class="ident">first</span>()
             .<span class="ident">ok_or</span>(<span class="ident">PerformanceMonitorError::MemFieldNotFound</span>)<span class="question-mark">?</span>

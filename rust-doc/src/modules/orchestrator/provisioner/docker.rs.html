@@ -221,9 +221,6 @@
 <span id="221">221</span>
 <span id="222">222</span>
 <span id="223">223</span>
-<span id="224">224</span>
-<span id="225">225</span>
-<span id="226">226</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
 <span class="kw">use</span> <span class="ident">std::str::FromStr</span>;
 
@@ -414,16 +411,13 @@
             .<span class="ident">into_iter</span>()
             .<span class="ident">filter_map</span>(<span class="op">|</span><span class="ident">container</span><span class="op">|</span> <span class="kw">match</span> <span class="ident">container</span>.<span class="ident">labels</span> {
                 <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">None</span>,
-                <span class="prelude-val">Some</span>(<span class="ident">labels</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">labels</span>
-                    .<span class="ident">get</span>(<span class="ident">CONTAINER_SESSION_ID_LABEL</span>)
-                    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">id</span><span class="op">|</span> {
-                        <span class="ident">Uuid::from_str</span>(<span class="ident">id</span>)
-                            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
-                                <span class="macro">warn!</span>(<span class="question-mark">?</span><span class="ident">id</span>, <span class="question-mark">?</span><span class="ident">e</span>, <span class="string">&quot;Failed to parse session id from container label&quot;</span>,)
-                            })
-                            .<span class="ident">ok</span>()
-                    })
-                    .<span class="ident">flatten</span>(),
+                <span class="prelude-val">Some</span>(<span class="ident">labels</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">labels</span>.<span class="ident">get</span>(<span class="ident">CONTAINER_SESSION_ID_LABEL</span>).<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">id</span><span class="op">|</span> {
+                    <span class="ident">Uuid::from_str</span>(<span class="ident">id</span>)
+                        .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
+                            <span class="macro">warn!</span>(<span class="question-mark">?</span><span class="ident">id</span>, <span class="question-mark">?</span><span class="ident">e</span>, <span class="string">&quot;Failed to parse session id from container label&quot;</span>,)
+                        })
+                        .<span class="ident">ok</span>()
+                }),
             })
             .<span class="ident">collect</span>())
     }

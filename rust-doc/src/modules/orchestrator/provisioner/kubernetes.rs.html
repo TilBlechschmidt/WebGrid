@@ -281,7 +281,6 @@
 <span id="281">281</span>
 <span id="282">282</span>
 <span id="283">283</span>
-<span id="284">284</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident"><span class="kw">super</span>::SessionProvisioner</span>;
 <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">CONTAINER_SESSION_ID_LABEL</span>, <span class="ident">PROVISIONER_INSTANCE_LABEL</span>};
 <span class="kw">use</span> <span class="ident">async_trait::async_trait</span>;
@@ -486,14 +485,13 @@
                 <span class="ident">job</span>.<span class="ident">meta</span>()
                     .<span class="ident">labels</span>
                     .<span class="ident">get</span>(<span class="ident">CONTAINER_SESSION_ID_LABEL</span>)
-                    .<span class="ident">map</span>(<span class="op">|</span><span class="ident">id</span><span class="op">|</span> {
+                    .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">id</span><span class="op">|</span> {
                         <span class="ident">Uuid::from_str</span>(<span class="ident">id</span>)
                             .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> {
                                 <span class="macro">warn!</span>(<span class="question-mark">?</span><span class="ident">id</span>, <span class="question-mark">?</span><span class="ident">e</span>, <span class="string">&quot;Failed to parse session id from container label&quot;</span>,)
                             })
                             .<span class="ident">ok</span>()
                     })
-                    .<span class="ident">flatten</span>()
             })
             .<span class="ident">collect</span>();
 

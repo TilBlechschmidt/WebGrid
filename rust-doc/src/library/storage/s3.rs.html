@@ -541,7 +541,7 @@
         <span class="kw">let</span> <span class="ident">backend</span> <span class="op">=</span> <span class="ident">test_backend</span>();
         <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">Uuid::new_v4</span>().<span class="ident">to_string</span>();
         <span class="kw">let</span> <span class="ident">put_link</span> <span class="op">=</span> <span class="ident">backend</span>
-            .<span class="ident">presign_put</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>, <span class="number">10</span>, <span class="kw-2">&amp;</span><span class="string">&quot;application/octet-stream&quot;</span>.<span class="ident">to_string</span>())
+            .<span class="ident">presign_put</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>, <span class="number">10</span>, <span class="string">&quot;application/octet-stream&quot;</span>)
             .<span class="ident">unwrap</span>();
 
         <span class="kw">let</span> <span class="ident">client</span> <span class="op">=</span> <span class="ident">reqwest::Client::new</span>();
