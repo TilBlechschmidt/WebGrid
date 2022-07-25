@@ -25,7 +25,4 @@ export ON_SESSION_CREATE="xwit -display $DISPLAY -all -resize 1920 1080"
 # Move the cursor out of the way
 xwit -display $DISPLAY -root -warp 1920 1080
 
-echo "Executing node service ..."
-webgrid node
-
 echo "Node service exited."
