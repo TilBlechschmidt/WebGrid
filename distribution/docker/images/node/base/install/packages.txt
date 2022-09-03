@@ -23,3 +23,4 @@ gettext-base
 xz-utils
 unzip
 gnupg
+iproute2
