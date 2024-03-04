@@ -229,7 +229,7 @@ jobs:
           pip install selenium
       - name: Start K8s cluster
         run: |
-          curl -sfL https://get.k3s.io | K3S_KUBECONFIG_MODE=777 sh -s - --docker
+          curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=v1.27.9+k3s1 K3S_KUBECONFIG_MODE=777 sh -s - --docker
           mkdir -p ~/.kube
           cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
       - name: Deploy WebGrid instance
