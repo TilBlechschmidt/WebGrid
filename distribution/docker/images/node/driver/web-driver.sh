@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-GECKO_VERSION=0.31.0
-CHROME_VERSION=101.0.4951.41
+GECKO_VERSION=0.34.0
+CHROME_VERSION=122.0.6261.94
 PREV_PWD=$(pwd)
 TMP_DIR=$(mktemp -d)
 
@@ -25,10 +25,10 @@ function geckodriver {
 
 function chromedriver {
 	# Install driver
-	wget --no-check-certificate https://chromedriver.storage.googleapis.com/${CHROME_VERSION}/chromedriver_linux64.zip
-	unzip chromedriver_linux64.zip
-	chmod +x chromedriver
-	mv chromedriver /usr/bin
+	wget --no-check-certificate https://storage.googleapis.com/chrome-for-testing-public/${CHROME_VERSION}/linux64/chromedriver-linux64.zip
+	unzip chromedriver-linux64.zip
+	chmod +x chromedriver-linux64/chromedriver
+	mv chromedriver-linux64/chromedriver /usr/bin
 
 	# Install chrome
 	wget --no-check-certificate -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
