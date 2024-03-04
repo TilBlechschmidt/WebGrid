@@ -221,9 +221,10 @@ jobs:
           docker load --input node-chrome.tar.gz
       - name: Install dependencies
         run: |
-          curl -fLO https://github.com/wercker/stern/releases/download/1.11.0/stern_linux_amd64
-          chmod +x stern_linux_amd64
-          sudo mv stern_linux_amd64 /usr/local/bin/stern
+          curl -fLO https://github.com/stern/stern/releases/download/v1.28.0/stern_1.28.0_linux_amd64.tar.gz
+          tar xzf stern_1.28.0_linux_amd64.tar.gz
+          chmod +x stern
+          sudo mv stern /usr/local/bin/stern
 
           pip install selenium
       - name: Start K8s cluster
